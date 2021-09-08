@@ -5,7 +5,7 @@ description = ""
 authors = ["Jonathan <jonathan.hilgart@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7.8"
 pandas = "1.2.0"
 jupyterlab = "^3.1.6"
 tensorflow = "^2.6.0"
@@ -13,9 +13,10 @@ seaborn = "^0.11.1"
 sklearn = "^0.0"
 tqdm = "^4.62.1"
 darts = "^0.10.1"
+pyyaml = "^5.4.1"
+cbpro = { git = "https://github.com/danpaquin/coinbasepro-python.git" }
 
 [tool.poetry.dev-dependencies]
-black = "^21.7b0"
 pytest = "^6.2.4"
 isort = "^5.9.3"
 ipykernel = "^6.1.0"
