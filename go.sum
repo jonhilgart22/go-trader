@@ -1,0 +1,6 @@
+github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=
+github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
+github.com/preichenberger/go-coinbasepro/v2 v2.0.5 h1:Mf1k3vZTuLzuzcmCJBIbT8eiRD+N2uEG2C6Ug3upXiA=
+github.com/preichenberger/go-coinbasepro/v2 v2.0.5/go.mod h1:tsiN/OFQ5FiE+T2i3r88GHDVvR/Jxkx+CGKw7JSYLrE=
+github.com/shopspring/decimal v1.2.0 h1:abSATXmQEYyShuxI4/vyW3tV1MrKAJzCZ/0zLUXYbsQ=
+github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
