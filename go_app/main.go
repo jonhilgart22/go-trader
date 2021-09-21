@@ -88,7 +88,8 @@ func main() {
 	}
 
 	// open csv file, add new candles to the .csv
-	bitcoinRecords := readCsvFile("./data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021.csv")
+	const bitcoinFileName string = "./data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021.csv"
+	bitcoinRecords := readCsvFile(bitcoinFileName)
 
 	// for _, newVal := range *res {
 	var newestDate time.Time
@@ -102,7 +103,29 @@ func main() {
 
 	for _, currentVal := range *currentRecords {
 		if currentVal.StartTime.After(newestDate) {
+			// this is new data we've pulled in
 			fmt.Println(currentVal.StartTime, "start time current records")
+
+			f, err := os.OpenFile(bitcoinFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			w := csv.NewWriter(f)
+			// csv format is date,open,high,low,close,volume
+			// need to convert all to strings
+
+			w.Write([]string{
+				fmt.Sprintf("%d-%02d-%02d",
+					currentVal.StartTime.Year(),
+					currentVal.StartTime.Month(),
+					currentVal.StartTime.Day()),
+				fmt.Sprintf("%f", currentVal.Open),
+				fmt.Sprintf("%f", currentVal.High),
+				fmt.Sprintf("%f", currentVal.Low),
+				fmt.Sprintf("%f", currentVal.Close),
+				fmt.Sprintf("%f", currentVal.Volume)})
+			w.Flush()
 		}
 	}
 

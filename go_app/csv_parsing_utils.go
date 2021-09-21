@@ -16,6 +16,10 @@ func ParseDate(inputDate string) time.Time {
 	return tm
 }
 
+func RoundTimeToDay(inputTime time.Time) time.Time {
+	return time.Date(inputTime.Year(), inputTime.Month(), inputTime.Day(), 0, 0, 0, 0, inputTime.Location())
+}
+
 func ConvertStringToFloat(inputFloat string) float64 {
 	const bitSize = 64 // Don't think about it to much. It's just 64 bits.
 
