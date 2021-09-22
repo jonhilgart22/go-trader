@@ -16,6 +16,7 @@ import (
 	// "github.com/go-numb/go-ftx/rest/private/account"
 	// "github.com/go-numb/go-ftx/rest/public/futures"
 	"github.com/go-numb/go-ftx/rest/public/markets"
+	"./go_app/csv_parsing_utils/Contains"
 )
 
 type historicCandles struct {
@@ -115,7 +116,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Pulled records for Bitcoin")
+	fmt.Println("Pulled records for Bitcoin", currentBitcoinRecords)
 	currentEthereumRecords, err := client.Candles(&markets.RequestForCandles{
 		ProductCode: "ETH/USD",
 		Resolution:  86400, //day
@@ -123,12 +124,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Pulled records for Etherum")
+	fmt.Println("Pulled records for Etherum", currentEthereumRecords)
 
 	// open csv file, add new candles to the .csv
 	const bitcoinFileName string = "./data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv"
 	const etherumFileName string = "./data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv"
+	const s3Bucket string = "go-trader"
+	const s3EtherumItem string = "data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv"
+	const s3BitcoinItem string = "data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv"
 
+	// download the files from s3
+	DownloadFromS3(s3Bucket, s3EtherumItem)
+	DownloadFromS3(s3Bucket, s3BitcoinItem)
+
+	// read the data into memory
 	bitcoinRecords := readCsvFile(bitcoinFileName)
 	etherumRecords := readCsvFile(etherumFileName)
 
@@ -138,11 +147,12 @@ func main() {
 	fmt.Println(newestBitcoinDate, "newestBitcoinDate")
 	fmt.Println(newestEtherumDate, "newestEtherumDate")
 
-	numBitcoinRecordsWritten := writeNewCsvData(currentBitcoinRecords, newestBitcoinDate, bitcoinFileName)
-	fmt.Println("Finished Bitcoin CSV")
-	fmt.Println("Records written = ", numBitcoinRecordsWritten)
-	numEtherumRecordsWritten := writeNewCsvData(currentEthereumRecords, newestEtherumDate, etherumFileName)
-	fmt.Println("Finished Etherum CSV")
-	fmt.Println("Records written = ", numEtherumRecordsWritten)
+	// add new data as needed
+	// numBitcoinRecordsWritten := writeNewCsvData(currentBitcoinRecords, newestBitcoinDate, bitcoinFileName)
+	// fmt.Println("Finished Bitcoin CSV")
+	// fmt.Println("Records written = ", numBitcoinRecordsWritten)
+	// numEtherumRecordsWritten := writeNewCsvData(currentEthereumRecords, newestEtherumDate, etherumFileName)
+	// fmt.Println("Finished Etherum CSV")
+	// fmt.Println("Records written = ", numEtherumRecordsWritten)
 
 }

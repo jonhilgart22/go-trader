@@ -13,9 +13,13 @@
 1. The go app handles connecting to the FTX exchange, pulling down data from/pushing up data to  S3, adding the new data, launching the python program, and executing orders
 2. The Python program trains the ML models, builds the Bollinger Bands, predict whether to enter/exit trades and returns current trade information to the golang app.
 
+## Data
+
+- All data is store in S3 in `s3://go-trader/data`
+
 ## Infrastructure
 
-- All contained in the `terraform/` directory
+- All contained in the `terraform/` directory. This project uses   `tfswitch` to change between Terraform versions.
 1. `bash terraform plan`
 2. `bash terraform apply`
 

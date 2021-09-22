@@ -6,8 +6,10 @@ require github.com/go-numb/go-ftx v0.0.0-20210920234327-1ed716ff9977
 
 require (
 	github.com/andybalholm/brotli v1.0.0 // indirect
+	github.com/aws/aws-sdk-go v1.40.46 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/klauspost/compress v1.10.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
