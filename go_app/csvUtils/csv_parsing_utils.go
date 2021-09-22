@@ -1,4 +1,4 @@
-package csvparsing
+package csvUtils
 
 import (
 	"strconv"
@@ -15,8 +15,6 @@ func ParseDate(inputDate string) time.Time {
 
 	return tm
 }
-
-
 
 func RoundTimeToDay(inputTime time.Time) time.Time {
 	return time.Date(inputTime.Year(), inputTime.Month(), inputTime.Day(), 0, 0, 0, 0, inputTime.Location())

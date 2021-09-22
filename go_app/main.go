@@ -16,7 +16,7 @@ import (
 	// "github.com/go-numb/go-ftx/rest/private/account"
 	// "github.com/go-numb/go-ftx/rest/public/futures"
 	"github.com/go-numb/go-ftx/rest/public/markets"
-	"./go_app/csv_parsing_utils/Contains"
+	"github.com/jonhilgart22/go-trader/tree/master/go_app/csvUtils"
 )
 
 type historicCandles struct {
@@ -44,15 +44,15 @@ func readCsvFile(filePath string) []historicCandles {
 			break
 		} else if error != nil {
 			panic(error)
-		} else if Contains(line, "date") && Contains(line, "open") && Contains(line, "close") {
+		} else if csvUtils.Contains(line, "date") && csvUtils.Contains(line, "open") && csvUtils.Contains(line, "close") {
 			continue
 		}
 		records = append(records, historicCandles{
-			Date:  ParseDate(line[0]),
-			Open:  ConvertStringToFloat(line[1]),
-			High:  ConvertStringToFloat(line[2]),
-			Low:   ConvertStringToFloat(line[3]),
-			Close: ConvertStringToFloat(line[4]),
+			Date:  csvUtils.ParseDate(line[0]),
+			Open:  csvUtils.ConvertStringToFloat(line[1]),
+			High:  csvUtils.ConvertStringToFloat(line[2]),
+			Low:   csvUtils.ConvertStringToFloat(line[3]),
+			Close: csvUtils.ConvertStringToFloat(line[4]),
 		})
 	}
 
@@ -72,7 +72,7 @@ func FindNewestCsvDate(inputRecords []historicCandles) time.Time {
 func writeNewCsvData(currentRecords *markets.ResponseForCandles, newestDate time.Time, csvFileName string) int {
 	loc, _ := time.LoadLocation("UTC")
 	today := time.Now().In(loc)
-	roundedToday := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+	roundedToday := csvUtils.RoundTimeToDay(today)
 
 	numRecordsWritten := 0
 	for _, currentVal := range *currentRecords {
