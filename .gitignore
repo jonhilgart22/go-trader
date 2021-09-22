@@ -4,3 +4,5 @@ data/*
 .ipynb_checkpoints*
 env_vars.sh
 *.terraform
+__pycache__
+.vscode
