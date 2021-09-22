@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-numb/go-ftx/rest/public/markets"
+	"github.com/jonhilgart22/go-trader/app/structs"
 )
 
 func ParseDate(inputDate string) time.Time {
@@ -82,7 +83,7 @@ func WriteNewCsvData(currentRecords *markets.ResponseForCandles, newestDate time
 	return numRecordsWritten
 }
 
-func FindNewestCsvDate(inputRecords []historicCandles) time.Time {
+func FindNewestCsvDate(inputRecords []structs.HistoricCandles) time.Time {
 	var newestDate time.Time
 	for _, historicVal := range inputRecords {
 		if historicVal.Date.After(newestDate) {

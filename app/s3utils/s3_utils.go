@@ -86,5 +86,5 @@ func UploadToS3(bucket string, item string) {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Upload successful of file %v", item)
+	fmt.Println("Upload successful of file ", item)
 }

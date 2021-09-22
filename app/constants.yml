@@ -1,0 +1,4 @@
+s3_bucket: go-trader
+s3_data_location: data
+bitcoin_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
+etherum_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
