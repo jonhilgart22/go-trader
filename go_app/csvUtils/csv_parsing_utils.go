@@ -1,8 +1,13 @@
 package csvUtils
 
 import (
+	"encoding/csv"
+	"fmt"
+	"os"
 	"strconv"
 	"time"
+
+	"github.com/go-numb/go-ftx/rest/public/markets"
 )
 
 func ParseDate(inputDate string) time.Time {
@@ -40,4 +45,49 @@ func Contains(s []string, str string) bool {
 	}
 
 	return false
+}
+
+func WriteNewCsvData(currentRecords *markets.ResponseForCandles, newestDate time.Time, csvFileName string) int {
+	loc, _ := time.LoadLocation("UTC")
+	today := time.Now().In(loc)
+	roundedToday := RoundTimeToDay(today)
+
+	numRecordsWritten := 0
+	for _, currentVal := range *currentRecords {
+
+		if currentVal.StartTime.After(newestDate) && !currentVal.StartTime.Equal(roundedToday) { // add this data, but not today's data
+
+			f, err := os.OpenFile(csvFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				fmt.Println(err)
+				return 0
+			}
+			w := csv.NewWriter(f)
+			// csv format is date,open,high,low,close,volume
+			// need to convert all to strings
+			w.Write([]string{
+				fmt.Sprintf("%d-%02d-%02d",
+					currentVal.StartTime.Year(),
+					currentVal.StartTime.Month(),
+					currentVal.StartTime.Day()),
+				fmt.Sprintf("%f", currentVal.Open),
+				fmt.Sprintf("%f", currentVal.High),
+				fmt.Sprintf("%f", currentVal.Low),
+				fmt.Sprintf("%f", currentVal.Close),
+				fmt.Sprintf("%f", currentVal.Volume)})
+			w.Flush()
+			numRecordsWritten += 1
+		}
+	}
+	return numRecordsWritten
+}
+
+func FindNewestCsvDate(inputRecords []historicCandles) time.Time {
+	var newestDate time.Time
+	for _, historicVal := range inputRecords {
+		if historicVal.Date.After(newestDate) {
+			newestDate = historicVal.Date
+		}
+	}
+	return newestDate
 }

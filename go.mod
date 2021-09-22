@@ -1,12 +1,14 @@
-module go_app
+module github.com/jonhilgart22/go-trader
 
 go 1.17
 
-require github.com/go-numb/go-ftx v0.0.0-20210920234327-1ed716ff9977
+require (
+	github.com/aws/aws-sdk-go v1.40.46
+	github.com/go-numb/go-ftx v0.0.0-20210920234327-1ed716ff9977
+)
 
 require (
 	github.com/andybalholm/brotli v1.0.0 // indirect
-	github.com/aws/aws-sdk-go v1.40.46 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
