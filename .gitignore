@@ -3,3 +3,4 @@ data/*
 *.darts*
 .ipynb_checkpoints*
 env_vars.sh
+*.terraform

@@ -16,20 +16,7 @@ import (
 	// "github.com/go-numb/go-ftx/rest/private/account"
 	// "github.com/go-numb/go-ftx/rest/public/futures"
 	"github.com/go-numb/go-ftx/rest/public/markets"
-	// "github.com/go-numb/go-ftx/types"
-	// "github.com/go-gota/gota/dataframe"
-	// "github.com/gocarina/gocsv"
 )
-
-// type DateTime struct {
-// 	time.Time
-// }
-
-// // Convert the CSV string as internal date
-// func (date *DateTime) UnmarshalCSV(csv string) (err error) {
-// 	date.Time, err = time.Parse("2006-01-02", csv)
-// 	return err
-// }
 
 type historicCandles struct {
 	Date   time.Time `csv:"date"`
