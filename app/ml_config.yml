@@ -1,1 +1,22 @@
-{}
+prediction_params:
+    df_to_predict_on: etherum_df,
+    bollinger_window: 14
+    no_of_std: 1.25
+    ml_lookback_windows: [31]
+    ml_prediction_n_days: 30
+    additional_dfs: [bitcoin_df]
+    stop_loss_pct: .10,
+    model_name: ["TCN", "NBEATS"]
+hyperparameters_tcn:
+    dropout: 0.10
+    random_state: 0
+    dilation_base: 2
+    kernel_size: 3
+    num_filters: 6
+    num_layers: 6
+hyperparameters_nbeats:
+    random_state: 0
+    num_blocks: 4
+    layer_widths: 512
+
+
