@@ -1,9 +1,11 @@
 s3_bucket: go-trader
 s3_data_location: data
-bitcoin_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
-etherum_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
-ml_models_location: models
-# bitcoin_tcn_model:_name bitcoin_tcn TODO
-# bitcoin_nbeats_model_name:
-# etherum_tcn_model:_name etherum_tcn TODO
-# etherum_nbeats_model_name:
+# TODO: will need to make a data directory locally?
+bitcoin_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
+etherum_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
+# TODO: will need to make a mdoels directory locally?
+# ml_models_location: models
+tcn_model_btc: models/tcn_btc_14_days.pth.tar
+tcn_model_eth: models/tcn_eth_14_days.pth.tar
+nbeats_model_btc: models/nbeats_btc_14_days.pth.tar
+nbeats_model_eth: models/nbeats_eth_14_days.pth.tar

@@ -76,18 +76,17 @@ func readYamlFile(fileLocation string) map[string]string {
 	return data
 }
 
-func downloadUpdateReuploadData(currentBitcoinRecords *markets.ResponseForCandles, currentEthereumRecords *markets.ResponseForCandles) {
-
-	// Read in the filenames from yaml
-	constantsMap := readYamlFile("app/constants.yml")
+func downloadUpdateReuploadData(currentBitcoinRecords *markets.ResponseForCandles, currentEthereumRecords *markets.ResponseForCandles, constantsMap map[string]string) {
 
 	// download the files from s3
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["etherum_filename"])
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["bitcoin_filename"])
+	fmt.Println("Downloading ", constantsMap["etherum_csv_filename"])
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"])
+	fmt.Println("Downloading ", constantsMap["bitcoin_csv_filename"])
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"])
 
 	// read the data into memory
-	bitcoinRecords := readCsvFile(constantsMap["bitcoin_filename"])
-	etherumRecords := readCsvFile(constantsMap["etherum_filename"])
+	bitcoinRecords := readCsvFile(constantsMap["bitcoin_csv_filename"])
+	etherumRecords := readCsvFile(constantsMap["etherum_csv_filename"])
 
 	newestBitcoinDate := csvUtils.FindNewestCsvDate(bitcoinRecords)
 	newestEtherumDate := csvUtils.FindNewestCsvDate(etherumRecords)
@@ -95,16 +94,16 @@ func downloadUpdateReuploadData(currentBitcoinRecords *markets.ResponseForCandle
 	fmt.Println(newestEtherumDate, "newestEtherumDate")
 
 	// add new data as needed
-	numBitcoinRecordsWritten := csvUtils.WriteNewCsvData(currentBitcoinRecords, newestBitcoinDate, constantsMap["bitcoin_filename"])
+	numBitcoinRecordsWritten := csvUtils.WriteNewCsvData(currentBitcoinRecords, newestBitcoinDate, constantsMap["bitcoin_csv_filename"])
 	fmt.Println("Finished Bitcoin CSV")
 	fmt.Println("Records written = ", numBitcoinRecordsWritten)
-	numEtherumRecordsWritten := csvUtils.WriteNewCsvData(currentEthereumRecords, newestEtherumDate, constantsMap["etherum_filename"])
+	numEtherumRecordsWritten := csvUtils.WriteNewCsvData(currentEthereumRecords, newestEtherumDate, constantsMap["etherum_csv_filename"])
 	fmt.Println("Finished Etherum CSV")
 	fmt.Println("Records written = ", numEtherumRecordsWritten)
 
 	// upload back to s3
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["bitcoin_filename"])
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["etherum_filename"])
+	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"])
+	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"])
 }
 
 func pullDataFromFtx(productCode string, resolution int) *markets.ResponseForCandles {
@@ -123,13 +122,27 @@ func pullDataFromFtx(productCode string, resolution int) *markets.ResponseForCan
 
 func main() {
 
+	// Read in the constants from yaml
+	constantsMap := readYamlFile("app/constants.yml")
+
 	// pull new data from FTX with day candles
 	currentBitcoinRecords := pullDataFromFtx("BTC/USD", 86400)
 	currentEthereumRecords := pullDataFromFtx("ETH/USD", 86400)
 
-	// Add new data to CSV from s3. This will be used by our Python program
-	downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords)
+	// Add new data to CSV from FTX to s3. This will be used by our Python program
+	downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, constantsMap)
+
+	// Download the model files to be used by the python program
+	fmt.Println("Downloadingthe following model files", constantsMap["tcn_model_btc"], constantsMap["tcn_model_eth"], constantsMap["nbeats_model_btc"], constantsMap["nbeats_model_eth"])
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["tcn_model_btc"])
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["tcn_model_eth"])
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["nbeats_model_btc"])
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["nbeats_model_eth"])
 
 	// Call the Python Program here
+
+	// upload the model files
+
+	// upload any config changes that we need to maintain state
 
 }

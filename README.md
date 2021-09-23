@@ -28,3 +28,8 @@ S3 bucket: `go-trader`
 ## Performance
 
 - View the different model performance results [here](https://docs.google.com/spreadsheets/d/1xEaxfYBcXNcGN71LAj_Yw-EDEifm_MficTvFqpLUR3s/edit?usp=sharing)
+
+
+## TODO
+- upload real models to `/models`
+- build lambda
