@@ -6,3 +6,4 @@ env_vars.sh
 *.terraform
 __pycache__
 .vscode
+models/

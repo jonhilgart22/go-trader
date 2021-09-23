@@ -1,13 +1,14 @@
 prediction_params:
-    df_to_predict_on: etherum_df,
     bollinger_window: 14
     no_of_std: 1.25
-    ml_lookback_windows: [31]
+    ml_lookback_window: 31
     ml_prediction_n_days: 30
     additional_dfs: [bitcoin_df]
     stop_loss_pct: .10,
     model_name: ["TCN", "NBEATS"]
 hyperparameters_tcn:
+    model_name_etherum: tcn_etherum_30_days.pth.tar
+    model_name_bitcoin: tcn_bitcoin_30_days.pth.tar
     dropout: 0.10
     random_state: 0
     dilation_base: 2
@@ -15,6 +16,8 @@ hyperparameters_tcn:
     num_filters: 6
     num_layers: 6
 hyperparameters_nbeats:
+    model_name_etherum: nbeats_etherum_30_days.pth.tar
+    model_name_bitcoin: nbeats_bitcoin_30_days.pth.tar
     random_state: 0
     num_blocks: 4
     layer_widths: 512

@@ -1,7 +1,7 @@
 
 # Go Trader
 
-- Golang  lambd app that trigger buy signals alongside a Python ML model
+- Golang lambda app that trigger buy signals alongside a Python ML model
 
 1. `wget http://api.bitcoincharts.com/v1/csv/localbtcUSD.csv.gz`
 - This data is used in `notebooks/testing_bollinger_bands_and_ts_models.ipynb`
