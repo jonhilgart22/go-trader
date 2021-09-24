@@ -28,3 +28,4 @@ upload_model:
 
 upload_data:
 	aws s3 cp "./data/historic_crypto_prices - bitcoin_jan_2017_sept_4_2021 copy.csv" "s3://go-trader/data/historic_crypto_prices - bitcoin_jan_2017_sept_4_2021 copy.csv" --sse aws:kms
+	aws s3 cp "./data/historic_crypto_prices - etherum_jan_2017_sept_4_2021.csv" "s3://go-trader/data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" --sse aws:kms
