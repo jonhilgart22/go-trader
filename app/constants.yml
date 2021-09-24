@@ -3,10 +3,14 @@ s3_data_location: data
 # TODO: will need to make a data directory locally?
 bitcoin_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
 etherum_csv_filename: data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
-# TODO: will need to make a mdoels directory locally?
-tcn_modelname_btc: 31_tcn
+# TODO: will need to make a models/checkpoints directory locally?
+tcn_modelname_btc: 31_tcn_btc
 tcn_modelname_eth: 31_tcn_eth
 tcn_filename_eth: checkpoint_5649_eth_tcn.pth.tar
+tcn_filename_btc: checkpoint_4499.pth.tar
+nbeats_modelname_btc: 31_nbeats_btc
+nbeats_modelname_eth: 31_nbeats_eth
+nbeats_filename_btc: checkpoint_257.pth.tar
 nbeats_model_btc: models/nbeats_btc_14_days.pth.tar
 nbeats_model_eth: models/nbeats_eth_14_days.pth.tar
 ml_models_dir: models

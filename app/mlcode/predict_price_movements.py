@@ -63,11 +63,13 @@ def read_in_data(input_file: str) -> pd.DataFrame:
 class BollingerBandsPredictor:
     def __init__(
         self,
+        coin_to_predict: str,
         constants: Dict[str, Dict[str, any]],
         ml_constants: Dict[str, Dict[str, any]],
         input_df: pd.DataFrame,
         additional_dfs: List[pd.DataFrame] = None,
     ):
+        self.coin_to_predict = coin_to_predict
         self.constants: Dict[str, Dict[str, Any]] = constants
         self.ml_constants: Dict[str, Dict[str, Any]] = ml_constants
         self.window = self.ml_constants["prediction_params"]["bollinger_window"]
@@ -76,41 +78,46 @@ class BollingerBandsPredictor:
         self.additional_dfs = additional_dfs
 
     def _load_models(self):
-        # print(
-        #     f"Loading model {self.ml_constants['hyperparameters_nbeats']['model_name_etherum']}")
-        # self.nbeats_model_eth = NBEATSModel(
-        #     input_chunk_length=self.ml_constants["prediction_params"]["lookback_window"],
-        #     output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
-        #     random_state=0,
-        #     model_name=self.ml_constants["hyperparameters_nbeats"]["model_name_etherum"],
-        #     num_blocks=self.ml_constants["hyperparameters_nbeats"]["num_blocks"],
-        #     layer_widths=self.ml_constants["hyperparameters_nbeats"]["layer_widths"],
-        #     force_reset=True,
-        #     log_tensorboard=True,
-        # )
-        # self.nbeats_model_eth.load_from_checkpoint(
-        #     model_name=self.ml_constants["hyperparameters_nbeats"]["model_name_etherum"],
-        #     work_dir=self.ml_constants["prediction_params"]["ml_models_dir"],
-        #     best=False)
-        # # filename=os.path.join(
-        # #     "models", self.ml_constants["hyperparameters_nbeats"]["model_name_etherum"]), best=False)
-        # ##
-        # print(
-        #     f"Loading model {self.ml_constants['hyperparameters_nbeats']['model_name_bitcoin']}")
-        # self.nbeats_model_btc = NBEATSModel(
-        #     input_chunk_length=self.ml_constants["prediction_params"]["lookback_window"],
-        #     output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
-        #     random_state=0,
-        #     model_name=self.ml_constants["hyperparameters_nbeats"]["model_name_bitcoin"],
-        #     num_blocks=self.ml_constants["hyperparameters_nbeats"]["num_blocks"],
-        #     layer_widths=self.ml_constants["hyperparameters_nbeats"]["layer_widths"],
-        #     force_reset=True,
-        #     log_tensorboard=True,
-        # )
-        print(
-            f"Loading model {self.constants['tcn_modelname_eth']}")
 
-        self.tcn_model_eth = TCNModel(
+        if self.coin_to_predict.lower() == "bitcoin":
+            tcn_model_name = self.constants['tcn_modelname_btc']
+            tcn_filename = self.constants['tcn_filename_btc']
+            nbeats_model_name = self.constants['nbeats_modelname_btc']
+            nbeats_filename = self.constants['nbeats_filename_btc']
+        elif self.coin_to_predict.lower() == "etherum":
+            tcn_model_name = self.constants['tcn_modelname_eth']
+            tcn_filename = self.constants['tcn_filename_eth']
+            nbeats_model_name = self.constants['nbeats_modelname_eth']
+            nbeats_filename = self.constants['nbeats_filename_eth']
+        else:
+            raise ValueError(
+                f"Incorrect model token to predict given {self. coin_to_predict}")
+        print("------")
+        print(f"Loading models for coin {self.coin_to_predict}")
+
+        print(
+            f"Loading model {nbeats_model_name},{nbeats_filename}")
+
+        self.nbeats_model = NBEATSModel(
+            input_chunk_length=self.ml_constants["prediction_params"]["lookback_window"],
+            output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
+            random_state=0,
+            model_name=nbeats_model_name,
+            num_blocks=self.ml_constants["hyperparameters_nbeats"]["num_blocks"],
+            layer_widths=self.ml_constants["hyperparameters_nbeats"]["layer_widths"],
+            force_reset=True,
+            log_tensorboard=True,
+        )
+        self.nbeats_model.load_from_checkpoint(
+            model_name=nbeats_model_name,
+            filename=nbeats_filename,
+            work_dir=self.constants["ml_models_dir"],
+            best=False)
+
+        print(
+            f"Loading model {tcn_model_name}, {tcn_filename}")
+
+        self.tcn_model = TCNModel(
             dropout=self.ml_constants["hyperparameters_tcn"]["dropout"],
             random_state=0,
             dilation_base=self.ml_constants["hyperparameters_tcn"]["dilation_base"],
@@ -120,36 +127,17 @@ class BollingerBandsPredictor:
             num_layers=self.ml_constants["hyperparameters_tcn"]["num_layers"],
             input_chunk_length=self.ml_constants["prediction_params"]["lookback_window"],
             output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
-            model_name=self.constants["tcn_modelname_eth"],
+            model_name=tcn_model_name,
             force_reset=True,
             log_tensorboard=True,
         )
         # This works
-        self.tcn_model_eth.load_from_checkpoint(
-            model_name=self.constants[
-                "tcn_modelname_eth"],
+        self.tcn_model.load_from_checkpoint(
+            model_name=tcn_model_name,
             work_dir=self.constants["ml_models_dir"],
-            filename=self.constants[
-                "tcn_filename_eth"],
+            filename=tcn_filename,
             best=False)
-
-        print(
-            f"Loading model {self.constants['hyperparameters_tcn']['model_name_bitcoin']}")
-
-        self.tcn_model_btc = TCNModel(
-            dropout=self.ml_constants["hyperparameters_tcn"]["dropout"],
-            random_state=0,
-            dilation_base=self.ml_constants["hyperparameters_tcn"]["dilation_base"],
-            weight_norm=self.ml_constants["hyperparameters_tcn"]["weight_norm"],
-            kernel_size=self.ml_constants["hyperparameters_tcn"]["kernel_size"],
-            num_filters=self.ml_constants["hyperparameters_tcn"]["num_filters"],
-            num_layers=self.ml_constants["hyperparameters_tcn"]["num_layers"],
-            input_chunk_length=self.ml_constants["prediction_params"]["lookback_window"],
-            output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
-            model_name=self.ml_constants["hyperparameters_tcn"]["model_name_bitcoin"],
-            force_reset=True,
-            log_tensorboard=True,
-        )
+        print("---- Finished loading models ----")
 
     def _build_bollinger_bands(self):
 
@@ -196,7 +184,7 @@ def main():
     etherum_df = read_in_data(constants["etherum_csv_filename"])
     ml_constants = read_in_constants("app/ml_config.yml")
     btc_predictor = BollingerBandsPredictor(
-        constants,  ml_constants, bitcoin_df, additional_dfs=[etherum_df]
+        "bitcoin", constants,  ml_constants, bitcoin_df, additional_dfs=[etherum_df]
     )
 
     btc_predictor.predict()
