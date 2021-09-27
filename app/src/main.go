@@ -8,6 +8,10 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
+	"strconv"
+
+	"path/filepath"
 
 	"github.com/go-numb/go-ftx/auth"
 	"github.com/go-numb/go-ftx/rest"
@@ -79,6 +83,7 @@ func readYamlFile(fileLocation string) map[string]string {
 func downloadUpdateReuploadData(currentBitcoinRecords *markets.ResponseForCandles, currentEthereumRecords *markets.ResponseForCandles, constantsMap map[string]string) {
 
 	// download the files from s3
+	// TODO: mkdir for data?
 	fmt.Println("Downloading ", constantsMap["etherum_csv_filename"])
 	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"])
 	fmt.Println("Downloading ", constantsMap["bitcoin_csv_filename"])
@@ -120,28 +125,78 @@ func pullDataFromFtx(productCode string, resolution int) *markets.ResponseForCan
 	return records
 }
 
+func downloadModelFiles(constantsMap map[string]string) {
+	tcnEthModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["tcn_modelname_eth"], constantsMap["tcn_filename_eth"])
+	tcnBtcModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["tcn_modelname_btc"], constantsMap["tcn_filename_btc"])
+
+	nbeatsBtcModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["nbeats_modelname_btc"], constantsMap["nbeats_filename_btc"])
+	nbeatsEthModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["nbeats_modelname_eth"], constantsMap["nbeats_filename_eth"])
+
+	fmt.Println("Downloading = ", tcnEthModelFilePath)
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], tcnEthModelFilePath)
+	fmt.Println("Downloading = ", tcnBtcModelFilePath)
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], tcnBtcModelFilePath)
+	fmt.Println("Downloading = ", nbeatsEthModelFilePath)
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], nbeatsEthModelFilePath)
+	fmt.Println("Downloading = ", nbeatsBtcModelFilePath)
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], nbeatsBtcModelFilePath)
+
+}
+
+func copyOutput(r io.Reader) {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+}
+
+func runPythonMlProgram(constantsMap map[string]string) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println("Current working directory = ", pwd)
+
+	cmd := exec.Command("python", filepath.Join(pwd, constantsMap["python_script_path"]))
+	out, err := cmd.Output()
+
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	fmt.Println(string(out))
+}
+
 func main() {
 
 	// Read in the constants from yaml
 	constantsMap := readYamlFile("app/constants.yml")
 
 	// pull new data from FTX with day candles
-	currentBitcoinRecords := pullDataFromFtx("BTC/USD", 86400)
-	currentEthereumRecords := pullDataFromFtx("ETH/USD", 86400)
+	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
+	if e != nil {
+		panic(e)
+	}
+	currentBitcoinRecords := pullDataFromFtx(constantsMap["btc_product_code"], granularity)
+	currentEthereumRecords := pullDataFromFtx(constantsMap["eth_product_code"], granularity)
 
 	// Add new data to CSV from FTX to s3. This will be used by our Python program
 	downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, constantsMap)
 
 	// Download the model files to be used by the python program
-	fmt.Println("Downloadingthe following model files", constantsMap["tcn_model_btc"], constantsMap["tcn_model_eth"], constantsMap["nbeats_model_btc"], constantsMap["nbeats_model_eth"])
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["tcn_model_btc"])
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["tcn_model_eth"])
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["nbeats_model_btc"])
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["nbeats_model_eth"])
+	// models need to be downloaded to models/checkpoints/{model_name}/{filename}
+	// TODO: uncomment
+	// don't need to do this
+	// downloadModelFiles(constantsMap)
 
-	// Call the Python Program here
+	// Call the Python Program here. This is kinda jank
+	fmt.Println("Calling our Python program")
 
-	// upload the model files
+	runPythonMlProgram(constantsMap)
+
+	// upload the model files after training
 
 	// upload any config changes that we need to maintain state
 

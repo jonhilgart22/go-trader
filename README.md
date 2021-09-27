@@ -17,6 +17,10 @@
 
 - All data is store in S3 in `s3://go-trader/data`
 
+## Models
+
+- Stored in S3 in `s3://go-trader/models`
+
 ## Infrastructure
 
 - All contained in the `terraform/` directory. This project uses   `tfswitch` to change between Terraform versions.

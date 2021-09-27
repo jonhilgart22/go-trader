@@ -3,15 +3,12 @@ import logging
 import yaml
 import pandas as pd
 import time
-import time
 from datetime import datetime
-from tqdm.keras import TqdmCallback
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -68,6 +65,8 @@ class BollingerBandsPredictor:
         ml_constants: Dict[str, Dict[str, any]],
         input_df: pd.DataFrame,
         additional_dfs: List[pd.DataFrame] = None,
+        period="24H",
+        verbose=True
     ):
         self.coin_to_predict = coin_to_predict
         self.constants: Dict[str, Dict[str, Any]] = constants
@@ -76,31 +75,40 @@ class BollingerBandsPredictor:
         self.no_of_std = self.ml_constants["prediction_params"]["no_of_std"]
         self.df = input_df
         self.additional_dfs = additional_dfs
+        self.period = period
+        self.verbose = verbose
 
-    def _load_models(self):
+        self.ml_train_cols = ['open', 'high', 'low', 'Rolling Mean', 'volume']
+        self.pred_col = 'close'
+
+    def _create_models(self, load_model: bool = False):
 
         if self.coin_to_predict.lower() == "bitcoin":
-            tcn_model_name = self.constants['tcn_modelname_btc']
-            tcn_filename = self.constants['tcn_filename_btc']
-            nbeats_model_name = self.constants['nbeats_modelname_btc']
-            nbeats_filename = self.constants['nbeats_filename_btc']
+            tcn_model_name = self.constants["tcn_modelname_btc"]
+            tcn_filename = self.constants["tcn_filename_btc"]
+            nbeats_model_name = self.constants["nbeats_modelname_btc"]
+            nbeats_filename = self.constants["nbeats_filename_btc"]
         elif self.coin_to_predict.lower() == "etherum":
-            tcn_model_name = self.constants['tcn_modelname_eth']
-            tcn_filename = self.constants['tcn_filename_eth']
-            nbeats_model_name = self.constants['nbeats_modelname_eth']
-            nbeats_filename = self.constants['nbeats_filename_eth']
+            tcn_model_name = self.constants["tcn_modelname_eth"]
+            tcn_filename = self.constants["tcn_filename_eth"]
+            nbeats_model_name = self.constants["nbeats_modelname_eth"]
+            nbeats_filename = self.constants["nbeats_filename_eth"]
         else:
             raise ValueError(
-                f"Incorrect model token to predict given {self. coin_to_predict}")
+                f"Incorrect model token to predict given {self. coin_to_predict}"
+            )
         print("------")
-        print(f"Loading models for coin {self.coin_to_predict}")
+        print(f"Creating models for coin {self.coin_to_predict}")
 
-        print(
-            f"Loading model {nbeats_model_name},{nbeats_filename}")
+        print(f"Creating model {nbeats_model_name},{nbeats_filename}")
 
         self.nbeats_model = NBEATSModel(
-            input_chunk_length=self.ml_constants["prediction_params"]["lookback_window"],
-            output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
+            input_chunk_length=self.ml_constants["prediction_params"][
+                "lookback_window"
+            ],
+            output_chunk_length=self.ml_constants["prediction_params"][
+                "prediction_n_days"
+            ],
             random_state=0,
             model_name=nbeats_model_name,
             num_blocks=self.ml_constants["hyperparameters_nbeats"]["num_blocks"],
@@ -108,14 +116,15 @@ class BollingerBandsPredictor:
             force_reset=True,
             log_tensorboard=True,
         )
-        self.nbeats_model.load_from_checkpoint(
-            model_name=nbeats_model_name,
-            filename=nbeats_filename,
-            work_dir=self.constants["ml_models_dir"],
-            best=False)
+        if load_model:
+            self.nbeats_model.load_from_checkpoint(
+                model_name=nbeats_model_name,
+                filename=nbeats_filename,
+                work_dir=self.constants["ml_models_dir"],
+                best=False,
+            )
 
-        print(
-            f"Loading model {tcn_model_name}, {tcn_filename}")
+        print(f"Loading model {tcn_model_name}, {tcn_filename}")
 
         self.tcn_model = TCNModel(
             dropout=self.ml_constants["hyperparameters_tcn"]["dropout"],
@@ -125,18 +134,24 @@ class BollingerBandsPredictor:
             kernel_size=self.ml_constants["hyperparameters_tcn"]["kernel_size"],
             num_filters=self.ml_constants["hyperparameters_tcn"]["num_filters"],
             num_layers=self.ml_constants["hyperparameters_tcn"]["num_layers"],
-            input_chunk_length=self.ml_constants["prediction_params"]["lookback_window"],
-            output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
+            input_chunk_length=self.ml_constants["prediction_params"][
+                "lookback_window"
+            ],
+            output_chunk_length=self.ml_constants["prediction_params"][
+                "prediction_n_days"
+            ],
             model_name=tcn_model_name,
             force_reset=True,
             log_tensorboard=True,
         )
         # This works
-        self.tcn_model.load_from_checkpoint(
-            model_name=tcn_model_name,
-            work_dir=self.constants["ml_models_dir"],
-            filename=tcn_filename,
-            best=False)
+        if load_model:
+            self.tcn_model.load_from_checkpoint(
+                model_name=tcn_model_name,
+                work_dir=self.constants["ml_models_dir"],
+                filename=tcn_filename,
+                best=False,
+            )
         print("---- Finished loading models ----")
 
     def _build_bollinger_bands(self):
@@ -168,12 +183,162 @@ class BollingerBandsPredictor:
                 print(df.tail())
         self.additional_dfs = new_additional_dfs
 
+    def _scale_time_series_df_and_time_cols(
+        self, input_df, time_cols=["year", "month", "day"]
+    ):
+        ts_transformers = {}
+        ts_stacked_series = None
+        ts_transformers, ts_stacked_series = self._scale_time_series_df(
+            input_df)
+
+        # build year and month and day series:
+        for col in time_cols:
+            transformer = Scaler()
+            transformed_series = transformer.fit_transform(
+                datetime_attribute_timeseries(ts_stacked_series, attribute=col)
+            )
+            ts_transformers[col] = transformer
+
+            ts_stacked_series = ts_stacked_series.stack(transformed_series)
+
+        return (
+            ts_transformers,
+            ts_stacked_series,
+            TimeSeries.from_series(input_df[self.pred_col], freq=self.period),
+        )
+
+    def _scale_time_series_df(self, input_df, use_pred_col=False):
+        """
+        Scale an input time series col from 0 to 1
+
+        input_df: the DF that contains the col
+        use_pred_col: if we are transforming additional DFs, we can use the pred col 'close' for them
+        """
+        ts_transformers = {}
+        ts_stacked_series = None
+        cols_to_transform = self.ml_train_cols.copy()
+        # if we have additional DFs, we can include their close price
+        if use_pred_col:
+            cols_to_transform.append(self.pred_col)
+        for col in cols_to_transform:
+            transformer = Scaler()
+
+            transformed_series = transformer.fit_transform(
+                fill_missing_values(
+                    TimeSeries.from_series(input_df[col], freq=self.period)
+                )
+            )
+            ts_transformers[col] = transformer
+
+            if ts_stacked_series:
+                ts_stacked_series = ts_stacked_series.stack(transformed_series)
+
+            else:
+                ts_stacked_series = transformed_series
+        return ts_transformers, ts_stacked_series
+
+    def _add_additional_training_dfs(self, ts_stacked_series):
+        """
+        Scale any additional DFs provided (such as ETHER)
+
+        ts_stacked_series: the current scaled lists from the df_original provided
+
+        """
+        all_ts_stacked_series = None
+        for df in self.additional_dfs:
+            additional_ts_transformers, additional_ts_stacked_series = self._scale_time_series_df(
+                df, use_pred_col=True
+            )
+            if all_ts_stacked_series is None:
+                if self.verbose:
+                    print(
+                        "last date for training additional df data",
+                        additional_ts_stacked_series.time_index[-1],
+                    )
+                all_ts_stacked_series = additional_ts_stacked_series
+            else:
+                return "Error. More than one time series for _add_additional_training_dfs not implemented"
+        return (
+            additional_ts_transformers,
+            all_ts_stacked_series.stack(ts_stacked_series),
+        )
+
+    def _convert_data_to_timeseries(
+        self
+    ) -> Tuple[TimeSeries, TimeSeries]:
+        # combine TS from both DFs
+        ts_transformers, ts_stacked_series, train_close_series = self._scale_time_series_df_and_time_cols(
+            self.df
+        )
+        if self.verbose:
+            print("original DF training series", ts_stacked_series.components)
+            print("last date for training data",
+                  ts_stacked_series.time_index[-1])
+
+        if len(self.additional_dfs) > 0:
+            # overwrite the ts_stacked_series var if we have additional DFS
+            additional_ts_transformers, ts_stacked_series = self._add_additional_training_dfs(
+                ts_stacked_series
+            )
+            ts_transformers = {
+                **additional_ts_transformers,
+                **ts_transformers,
+            }  # merge dicts
+        self.ts_transformers = ts_transformers
+
+        if self.verbose:
+            print("all series now stacked", ts_stacked_series.components)
+
+        return train_close_series, ts_stacked_series
+
+    def _train_models(self, train_close_series, ts_stacked_series):
+
+        self.nbeats_model.fit(
+            series=train_close_series,
+            past_covariates=[ts_stacked_series],
+            verbose=self.verbose,
+            epochs=self.ml_constants["hyperparameters_nbeats"]["epochs"],
+        )
+        self.tcn_model.fit(
+            series=train_close_series,
+            past_covariates=[ts_stacked_series],
+            verbose=self.verbose,
+            epochs=self.ml_constants["hyperparameters_tcn"]["epochs"],
+        )
+
+    def _make_prediction(self, train_close_series, ts_stacked_series):
+        nbeats_prediction = self.nbeats_model.predict(
+            n=self.ml_constants['prediction_params']["prediction_n_days"],
+            series=train_close_series,
+            past_covariates=[ts_stacked_series],
+        ).last_value()  # grab the last value
+        print(
+            f" Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {nbeats_prediction}")
+        tcn_prediction = self.tcn_model.predict(
+            n=self.ml_constants['prediction_params']["prediction_n_days"],
+            series=train_close_series,
+            past_covariates=[ts_stacked_series],
+        ).last_value()  # grab the last value
+        print(
+            f" Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {tcn_prediction}")
+
+        return np.mean([tcn_prediction, nbeats_prediction])
+
     def predict(self):
+        print("Building Bollinger Bands")
         self._build_bollinger_bands()
-        self._load_models()
-        # todo
-        # self._train_model()
-        # self._make_predictions()
+        print("Creating Models")
+        # turns out, it's better to create new models than retrain old ones
+        self._create_models()
+        # TODO
+        print("Converting data to timeseries")
+        train_close_series, ts_stacked_series = self._convert_data_to_timeseries()
+        print("Training models")
+        self._train_models(train_close_series, ts_stacked_series)
+        print("making predictions")
+        prediction = self._make_prediction(
+            train_close_series, ts_stacked_series)
+        print(prediction, "prediction")
         # self._update_state()
 
 
@@ -184,7 +349,7 @@ def main():
     etherum_df = read_in_data(constants["etherum_csv_filename"])
     ml_constants = read_in_constants("app/ml_config.yml")
     btc_predictor = BollingerBandsPredictor(
-        "bitcoin", constants,  ml_constants, bitcoin_df, additional_dfs=[etherum_df]
+        "bitcoin", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
     )
 
     btc_predictor.predict()
