@@ -224,7 +224,7 @@ class BollingerBandsPredictor:
             if all_ts_stacked_series is None:
                 if self.verbose:
                     logger.info("last date for training additional df data")
-                    logger.info((additional_ts_stacked_series.time_index[-1]),)
+                    logger.info((additional_ts_stacked_series.time_index[-1]))
                 all_ts_stacked_series = additional_ts_stacked_series
             else:
                 return "Error. More than one time series for _add_additional_training_dfs not implemented"

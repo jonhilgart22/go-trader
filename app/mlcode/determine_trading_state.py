@@ -7,6 +7,7 @@ import logging
 import yaml
 from datetime import date
 from datetime import timedelta
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class DetermineTradingState:
         # trading state args
         for k, v in trading_state_constants.items():
             setattr(self, k, v)
-        logger.info(vars(self))
+            logger.info(f"Setting the class var self.{k} = {v}")
 
         # self.mode = self.trading_state_constants["mode"]
         # self.position_entry_date = self.trading_state_constants["position_entry_date"]
@@ -61,111 +62,71 @@ class DetermineTradingState:
             assert row.index == yesterday
             assert prev_row.index == two_days_ago
         except ValueError:
-            raise(
-                f"Incorrect dates passed. Yesterday = {yesterday} Two days ago = {two_days_ago}")
+            raise (
+                f"Incorrect dates passed. Yesterday = {yesterday} Two days ago = {two_days_ago}"
+            )
 
         # update stop loss
         if (
             self.mode == "buy"
-            and (1 - self.stop_loss_pct) * row["close"]
-            > self.stop_loss_price
+            and (1 - self.stop_loss_pct) * row["close"][0] > self.stop_loss_price
         ):
-            self.stop_loss_price = (
-                1 - self.stop_loss_pct
-            ) * row["close"]
-            logger.info(f"Updating stop loss to {self.stop_loss_price}")
-            logger.info(row["close"])
-            logger.info("row close")
+            self.stop_loss_price = (1 - self.stop_loss_pct) * row["close"]
+            self._print_log_statements(
+                f"Updating stop loss to {self.stop_loss_price}", row
+            )
 
         if (
             self.mode == "short"
-            and (1 + self.stop_loss_pct) * row["close"]
-            < self.stop_loss_price
+            and (1 + self.stop_loss_pct) * row["close"][0] < self.stop_loss_price
         ):
-            self.stop_loss_price = (
-                1 + self.stop_loss_pct
-            ) * row["close"]
-            logger.info(f"Updating stop loss to {self.stop_loss_price}")
-            logger.info(row["close"], "row close")
+            self.stop_loss_price = (1 + self.stop_loss_pct) * row["close"][0]
+            self._print_log_statements(
+                f"Updating stop loss to {self.stop_loss_price}", row
+            )
 
         # check if we've previously crossed the mean trailing price
-        if (
-            self.mode == "buy"
-            and row["close"] > row["Rolling Mean"]
-        ):
-            self.trading_state_constants["buy_has_crossed_mean"] = True
+        if self.mode == "buy" and row["close"] > row["Rolling Mean"]:
+            self.buy_has_crossed_mean = True
 
-        if (
-            self.mode == "short"
-            and row["close"] < row["Rolling Mean"]
-        ):
-            self.trading_state_constants["short_has_crossed_mean"] = True
+        if self.mode == "short" and row["close"] < row["Rolling Mean"]:
+            self.short_has_crossed_mean = True
 
         # stop loss, get out of buy position
-        if (
-            self.mode == "buy"
-            and self.stop_loss_price > row["close"]
-        ):
-            logger.info("----")
-            logger.info("stop loss activated for getting out of our buy")
-            logger.info(row.name, "current date")
-            logger.info(row["close"], "row close")
-            logger.info(self.stop_loss_price, "self.stop_loss_price")
-            logger.info(self.buy_entry_price, "self.buy_entry_price")
+        if self.mode == "buy" and self.stop_loss_price > row["close"]:
+            self._print_log_statements(
+                f"stop loss activated for getting out of our buy", row
+            )
 
-            self.df.iloc[index, self.df.columns.get_loc("Position")] = 1
-            if index + 1 == len(self.df):
-                self.df.iloc[index, self.df.columns.get_loc("Position")] = 0
-            else:
-                # for pct change it does a ffilll. ffill with zeros
-                self.df.iloc[index + 1,
-                             self.df.columns.get_loc("Position")] = 0
             self._determine_win_or_loss_amount(row)
             # record keeping
-            self.df.iloc[index, self.df.columns.get_loc(
-                "Mode")] = "buy_to_no_position"
+
             self.mode = "no_position"
-            buy_has_crossed_mean = False
+            self.buy_has_crossed_mean = False
 
         # stop loss, get out of short position
-        elif (
-            self.mode == "short"
-            and self.stop_loss_price < row["close"]
-        ):
-            logger.info("----")
-            logger.info("stop loss activated for getting out of our short")
-            logger.info(row.name, "current date")
-            logger.info(row["close"], "row close")
-            logger.info(self.stop_loss_price, "self.stop_loss_price")
-            logger.info(self.short_entry_price, "self.short_entry_price")
+        elif self.mode == "short" and self.stop_loss_price < row["close"]:
+            self._print_log_statements(
+                f"stop loss activated for getting out of our short", row
+            )
 
-            self.df.iloc[index, self.df.columns.get_loc("Position")] = -1
-            if index + 1 == len(self.df):
-                self.df.iloc[index, self.df.columns.get_loc("Position")] = 0
-            else:
-                # for pct change it does a ffilll. ffill with zeros
-                self.df.iloc[index + 1,
-                             self.df.columns.get_loc("Position")] = 0
             self._determine_win_or_loss_amount(row)
             # record keeping
-            self.df.iloc[
-                index, self.df.columns.get_loc("Mode")
-            ] = "short_to_no_position"
             self.mode = "no_position"
-            short_has_crossed_mean = False
+            self.short_has_crossed_mean = False
 
         # buy -> no_position? no position is below running mean
         # or, if we are above the top band (mean reversion)
         elif self.mode == "buy" and (
             (
-                row["close"] < row["Rolling Mean"]
-                and self.trading_state_constants["buy_has_crossed_mean"]
+                row["close"][0] < row["Rolling Mean"][0]
+                and self.trading_state_constants["buy_has_crossed_mean"][0]
             )
-            or (row["close"] > row["Bollinger High"])
-            or (row["close"] < row["Bollinger Low"])
-            or (row["Rolling Mean"] < self.buy_entry_price)
+            or (row["close"][0] > row["Bollinger High"][0])
+            or (row["close"][0] < row["Bollinger Low"][0])
+            or (row["Rolling Mean"][0] < self.buy_entry_price)
         ):
-            self._check_buy_to_no_position(index, row)
+            self._check_buy_to_no_position(row)
 
         # short -> no_position? no position if above running mean
         # or, if we are below the bottom band (mean reversion)
@@ -178,28 +139,26 @@ class DetermineTradingState:
             or (row["close"] > row["Bollinger High"])
             or row["Rolling Mean"] > self.short_entry_price
         ):
-            self._check_short_to_no_position(index, row)
+            self._check_short_to_no_position(row)
 
         # buy check with ML model
         elif (
             self.mode == "no_position"
-            and row["close"] < row["Bollinger Low"]
-            and prev_row["close"] > prev_row["Bollinger Low"]
+            and row["close"][0] < row["Bollinger Low"][0]
+            and prev_row["close"][0] > prev_row["Bollinger Low"][0]
         ):
-            self._check_if_we_should_buy(index, row)
+            self._check_if_we_should_buy(row)
 
         # short?
         elif (
             self.mode == "no_position"
-            and row["close"] > row["Bollinger High"]
-            and prev_row["close"] < prev_row["Bollinger High"]
+            and row["close"][0] > row["Bollinger High"][0]
+            and prev_row["close"][0] < prev_row["Bollinger High"][0]
         ):
-            self._check_if_we_should_short(index, row)
+            self._check_if_we_should_short(row)
 
         else:
-            self.df.iloc[
-                index, self.df.columns.get_loc("Mode")
-            ] = self.mode
+            self._print_log_statements("Taking no action today", row)
 
     def _determine_win_or_loss_amount(self, row):
         """
@@ -208,10 +167,7 @@ class DetermineTradingState:
         # short s
 
         # stop loss for short
-        if (
-            self.mode == "short"
-            and self.short_entry_price < row["close"]
-        ):
+        if self.mode == "short" and self.short_entry_price < row["close"]:
             lost_amount = row["close"] - self.short_entry_price
             logger.info(f"Lost {lost_amount} on this trade")
 
@@ -219,10 +175,7 @@ class DetermineTradingState:
             self.win_and_lose_amount_dict["$_short_lost"] += lost_amount
 
         # made money
-        elif (
-            self.mode == "short"
-            and self.short_entry_price > row["close"]
-        ):
+        elif self.mode == "short" and self.short_entry_price > row["close"]:
 
             win_amount = self.short_entry_price - row["close"]
             logger.info(f"Won {win_amount} on this trade")
@@ -232,10 +185,7 @@ class DetermineTradingState:
         # buys
 
         # lost money
-        elif (
-            self.mode == "buy"
-            and self.buy_entry_price > row["close"]
-        ):
+        elif self.mode == "buy" and self.buy_entry_price > row["close"]:
 
             lost_amount = self.buy_entry_price - row["close"]
             logger.info(f"Lost {lost_amount} on this trade")
@@ -243,10 +193,7 @@ class DetermineTradingState:
             self.win_and_lose_amount_dict["$_buy_lost"] += lost_amount
 
         # made money
-        elif (
-            self.mode == "buy"
-            and self.buy_entry_price < row["close"]
-        ):
+        elif self.mode == "buy" and self.buy_entry_price < row["close"]:
 
             won_amount = row["close"] - self.buy_entry_price
             logger.info(f"Won {won_amount} on this trade")
@@ -302,157 +249,109 @@ class DetermineTradingState:
         """
         While in a short position, check if we should exit
         """
-
-        logger.info("---------")
-        logger.info("checking if we should get out of our short position")
-        logger.info(row.name, "current date")
-        logger.info(row["Rolling Mean"], "mean")
-        logger.info(self.short_entry_price, "self.short_entry_price")
-        logger.info(row["close"], "current close")
+        self._print_log_statements(
+            "checking if we should get out of our short position", row
+        )
 
         # check ML predicted trend as well
-        try:
-            ml_pred = self._check_ml_prediction(row.name)
-        except ValueError:  # don't have enough data for ML prediction
-            logger.info(
-                "Ran into not enough data ValueError for short_to_no_position")
-            return
-        logger.info(ml_pred, "ml_pred")
+
         if (
-            (ml_pred > row["Rolling Mean"])
-            or (ml_pred > self.short_entry_price)
-            or (row["Rolling Mean"] > self.short_entry_price)
+            (self.price_prediction > row["Rolling Mean"][0])
+            or (self.price_prediction > self.short_entry_price)
+            or (row["Rolling Mean"][0] > self.short_entry_price)
         ):
             logger.info("short_to_no_position")
-            self.df["ML_Future_Prediction"] = ml_pred
-
-            self.df.iloc[index, self.df.columns.get_loc("Position")] = -1
-            if index + 1 == len(self.df):
-                self.df.iloc[index, self.df.columns.get_loc("Position")] = 0
-            else:
-                # for pct change it does a ffilll. ffill with zeros
-                self.df.iloc[index + 1,
-                             self.df.columns.get_loc("Position")] = 0
 
             self._determine_win_or_loss_amount(row)
-            # record keeping
-            self.df.iloc[
-                index, self.df.columns.get_loc("Mode")
-            ] = "short_to_no_position"
+
             self.mode = "no_position"
-            short_has_crossed_mean = False
+            self.short_has_crossed_mean = False
         else:
-            self.df.iloc[
-                index, self.df.columns.get_loc("Mode")
-            ] = self.mode
+            logger.info("not exiting out short position")
 
     def _check_buy_to_no_position(self, index, row):
         """
         While in a buy/long position, check if we should exit
         """
-        logger.info("---------")
-        logger.info("checking if we should get out of our buy position")
-        logger.info(row.name)
-        logger.info("current date")
-        logger.info(row["Rolling Mean"])
-        logger.info("mean")
-        logger.info(self.trading_constants["buy_entry_price"])
-        logger.info("self.buy_entry_price")
-        logger.info(row["close"], "current close")
+        self._print_log_statements(
+            "checking if we should exit our buy position", row)
 
         # check ML predicted trend as well
-        try:
-            ml_pred = self._check_ml_prediction(row.name)
-        except ValueError:  # don't have enough data for ML prediction
-            logger.info(
-                "Ran into not enough data ValueError for buy_to_no_position")
-            return
-        logger.info(ml_pred, "ml_pred")
 
         if (
-            (ml_pred < row["Rolling Mean"])
-            or (ml_pred < self.buy_entry_price)
-            or (row["Rolling Mean"] < self.buy_entry_price)
+            (self.price_prediction < row["Rolling Mean"][0])
+            or (self.price_prediction < self.buy_entry_price)
+            or (row["Rolling Mean"][0] < self.buy_entry_price)
         ):
             logger.info("buy_to_no_position")
-            self.df["ML_Future_Prediction"] = ml_pred
-
-            self.df.iloc[index, self.df.columns.get_loc("Position")] = 1
-
-            if index + 1 == len(self.df):
-                self.df.iloc[index, self.df.columns.get_loc("Position")] = 0
-            else:
-                # for pct change it does a ffilll. ffill with zeros
-                self.df.iloc[index + 1,
-                             self.df.columns.get_loc("Position")] = 0
 
             self._determine_win_or_loss_amount(row)
             # record keeping
-            self.df.iloc[index, self.df.columns.get_loc(
-                "Mode")] = "buy_to_no_position"
-            self.mode = "no_position"
-            self.trading_state_constants["buy_has_crossed_mean"] = False
-        else:
-            logger.info(
-                "Not exiting buy position")
 
-    def _check_if_we_should_buy(self, index, row):
+            self.mode = "no_position"
+            self.buy_has_crossed_mean = False
+        else:
+            logger.info("Not exiting buy position")
+
+    def _check_if_we_should_buy(self, row):
         """
         Determine if we should enter a buy position
         """
+        self._print_log_statements(
+            "Checking if we should enter a buy position", row)
         start_time = time.time()
-        logger.info("----------")
-        logger.info("buy")
-        logger.info(row.name, "current date")
-        logger.info(row["close"], "close")
         # check ML predicted trend as well
-
-        logger.info(self.price_prediction, "ml prediction day")
-        logger.info(row["Rolling Mean"], "mean")
 
         if self.price_prediction > row["Rolling Mean"]:
             logger.info(f"ml pred higher than mean taking position")
 
             self.mode = "buy"
             self.buy_entry_price = row["close"]
-            self.stop_loss_price = row["close"] * (
-                1 - self.stop_loss_pct
-            )
+            self.stop_loss_price = row["close"] * (1 - self.stop_loss_pct)
             self.position_entry_date = row.name
         else:
             logger.info(
-                "self.price_prediction is not higher than the Rolling Mean. Not going to buy")
+                "self.price_prediction is not higher than the Rolling Mean. Not going to buy"
+            )
 
         end_time = time.time()
         logger.info(f"Eval buy took {(end_time - start_time)/60} minutes")
 
-    def _check_if_we_should_short(self, index, row):
+    def _check_if_we_should_short(self, row):
         """
         Check if we should enter a short position
         """
-        start_time = time.time()
-        logger.info("----------")
-        logger.info("short")
-        logger.info(row.name, "current date")
-        logger.info(row["close"], "close")
-        # check ML predicted trend as well
+        self._print_log_statements(
+            "Checking if we should enter a short position", row)
 
-        logger.info(self.price_prediction)
-        logger.info("ml pred day")
-        logger.info(row["Rolling Mean"], "mean")
+        start_time = time.time()
 
         if self.price_prediction < row["Rolling Mean"]:
             logger.info("pred  lower than mean taking position")
 
             self.mode = "short"
             self.short_entry_price = row["close"]
-            self.stop_loss_price = row["close"] * (
-                1 + self.stop_loss_pct
-            )
+            self.stop_loss_price = row["close"] * (1 + self.stop_loss_pct)
             self.position_entry_date = row.name
+        else:
+            logger.info("not taking a position to short")
 
         end_time = time.time()
         logger.info(f"Eval short took {(end_time - start_time)/60} minutes")
+
+    def _print_log_statements(self, message: str, row: pd.Series):
+        logger.info("------------")
+        logger.info(message)
+
+        logger.info(f"current date = {row.index}")
+        logger.info(f"close = {row['close']}")
+
+        logger.info(f"mean = {row['Rolling Mean']}")
+        logger.info(f"self.buy_entry_price = {self.buy_entry_price}")
+        logger.info(f"self.short_entry_price = {self.short_entry_price}")
+        logger.info(f"ml price_prediction  = {self.price_prediction}")
+
+        logger.info("------------")
 
 
 def main():
@@ -470,6 +369,7 @@ def main():
 
     # TODO: uncomment
     price_prediction = btc_predictor.predict()
+    print(price_prediction, 'price_prediction')
     logger.info("Determine trading state")
 
     # btc_predictor.df has the bollinger bands
