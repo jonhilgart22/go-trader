@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install
+PHONY: clean setup upload_models upload_data install run_go run_python
 PYTHON_VERSION=3.7.8
 
 install:
@@ -22,6 +22,12 @@ lint: install
 
 clean:
 	rm -rf notebooks/.darts
+
+run_go:
+	go run app/src/main.go
+
+run_python:
+	python app/mlcode/determine_trading_state.py
 
 upload_models:
  	aws s3 cp ./models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar s3://go-trader/models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar --sse aws:kms 

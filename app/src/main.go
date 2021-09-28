@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"path/filepath"
 
@@ -117,11 +118,14 @@ func pullDataFromFtx(productCode string, resolution int) *markets.ResponseForCan
 	records, err := client.Candles(&markets.RequestForCandles{
 		ProductCode: productCode,
 		Resolution:  resolution,
+		Start:       time.Now().Add(-7 * 86400 * time.Second).Unix(), // last 7 days
+		End:         time.Now().Unix(),                               // optional
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Pulled records for", productCode)
+	fmt.Println("Records =", *records)
 	return records
 }
 
@@ -159,14 +163,23 @@ func runPythonMlProgram(constantsMap map[string]string) {
 	fmt.Println("Current working directory = ", pwd)
 
 	cmd := exec.Command("python", filepath.Join(pwd, constantsMap["python_script_path"]))
-	out, err := cmd.Output()
-
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		println(err.Error())
-		return
+		panic(err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		panic(err)
+	}
+	err = cmd.Start()
+	if err != nil {
+		panic(err)
 	}
 
-	fmt.Println(string(out))
+	go copyOutput(stdout)
+	go copyOutput(stderr)
+	cmd.Wait()
+
 }
 
 func main() {

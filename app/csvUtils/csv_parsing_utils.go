@@ -57,6 +57,7 @@ func WriteNewCsvData(currentRecords *markets.ResponseForCandles, newestDate time
 	for _, currentVal := range *currentRecords {
 
 		if currentVal.StartTime.After(newestDate) && !currentVal.StartTime.Equal(roundedToday) { // add this data, but not today's data
+			fmt.Println("Adding data from this date =", currentVal.StartTime)
 
 			f, err := os.OpenFile(csvFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 			if err != nil {

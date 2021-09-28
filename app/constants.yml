@@ -1,7 +1,7 @@
 ## Coins to predict information
 btc_product_code: "BTC/USD"
 eth_product_code: "ETH/USD"
-candle_granularity: 864000
+candle_granularity: 86400
 
 ## S3 and data information
 s3_bucket: go-trader

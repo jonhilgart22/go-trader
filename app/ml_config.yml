@@ -4,7 +4,6 @@ prediction_params:
     lookback_window: 15
     prediction_n_days: 14
     additional_dfs: [bitcoin_df]
-    stop_loss_pct: .05,
     model_name: ["TCN", "NBEATS"]
 hyperparameters_tcn:
     dropout: 0.10

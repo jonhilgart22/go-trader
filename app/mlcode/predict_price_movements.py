@@ -1,60 +1,34 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 import logging
-import yaml
-import pandas as pd
+import os
+import sys
 import time
-from datetime import datetime
+import warnings
+from datetime import datetime, timedelta
+from math import sqrt
+from time import time
+from typing import Any, Dict, List, Tuple
+
 import numpy as np
 import pandas as pd
-import os
-
-from typing import Dict, Any, List, Tuple
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-
+import yaml
 from darts import TimeSeries
 from darts.dataprocessing.transformers import Scaler
-from darts.models import TCNModel, NBEATSModel
-from darts.utils.missing_values import fill_missing_values
-
 from darts.metrics import mape, mse
+from darts.models import NBEATSModel, TCNModel
+from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 
-from math import sqrt
-from time import time
-
-from datetime import timedelta
-
-import warnings
+from utils import read_in_constants, read_in_data
 
 warnings.filterwarnings("ignore")
-logging.disable(logging.CRITICAL)
 
+__all__ = ["generate_predictions"]
 
-def read_in_constants(input_file: str):
-    print(f"Reading in {input_file}")
-    with open(input_file, "r") as stream:
-        try:
-            constants = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
-            return
-
-    for k, v in constants.items():
-        print(f"Key = {k} Value = {v}")
-    print("----------")
-    return constants
-
-
-def read_in_data(input_file: str) -> pd.DataFrame:
-    print(f"Input file {input_file}")
-    df = pd.read_csv(input_file, index_col=0, parse_dates=True)
-    print(df.head())
-    print(df.tail())
-    print("---")
-    return df
+logger = logging.getLogger(__name__)
 
 
 class BollingerBandsPredictor:
@@ -66,7 +40,7 @@ class BollingerBandsPredictor:
         input_df: pd.DataFrame,
         additional_dfs: List[pd.DataFrame] = None,
         period="24H",
-        verbose=True
+        verbose=True,
     ):
         self.coin_to_predict = coin_to_predict
         self.constants: Dict[str, Dict[str, Any]] = constants
@@ -78,8 +52,8 @@ class BollingerBandsPredictor:
         self.period = period
         self.verbose = verbose
 
-        self.ml_train_cols = ['open', 'high', 'low', 'Rolling Mean', 'volume']
-        self.pred_col = 'close'
+        self.ml_train_cols = ["open", "high", "low", "Rolling Mean", "volume"]
+        self.pred_col = "close"
 
     def _create_models(self, load_model: bool = False):
 
@@ -97,10 +71,10 @@ class BollingerBandsPredictor:
             raise ValueError(
                 f"Incorrect model token to predict given {self. coin_to_predict}"
             )
-        print("------")
-        print(f"Creating models for coin {self.coin_to_predict}")
+        logger.info("------")
+        logger.info(f"Creating models for coin {self.coin_to_predict}")
 
-        print(f"Creating model {nbeats_model_name},{nbeats_filename}")
+        logger.info(f"Creating model {nbeats_model_name},{nbeats_filename}")
 
         self.nbeats_model = NBEATSModel(
             input_chunk_length=self.ml_constants["prediction_params"][
@@ -124,7 +98,9 @@ class BollingerBandsPredictor:
                 best=False,
             )
 
-        print(f"Loading model {tcn_model_name}, {tcn_filename}")
+            logger.info(f"Loading model {tcn_model_name}, {tcn_filename}")
+
+        logger.info(f"Creating model {tcn_model_name},{tcn_filename}")
 
         self.tcn_model = TCNModel(
             dropout=self.ml_constants["hyperparameters_tcn"]["dropout"],
@@ -152,7 +128,7 @@ class BollingerBandsPredictor:
                 filename=tcn_filename,
                 best=False,
             )
-        print("---- Finished loading models ----")
+        logger.info("---- Finished creating models ----")
 
     def _build_bollinger_bands(self):
 
@@ -164,8 +140,8 @@ class BollingerBandsPredictor:
             (rolling_std * self.no_of_std)
         self.df["Bollinger Low"] = rolling_mean - \
             (rolling_std * self.no_of_std)
-        print("---- Adding Bollinger Bands ----")
-        print(self.df.tail())
+        logger.info("---- Adding Bollinger Bands ----")
+        logger.info(self.df.tail())
 
         new_additional_dfs = []
         if len(self.additional_dfs) > 0:
@@ -180,7 +156,7 @@ class BollingerBandsPredictor:
                     (rolling_std * self.no_of_std)
 
                 new_additional_dfs.append(df)
-                print(df.tail())
+                logger.info(df.tail())
         self.additional_dfs = new_additional_dfs
 
     def _scale_time_series_df_and_time_cols(
@@ -251,10 +227,10 @@ class BollingerBandsPredictor:
             )
             if all_ts_stacked_series is None:
                 if self.verbose:
-                    print(
-                        "last date for training additional df data",
-                        additional_ts_stacked_series.time_index[-1],
-                    )
+                    logger.info(
+                        "last date for training additional df data")
+                    logger.info((additional_ts_stacked_series.time_index[-1]),
+                                )
                 all_ts_stacked_series = additional_ts_stacked_series
             else:
                 return "Error. More than one time series for _add_additional_training_dfs not implemented"
@@ -263,17 +239,16 @@ class BollingerBandsPredictor:
             all_ts_stacked_series.stack(ts_stacked_series),
         )
 
-    def _convert_data_to_timeseries(
-        self
-    ) -> Tuple[TimeSeries, TimeSeries]:
+    def _convert_data_to_timeseries(self) -> Tuple[TimeSeries, TimeSeries]:
         # combine TS from both DFs
         ts_transformers, ts_stacked_series, train_close_series = self._scale_time_series_df_and_time_cols(
             self.df
         )
         if self.verbose:
-            print("original DF training series", ts_stacked_series.components)
-            print("last date for training data",
-                  ts_stacked_series.time_index[-1])
+            logger.info("original DF training series")
+            logger.info(ts_stacked_series.components)
+            logger.info("last date for training data")
+            logger.info(ts_stacked_series.time_index[-1])
 
         if len(self.additional_dfs) > 0:
             # overwrite the ts_stacked_series var if we have additional DFS
@@ -287,7 +262,8 @@ class BollingerBandsPredictor:
         self.ts_transformers = ts_transformers
 
         if self.verbose:
-            print("all series now stacked", ts_stacked_series.components)
+            logger.info("all series now stacked")
+            logger.info(ts_stacked_series.components)
 
         return train_close_series, ts_stacked_series
 
@@ -308,72 +284,57 @@ class BollingerBandsPredictor:
 
     def _make_prediction(self, train_close_series, ts_stacked_series):
         nbeats_prediction = self.nbeats_model.predict(
-            n=self.ml_constants['prediction_params']["prediction_n_days"],
+            n=self.ml_constants["prediction_params"]["prediction_n_days"],
             series=train_close_series,
             past_covariates=[ts_stacked_series],
         ).last_value()  # grab the last value
-        print(
-            f" Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {nbeats_prediction}")
+        logger.info(
+            f" Model = { self.nbeats_model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {nbeats_prediction}"
+        )
         tcn_prediction = self.tcn_model.predict(
-            n=self.ml_constants['prediction_params']["prediction_n_days"],
+            n=self.ml_constants["prediction_params"]["prediction_n_days"],
             series=train_close_series,
             past_covariates=[ts_stacked_series],
         ).last_value()  # grab the last value
-        print(
-            f" Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {tcn_prediction}")
+        logger.info(
+            f" Model = { self.tcn_model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {tcn_prediction}"
+        )
 
         return np.mean([tcn_prediction, nbeats_prediction])
 
     def predict(self):
-        print("Building Bollinger Bands")
+        logger.info("Building Bollinger Bands")
+        sys.stdout.flush()
         self._build_bollinger_bands()
-        print("Creating Models")
+        logger.info("Creating Models")
+        sys.stdout.flush()
         # turns out, it's better to create new models than retrain old ones
         self._create_models()
         # TODO
-        print("Converting data to timeseries")
+        logger.info("Converting data to timeseries")
+        sys.stdout.flush()
         train_close_series, ts_stacked_series = self._convert_data_to_timeseries()
-        print("Training models")
+        logger.info("Training models")
+        sys.stdout.flush()
         self._train_models(train_close_series, ts_stacked_series)
-        print("making predictions")
+        logger.info("making predictions")
+        sys.stdout.flush()
         prediction = self._make_prediction(
             train_close_series, ts_stacked_series)
-        print(prediction, "prediction")
+        logger.info("prediction")
+        logger.info(prediction)
+        sys.stdout.flush()
         # self._update_state()
 
 
-def main():
-    constants = read_in_constants("app/constants.yml")
-    # data should already be downloaded from the golang app
-    bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
-    etherum_df = read_in_data(constants["etherum_csv_filename"])
-    ml_constants = read_in_constants("app/ml_config.yml")
-    btc_predictor = BollingerBandsPredictor(
-        "bitcoin", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
-    )
-
-    btc_predictor.predict()
-
-    # BollingerBandsPredictor(
-
+# if __name__ == "__main__":
+    # constants = read_in_constants("app/constants.yml")
+    # # data should already be downloaded from the golang app
+    # bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
+    # etherum_df = read_in_data(constants["etherum_csv_filename"])
+    # ml_constants = read_in_constants("app/ml_config.yml")
+    # btc_predictor = BollingerBandsPredictor(
+    #     "bitcoin", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
     # )
 
-    # simulator = BollingerBandsSimulator(
-    #     etherum_df,
-    #     from_date="2019-1-01",
-    #     period="24H",
-    #     window=14,
-    #     no_of_std=1.25,
-    #     ml_lookback_windows=[31],
-    #     ml_prediction_n_days=30,
-    #     additional_dfs = [bitcoin_df],
-    #     stop_loss_pct=.10,
-    #     model_name=["TCN", "NBEATS"]
-    # )
-    # simulator.simulate()
-
-    return
-
-
-if __name__ == "__main__":
-    main()
+    # logger.info(btc_predictor.predict(), 'price prediction')
