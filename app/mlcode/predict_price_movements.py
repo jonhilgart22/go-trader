@@ -136,10 +136,8 @@ class BollingerBandsPredictor:
         rolling_std = self.df["close"].rolling(self.window).std()
 
         self.df["Rolling Mean"] = rolling_mean
-        self.df["Bollinger High"] = rolling_mean + \
-            (rolling_std * self.no_of_std)
-        self.df["Bollinger Low"] = rolling_mean - \
-            (rolling_std * self.no_of_std)
+        self.df["Bollinger High"] = rolling_mean + (rolling_std * self.no_of_std)
+        self.df["Bollinger Low"] = rolling_mean - (rolling_std * self.no_of_std)
         logger.info("---- Adding Bollinger Bands ----")
         logger.info(self.df.tail())
 
@@ -150,10 +148,8 @@ class BollingerBandsPredictor:
                 rolling_std = df["close"].rolling(self.window).std()
 
                 df["Rolling Mean"] = rolling_mean
-                df["Bollinger High"] = rolling_mean + \
-                    (rolling_std * self.no_of_std)
-                df["Bollinger Low"] = rolling_mean - \
-                    (rolling_std * self.no_of_std)
+                df["Bollinger High"] = rolling_mean + (rolling_std * self.no_of_std)
+                df["Bollinger Low"] = rolling_mean - (rolling_std * self.no_of_std)
 
                 new_additional_dfs.append(df)
                 logger.info(df.tail())
@@ -164,8 +160,7 @@ class BollingerBandsPredictor:
     ):
         ts_transformers = {}
         ts_stacked_series = None
-        ts_transformers, ts_stacked_series = self._scale_time_series_df(
-            input_df)
+        ts_transformers, ts_stacked_series = self._scale_time_series_df(input_df)
 
         # build year and month and day series:
         for col in time_cols:
@@ -222,15 +217,14 @@ class BollingerBandsPredictor:
         """
         all_ts_stacked_series = None
         for df in self.additional_dfs:
-            additional_ts_transformers, additional_ts_stacked_series = self._scale_time_series_df(
-                df, use_pred_col=True
-            )
+            (
+                additional_ts_transformers,
+                additional_ts_stacked_series,
+            ) = self._scale_time_series_df(df, use_pred_col=True)
             if all_ts_stacked_series is None:
                 if self.verbose:
-                    logger.info(
-                        "last date for training additional df data")
-                    logger.info((additional_ts_stacked_series.time_index[-1]),
-                                )
+                    logger.info("last date for training additional df data")
+                    logger.info((additional_ts_stacked_series.time_index[-1]),)
                 all_ts_stacked_series = additional_ts_stacked_series
             else:
                 return "Error. More than one time series for _add_additional_training_dfs not implemented"
@@ -241,9 +235,11 @@ class BollingerBandsPredictor:
 
     def _convert_data_to_timeseries(self) -> Tuple[TimeSeries, TimeSeries]:
         # combine TS from both DFs
-        ts_transformers, ts_stacked_series, train_close_series = self._scale_time_series_df_and_time_cols(
-            self.df
-        )
+        (
+            ts_transformers,
+            ts_stacked_series,
+            train_close_series,
+        ) = self._scale_time_series_df_and_time_cols(self.df)
         if self.verbose:
             logger.info("original DF training series")
             logger.info(ts_stacked_series.components)
@@ -252,9 +248,10 @@ class BollingerBandsPredictor:
 
         if len(self.additional_dfs) > 0:
             # overwrite the ts_stacked_series var if we have additional DFS
-            additional_ts_transformers, ts_stacked_series = self._add_additional_training_dfs(
-                ts_stacked_series
-            )
+            (
+                additional_ts_transformers,
+                ts_stacked_series,
+            ) = self._add_additional_training_dfs(ts_stacked_series)
             ts_transformers = {
                 **additional_ts_transformers,
                 **ts_transformers,
@@ -319,8 +316,7 @@ class BollingerBandsPredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        prediction = self._make_prediction(
-            train_close_series, ts_stacked_series)
+        prediction = self._make_prediction(train_close_series, ts_stacked_series)
         logger.info("prediction")
         logger.info(prediction)
         sys.stdout.flush()
@@ -328,13 +324,13 @@ class BollingerBandsPredictor:
 
 
 # if __name__ == "__main__":
-    # constants = read_in_constants("app/constants.yml")
-    # # data should already be downloaded from the golang app
-    # bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
-    # etherum_df = read_in_data(constants["etherum_csv_filename"])
-    # ml_constants = read_in_constants("app/ml_config.yml")
-    # btc_predictor = BollingerBandsPredictor(
-    #     "bitcoin", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
-    # )
+# constants = read_in_constants("app/constants.yml")
+# # data should already be downloaded from the golang app
+# bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
+# etherum_df = read_in_data(constants["etherum_csv_filename"])
+# ml_constants = read_in_constants("app/ml_config.yml")
+# btc_predictor = BollingerBandsPredictor(
+#     "bitcoin", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
+# )
 
-    # logger.info(btc_predictor.predict(), 'price prediction')
+# logger.info(btc_predictor.predict(), 'price prediction')

@@ -7,3 +7,4 @@ env_vars.sh
 __pycache__
 .vscode
 models/
+*mypy_cache

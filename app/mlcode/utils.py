@@ -6,21 +6,18 @@ from logging import config
 
 log_config = {
     "version": 1,
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO"
-    },
+    "root": {"handlers": ["console"], "level": "INFO"},
     "handlers": {
         "console": {
             "formatter": "std_out",
             "class": "logging.StreamHandler",
-            "level": "INFO"
+            "level": "INFO",
         }
     },
     "formatters": {
         "std_out": {
             "format": "[%(asctime)s] : %(levelname)s : %(module)s : %(funcName)s : %(lineno)d  %(message)s",
-            "datefmt": "%m-%d-%Y %I:%M:%S"
+            "datefmt": "%m-%d-%Y %I:%M:%S",
         }
     },
 }
@@ -28,6 +25,11 @@ log_config = {
 config.dictConfig(log_config)
 
 logger = logging.getLogger(__name__)
+
+
+def update_yaml_config(file_name: str, data):
+    with open(file_name, "w") as yaml_file:
+        yaml_file.write(yaml.dump(data, default_flow_style=False))
 
 
 def read_in_constants(input_file: str):

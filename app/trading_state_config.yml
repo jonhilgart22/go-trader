@@ -3,3 +3,6 @@ short_entry_price: 0
 mode: "no_position"
 stop_loss_pct: .05
 stop_loss_price: 0
+buy_has_crossed_mean: False
+short_has_crossed_mean: False
+position_entry_date: None
