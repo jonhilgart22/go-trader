@@ -33,6 +33,12 @@ S3 bucket: `go-trader`
 
 - View the different model performance results [here](https://docs.google.com/spreadsheets/d/1xEaxfYBcXNcGN71LAj_Yw-EDEifm_MficTvFqpLUR3s/edit?usp=sharing)
 
+## CI/CD
+
+- Use act to test locally
+- `bash brew install act`
+- run act `bash act`
+
 
 ## TODO
 - upload real models to `/models`

@@ -1,12 +1,9 @@
 name: lint and test
 
-on:
-  push:
-    branches:    
-      - *
+on: [push]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       #----------------------------------------------
@@ -56,12 +53,12 @@ jobs:
       #     source .venv/bin/activate
       #     pytest tests/
       #     coverage report
-     - name: lint 
-        poetry run black . --check
-     - name: flake8 
-        poetry run flake8 . 
-     - name: isort 
-        poetry run isort . --check
-     - name: mypy 
-        poetry run mypy  . --check
+      - name: lint
+        run: poetry run black . --check
+      - name: flake8 
+        run: poetry run flake8 . 
+      - name: isort 
+        run: poetry run isort . --check
+      - name: mypy 
+        run: poetry run mypy  . --check
         
