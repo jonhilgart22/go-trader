@@ -1,0 +1,8 @@
+buy_entry_price: 1000
+short_entry_price: 0
+mode: "buy"
+stop_loss_pct: .05
+stop_loss_price: 950
+buy_has_crossed_mean: True
+short_has_crossed_mean: False
+position_entry_date: None

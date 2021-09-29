@@ -1,0 +1,18 @@
+btc:
+  n_short_lost:  0,
+  n_buy_lost:  0,
+  n_short_won: 0,
+  n_buy_won: 0,
+  $_short_lost: 0,
+  $_buy_lost: 0,
+  $_short_won: 0,
+  $_buy_won: 0
+eth:
+  n_short_lost:  0,
+  n_buy_lost:  0,
+  n_short_won: 0,
+  n_buy_won: 0,
+  $_short_lost: 0,
+  $_buy_lost: 0,
+  $_short_won: 0,
+  $_buy_won: 0

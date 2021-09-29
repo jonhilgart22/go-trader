@@ -312,7 +312,7 @@ class BollingerBandsPredictor:
 
         return np.mean([tcn_prediction, nbeats_prediction])
 
-    def predict(self):
+    def predict(self) -> float:
         logger.info("Building Bollinger Bands")
         sys.stdout.flush()
         self._build_bollinger_bands()
@@ -334,6 +334,7 @@ class BollingerBandsPredictor:
         logger.info("prediction")
         logger.info(prediction)
         sys.stdout.flush()
+        return prediction
         # self._update_state()
 
 
