@@ -22,7 +22,11 @@ from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 
-from utils import read_in_constants, read_in_data
+try:  # need modules for pytest to work
+    from app.mlcode.utils import read_in_constants, read_in_data
+except ModuleNotFoundError:  # Go is unable to run python modules -m
+    from utils import read_in_constants, read_in_data
+
 
 warnings.filterwarnings("ignore")
 
@@ -135,9 +139,13 @@ class BollingerBandsPredictor:
         rolling_mean = self.df["close"].rolling(self.window).mean()
         rolling_std = self.df["close"].rolling(self.window).std()
 
-        self.df["Rolling Mean"] = rolling_mean
-        self.df["Bollinger High"] = rolling_mean + (rolling_std * self.no_of_std)
-        self.df["Bollinger Low"] = rolling_mean - (rolling_std * self.no_of_std)
+        self.df[self.constants["rolling_mean_col"]] = rolling_mean
+        self.df[self.constants["bollinger_high_col"]] = rolling_mean + (
+            rolling_std * self.no_of_std
+        )
+        self.df[self.constants["bollinger_low_col"]] = rolling_mean - (
+            rolling_std * self.no_of_std
+        )
         logger.info("---- Adding Bollinger Bands ----")
         logger.info(self.df.tail())
 
@@ -147,9 +155,13 @@ class BollingerBandsPredictor:
                 rolling_mean = df["close"].rolling(self.window).mean()
                 rolling_std = df["close"].rolling(self.window).std()
 
-                df["Rolling Mean"] = rolling_mean
-                df["Bollinger High"] = rolling_mean + (rolling_std * self.no_of_std)
-                df["Bollinger Low"] = rolling_mean - (rolling_std * self.no_of_std)
+                df[self.constants["rolling_mean_col"]] = rolling_mean
+                df[self.constants["bollinger_high_col"]] = rolling_mean + (
+                    rolling_std * self.no_of_std
+                )
+                df[self.constants["bollinger_low_col"]] = rolling_mean - (
+                    rolling_std * self.no_of_std
+                )
 
                 new_additional_dfs.append(df)
                 logger.info(df.tail())
@@ -160,7 +172,8 @@ class BollingerBandsPredictor:
     ):
         ts_transformers = {}
         ts_stacked_series = None
-        ts_transformers, ts_stacked_series = self._scale_time_series_df(input_df)
+        ts_transformers, ts_stacked_series = self._scale_time_series_df(
+            input_df)
 
         # build year and month and day series:
         for col in time_cols:
@@ -316,7 +329,8 @@ class BollingerBandsPredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        prediction = self._make_prediction(train_close_series, ts_stacked_series)
+        prediction = self._make_prediction(
+            train_close_series, ts_stacked_series)
         logger.info("prediction")
         logger.info(prediction)
         sys.stdout.flush()

@@ -1,6 +1,11 @@
-from predict_price_movements import BollingerBandsPredictor
+try:  # need modules for pytest to work
+    from app.mlcode.predict_price_movements import BollingerBandsPredictor
+    from app.mlcode.utils import read_in_constants, read_in_data, update_yaml_config
+except ModuleNotFoundError:  # Go is unable to run python modules -m
+    from predict_price_movements import BollingerBandsPredictor
+    from utils import read_in_constants, read_in_data, update_yaml_config
 import pandas as pd
-from utils import read_in_constants, read_in_data, update_yaml_config
+
 from typing import Dict
 import time
 import logging
@@ -16,6 +21,7 @@ class DetermineTradingState:
     def __init__(
         self,
         price_prediction: float,
+        constants: Dict[str, Dict[str, str]],
         trading_state_constants: Dict[str, str],
         prediction_df: pd.DataFrame,
     ):
@@ -23,37 +29,27 @@ class DetermineTradingState:
 
         Args:
             price_prediction ([type]): price prediction for the future price of the given coin
+            constants (Dict[str, str]): The constants read in from yaml
             trading_state_constants (Dict[str, str]): the current state we are in for trading (buy short no_position)
             prediction_df (pd.DataFrame):  the DF with Bolligner bands to predict against
         """
         self.price_prediction = price_prediction
+        self.constants = constants
         self.trading_state_constants = trading_state_constants
         self.prediction_df = prediction_df
 
         # trading state args
-        for k, v in trading_state_constants.items():
+        for k, v in self.trading_state_constants.items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
-        # self.mode = self.trading_state_constants["mode"]
-        # self.position_entry_date = self.trading_state_constants["position_entry_date"]
-        # self.buy_entry_price = self.trading_state_constants["buy_entry_price"]
-        # self.short_entry_price = self.trading_state_constants["short_entry_price"]
-        # self.stop_loss_price = self.trading_state_constants["stop_loss_price"]
-        # self.buy_has_crossed_mean = self.trading_state_constants["buy_has_crossed_mean"]
-        # self.short_has_crossed_mean = self.trading_state_constants["short_has_crossed_mean"]
-
     def calculate_positions(self):
-        # self.prediction_df["Position"] = None
-        # self.prediction_df["Mode"] = None
-        # self.prediction_df["ML_Future_Prediction"] = None
+
         # grab the last row, and verify the date is equal to yesterday's date
         row = self.prediction_df.iloc[-1:]
-        logger.info(row)
-        logger.info("row")
+        logger.info("current row = {row}")
         prev_row = self.prediction_df.iloc[-2:-1]
-        logger.info(prev_row)
-        logger.info("prev_row")
+        logger.info(f"prev_row = {prev_row}")
         # assert date is yesterday date
 
         yesterday = pd.to_datetime(date.today() - timedelta(days=1))
@@ -86,10 +82,16 @@ class DetermineTradingState:
             )
 
         # check if we've previously crossed the mean trailing price
-        if self.mode == "buy" and row["close"] > row["Rolling Mean"]:
+        if (
+            self.mode == "buy"
+            and row["close"] > row[self.constants["rolling_mean_col"]]
+        ):
             self.buy_has_crossed_mean = True
 
-        if self.mode == "short" and row["close"] < row["Rolling Mean"]:
+        if (
+            self.mode == "short"
+            and row["close"] < row[self.constants["rolling_mean_col"]]
+        ):
             self.short_has_crossed_mean = True
 
         # stop loss, get out of buy position
@@ -119,12 +121,12 @@ class DetermineTradingState:
         # or, if we are above the top band (mean reversion)
         elif self.mode == "buy" and (
             (
-                row["close"][0] < row["Rolling Mean"][0]
+                row["close"][0] < row[self.constants["rolling_mean_col"]][0]
                 and self.trading_state_constants["buy_has_crossed_mean"][0]
             )
-            or (row["close"][0] > row["Bollinger High"][0])
-            or (row["close"][0] < row["Bollinger Low"][0])
-            or (row["Rolling Mean"][0] < self.buy_entry_price)
+            or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
+            or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
+            or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
             self._check_buy_to_no_position(row)
 
@@ -132,28 +134,28 @@ class DetermineTradingState:
         # or, if we are below the bottom band (mean reversion)
         elif self.mode == "short" and (
             (
-                row["close"] > row["Rolling Mean"]
+                row["close"] > row[self.constants["rolling_mean_col"]]
                 and self.trading_state_constants["short_has_crossed_mean"]
             )
-            or (row["close"] < row["Bollinger Low"])
-            or (row["close"] > row["Bollinger High"])
-            or row["Rolling Mean"] > self.short_entry_price
+            or (row["close"] < row[self.constants["bollinger_low_col"]])
+            or (row["close"] > row[self.constants["bollinger_high_col"]])
+            or row[self.constants["rolling_mean_col"]] > self.short_entry_price
         ):
             self._check_short_to_no_position(row)
 
         # buy check with ML model
         elif (
             self.mode == "no_position"
-            and row["close"][0] < row["Bollinger Low"][0]
-            and prev_row["close"][0] > prev_row["Bollinger Low"][0]
+            and row["close"][0] < row[self.constants["bollinger_low_col"]][0]
+            and prev_row["close"][0] > prev_row[self.constants["bollinger_low_col"]][0]
         ):
             self._check_if_we_should_buy(row)
 
         # short?
         elif (
             self.mode == "no_position"
-            and row["close"][0] > row["Bollinger High"][0]
-            and prev_row["close"][0] < prev_row["Bollinger High"][0]
+            and row["close"][0] > row[self.constants["bollinger_high_col"]][0]
+            and prev_row["close"][0] < prev_row[self.constants["bollinger_high_col"]][0]
         ):
             self._check_if_we_should_short(row)
 
@@ -256,9 +258,10 @@ class DetermineTradingState:
         # check ML predicted trend as well
 
         if (
-            (self.price_prediction > row["Rolling Mean"][0])
+            (self.price_prediction >
+             row[self.constants["rolling_mean_col"]][0])
             or (self.price_prediction > self.short_entry_price)
-            or (row["Rolling Mean"][0] > self.short_entry_price)
+            or (row[self.constants["rolling_mean_col"]][0] > self.short_entry_price)
         ):
             logger.info("short_to_no_position")
 
@@ -279,9 +282,10 @@ class DetermineTradingState:
         # check ML predicted trend as well
 
         if (
-            (self.price_prediction < row["Rolling Mean"][0])
+            (self.price_prediction <
+             row[self.constants["rolling_mean_col"]][0])
             or (self.price_prediction < self.buy_entry_price)
-            or (row["Rolling Mean"][0] < self.buy_entry_price)
+            or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
             logger.info("buy_to_no_position")
 
@@ -302,7 +306,7 @@ class DetermineTradingState:
         start_time = time.time()
         # check ML predicted trend as well
 
-        if self.price_prediction > row["Rolling Mean"]:
+        if self.price_prediction > row[self.constants["rolling_mean_col"]][0]:
             logger.info(f"ml pred higher than mean taking position")
 
             self.mode = "buy"
@@ -326,7 +330,7 @@ class DetermineTradingState:
 
         start_time = time.time()
 
-        if self.price_prediction < row["Rolling Mean"]:
+        if self.price_prediction < row[self.constants["rolling_mean_col"]]:
             logger.info("pred  lower than mean taking position")
 
             self.mode = "short"
@@ -353,6 +357,18 @@ class DetermineTradingState:
 
         logger.info("------------")
 
+    def update_state(self):
+        """Convenience method to update  our state params
+        """
+        self.trading_constants["buy_entry_price"] = self.buy_entry_price
+        self.trading_constants["short_entry_price"] = self.short_entry_price
+        self.trading_constants["mode"] = self.mode
+        self.trading_constants["stop_loss_pct"] = self.stop_loss_pct
+        self.trading_constants["stop_loss_price"] = self.stop_loss_price
+        self.trading_constants["buy_has_crossed_mean"] = self.buy_has_crossed_mean
+        self.trading_constants["short_has_crossed_mean"] = self.short_has_crossed_mean
+        self.trading_constants["position_entry_date"] = self.position_entry_date
+
 
 def main():
     logger.info("Running determine trading state")
@@ -369,23 +385,20 @@ def main():
 
     # TODO: uncomment
     price_prediction = btc_predictor.predict()
-    print(price_prediction, 'price_prediction')
+    print(price_prediction, "price_prediction")
     logger.info("Determine trading state")
 
     # btc_predictor.df has the bollinger bands
     trading_state_class = DetermineTradingState(
-        price_prediction, trading_constants, btc_predictor.df
+        price_prediction, constants, trading_constants, btc_predictor.df
     )
     trading_state_class.calculate_positions()
     logger.info("---- Finished determinig trading strategy --- ")
+    trading_state_class.update_state()
     # this works
-    # update_yaml_config("app/trading_state_config.yml", trading_constants)
-    # logger.info("---- Finished updating yaml config--- ")
-
-    # update self.stop_loss_price  in the trading_state_config file
-    # update self.trading_state_constants
-    # update self. short_has_crossed_mean
-    # update position_entry_date
+    update_yaml_config("app/trading_state_config.yml",
+                       trading_state_class.trading_constants)
+    logger.info("---- Updated trading state config --- ")
 
 
 if __name__ == "__main__":
