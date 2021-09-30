@@ -6,17 +6,34 @@ import unittest
 import pytest
 
 
-def test_no_btc_action(example_btc_df, example_eth_df, constants, ml_config, trading_state_config):
+def test_no_btc_action(
+    example_btc_df,
+    example_eth_df,
+    constants,
+    ml_config,
+    trading_state_config,
+    won_and_lost_amount_constants,
+):
     """verify everyting works as intended
     """
     price_prediction = 900
+    coin_to_predict = "btc"
     btc_predictor = BollingerBandsPredictor(
-        "bitcoin", constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
+        coin_to_predict,
+        constants,
+        ml_config,
+        example_btc_df,
+        additional_dfs=[example_eth_df],
     )
     btc_predictor._build_bollinger_bands()
     # btc_predictor.df has the bollinger bands
     trading_state_class = DetermineTradingState(
-        price_prediction, constants, trading_state_config, btc_predictor.df
+        "btc",
+        price_prediction,
+        constants,
+        trading_state_config,
+        btc_predictor.df,
+        won_and_lost_amount_constants,
     )
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
@@ -24,61 +41,301 @@ def test_no_btc_action(example_btc_df, example_eth_df, constants, ml_config, tra
     assert trading_state_config == trading_state_class.trading_state_constants
 
 
-def test_buy_btc_action(example_btc_df_bollinger_buy,  constants, ml_config, trading_state_config):
+def test_buy_btc_action(
+    example_btc_df_bollinger_exit_position,
+    constants,
+    trading_state_config,
+    won_and_lost_amount_constants,
+):
     price_prediction = 9000
 
     # btc_predictor.df has the bollinger bands
+    coin_to_predict = "btc"
     trading_state_class = DetermineTradingState(
-        price_prediction, constants, trading_state_config, example_btc_df_bollinger_buy
+        coin_to_predict,
+        price_prediction,
+        constants,
+        trading_state_config,
+        example_btc_df_bollinger_exit_position,
+        won_and_lost_amount_constants,
     )
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
-    assert trading_state_class.trading_state_constants["mode"] == "buy"
-    assert trading_state_class.trading_state_constants["short_entry_price"] == 0
-    assert trading_state_class.trading_state_constants["buy_entry_price"] == 982
-    assert trading_state_class.trading_state_constants["stop_loss_price"] == 932.9
+    assert trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "buy"
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "short_entry_price"
+        ]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"]
+        == 982
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"]
+        == 932.9
+    )
 
 
-def test_short_btc_action(example_btc_df_bollinger_short,  constants, ml_config, trading_state_config):
+def test_short_btc_action(
+    example_btc_df_bollinger_short,
+    constants,
+    trading_state_config,
+    won_and_lost_amount_constants,
+):
     price_prediction = 90
 
     # btc_predictor.df has the bollinger bands
+    coin_to_predict = "btc"
     trading_state_class = DetermineTradingState(
-        price_prediction, constants, trading_state_config, example_btc_df_bollinger_short
+        coin_to_predict,
+        price_prediction,
+        constants,
+        trading_state_config,
+        example_btc_df_bollinger_short,
+        won_and_lost_amount_constants,
     )
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
-    assert trading_state_class.trading_state_constants["mode"] == "short"
-    assert trading_state_class.trading_state_constants["short_entry_price"] == 1500
-    assert trading_state_class.trading_state_constants["buy_entry_price"] == 0
-    assert trading_state_class.trading_state_constants["stop_loss_price"] == 1575
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "short"
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "short_entry_price"
+        ]
+        == 1500
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"]
+        == 1575
+    )
 
 
-def test_buy_to_no_position_via_prediction_btc(example_btc_df_bollinger_buy,  constants, ml_config, trading_state_config_buy):
+def test_buy_to_no_position_via_prediction_btc(
+    example_btc_df_bollinger_exit_position,
+    constants,
+    trading_state_config_buy,
+    won_and_lost_amount_constants,
+):
     price_prediction = 9
 
     # btc_predictor.df has the bollinger bands
+    coin_to_predict = "btc"
     trading_state_class = DetermineTradingState(
-        price_prediction, constants, trading_state_config_buy, example_btc_df_bollinger_buy
+        coin_to_predict,
+        price_prediction,
+        constants,
+        trading_state_config_buy,
+        example_btc_df_bollinger_exit_position,
+        won_and_lost_amount_constants,
     )
+
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
-    assert trading_state_class.trading_state_constants["mode"] == "no_position"
-    assert trading_state_class.trading_state_constants["short_entry_price"] == 0
-    assert trading_state_class.trading_state_constants["buy_has_crossed_mean"] == False
-    assert trading_state_class.trading_state_constants["buy_entry_price"] == 0
-    assert trading_state_class.trading_state_constants["stop_loss_price"] == 0
+    # assert trading state is correct
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["mode"]
+        == "no_position"
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "short_entry_price"
+        ]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "buy_has_crossed_mean"
+        ]
+        == False
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "short_has_crossed_mean"
+        ]
+        == False
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "position_entry_date"
+        ]
+        == None
+    )
+    ## assert win/lose is correct
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict]["n_buy_lost"] == 1
+    )
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict][
+            "dollar_amount_buy_lost"
+        ]
+        == 18
+    )
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict][
+            "n_total_days_in_trades"
+        ]
+        == 637
+    )
 
-# def test_buy_to_no_position_via_stop_loss_btc(example_btc_df_bollinger_buy,  constants, ml_config, trading_state_config):
-#     price_prediction = 9000
 
-#     # btc_predictor.df has the bollinger bands
-#     trading_state_class = DetermineTradingState(
-#         price_prediction, constants, trading_state_config, example_btc_df_bollinger_buy
-#     )
-#     trading_state_class.calculate_positions()
-#     trading_state_class.update_state()
-#     assert trading_state_class.trading_state_constants["mode"] == "buy"
-#     assert trading_state_class.trading_state_constants["short_entry_price"] == 0
-#     assert trading_state_class.trading_state_constants["buy_entry_price"] == 982
-#     assert trading_state_class.trading_state_constants["stop_loss_price"] == 932.9
+def test_short_to_no_position_via_prediction_btc(
+    example_btc_df_bollinger_exit_position,
+    constants,
+    trading_state_config_short,
+    won_and_lost_amount_constants,
+):
+    price_prediction = 99999
+
+    # btc_predictor.df has the bollinger bands
+    coin_to_predict = "btc"
+    trading_state_class = DetermineTradingState(
+        coin_to_predict,
+        price_prediction,
+        constants,
+        trading_state_config_short,
+        example_btc_df_bollinger_exit_position,
+        won_and_lost_amount_constants,
+    )
+
+    trading_state_class.calculate_positions()
+    trading_state_class.update_state()
+    # assert trading state is correct
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["mode"]
+        == "no_position"
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "short_entry_price"
+        ]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "buy_has_crossed_mean"
+        ]
+        == False
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "short_has_crossed_mean"
+        ]
+        == False
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "position_entry_date"
+        ]
+        == None
+    )
+    # assert win/lose is correct
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict]["n_short_won"]
+        == 1
+    )
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict]["dollar_amount_short_won"]
+        == 18
+    )
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict]["n_total_days_in_trades"]
+        == 363
+    )
+
+
+def test_short_to_stop_loss(
+    example_btc_df_bollinger_exit_position,
+    constants,
+    trading_state_config_short_stop_loss,
+    won_and_lost_amount_constants,
+):
+    price_prediction = 99999
+
+    # btc_predictor.df has the bollinger bands
+    coin_to_predict = "btc"
+    trading_state_class = DetermineTradingState(
+        coin_to_predict,
+        price_prediction,
+        constants,
+        trading_state_config_short_stop_loss,
+        example_btc_df_bollinger_exit_position,
+        won_and_lost_amount_constants,
+    )
+
+    trading_state_class.calculate_positions()
+    trading_state_class.update_state()
+    # assert trading state is correct
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["mode"]
+        == "no_position"
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "short_entry_price"
+        ]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "buy_has_crossed_mean"
+        ]
+        == False
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "short_has_crossed_mean"
+        ]
+        == False
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"]
+        == 0
+    )
+    assert (
+        trading_state_class.trading_state_constants[coin_to_predict][
+            "position_entry_date"
+        ]
+        == None
+    )
+    # assert win/lose is correct
+    print(trading_state_class.won_and_lose_amount_dict,
+          "trading_state_class.won_and_lose_amount_dict")
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict]["n_short_lost"]
+        == 1
+    )
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict]["dollar_amount_short_lost"]
+        == 977
+    )
+    assert (
+        trading_state_class.won_and_lose_amount_dict[coin_to_predict]["n_total_days_in_trades"]
+        == 363
+    )

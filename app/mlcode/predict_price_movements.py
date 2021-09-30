@@ -46,6 +46,10 @@ class BollingerBandsPredictor:
         period="24H",
         verbose=True,
     ):
+        if coin_to_predict not in ["btc", "eth"]:
+            raise ValueError(
+                f"Incorrect coin to predict = {coin_to_predict} needs to be eth or btc"
+            )
         self.coin_to_predict = coin_to_predict
         self.constants: Dict[str, Dict[str, Any]] = constants
         self.ml_constants: Dict[str, Dict[str, Any]] = ml_constants
@@ -61,12 +65,12 @@ class BollingerBandsPredictor:
 
     def _create_models(self, load_model: bool = False):
 
-        if self.coin_to_predict.lower() == "bitcoin":
+        if self.coin_to_predict.lower() == "btc":
             tcn_model_name = self.constants["tcn_modelname_btc"]
             tcn_filename = self.constants["tcn_filename_btc"]
             nbeats_model_name = self.constants["nbeats_modelname_btc"]
             nbeats_filename = self.constants["nbeats_filename_btc"]
-        elif self.coin_to_predict.lower() == "etherum":
+        elif self.coin_to_predict.lower() == "eth":
             tcn_model_name = self.constants["tcn_modelname_eth"]
             tcn_filename = self.constants["tcn_filename_eth"]
             nbeats_model_name = self.constants["nbeats_modelname_eth"]
@@ -172,8 +176,7 @@ class BollingerBandsPredictor:
     ):
         ts_transformers = {}
         ts_stacked_series = None
-        ts_transformers, ts_stacked_series = self._scale_time_series_df(
-            input_df)
+        ts_transformers, ts_stacked_series = self._scale_time_series_df(input_df)
 
         # build year and month and day series:
         for col in time_cols:
@@ -329,8 +332,7 @@ class BollingerBandsPredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        prediction = self._make_prediction(
-            train_close_series, ts_stacked_series)
+        prediction = self._make_prediction(train_close_series, ts_stacked_series)
         logger.info("prediction")
         logger.info(prediction)
         sys.stdout.flush()

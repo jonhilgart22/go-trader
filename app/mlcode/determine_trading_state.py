@@ -25,7 +25,7 @@ class DetermineTradingState:
         constants: Dict[str, Dict[str, str]],
         trading_state_constants: Dict[str, str],
         prediction_df: pd.DataFrame,
-        win_and_lost_amount_constants: Dict[str, Dict[str, Union[int, float]]]
+        won_and_lost_amount_constants: Dict[str, Dict[str, Union[int, float]]],
     ):
         """Determine the current state we should be in for trading. Buy Short, entering, or exiting positions.
 
@@ -35,11 +35,12 @@ class DetermineTradingState:
             constants (Dict[str, str]): The constants read in from yaml
             trading_state_constants (Dict[str, str]): the current state we are in for trading (buy short no_position)
             prediction_df (pd.DataFrame):  the DF with Bolligner bands to predict against
-            win_and_lost_amount_constants: track win and lost trades and amount
+            won_and_lost_amount_constants: track win and lost trades and amount
         """
         if coin_to_predict not in ["btc", "eth"]:
             raise ValueError(
-                f"Incorrect prediction coin entered = {coin_to_predict}. Needs to be eth or btc")
+                f"Incorrect prediction coin entered = {coin_to_predict}. Needs to be eth or btc"
+            )
         self.coin_to_predict = coin_to_predict
         self.price_prediction = price_prediction
         self.constants = constants
@@ -47,12 +48,15 @@ class DetermineTradingState:
         self.prediction_df = prediction_df
 
         # trading state args
-        for k, v in self.trading_state_constants.items():
+        for k, v in self.trading_state_constants[self.coin_to_predict].items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
         # Record keeping for how this program is doing
-        self.win_and_lose_amount_dict = win_and_lost_amount_constants[self.coin_to_predict]
+        self.won_and_lose_amount_dict = won_and_lost_amount_constants
+        for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
+            setattr(self, k, v)
+            logger.info(f"Setting the class var self.{k} = {v}")
 
     def calculate_positions(self):
 
@@ -116,9 +120,11 @@ class DetermineTradingState:
 
             self.mode = "no_position"
             self.buy_has_crossed_mean = False
+            self.buy_entry_price = 0
+            self.stop_loss_price = 0
 
         # stop loss, get out of short position
-        elif self.mode == "short" and self.stop_loss_price < row["close"]:
+        elif self.mode == "short" and self.stop_loss_price < row["close"][0]:
             self._print_log_statements(
                 f"stop loss activated for getting out of our short", row
             )
@@ -127,13 +133,17 @@ class DetermineTradingState:
             # record keeping
             self.mode = "no_position"
             self.short_has_crossed_mean = False
+            self.short_entry_price = 0
+            self.stop_loss_price = 0
 
         # buy -> no_position? no position is below running mean
         # or, if we are above the top band (mean reversion)
         elif self.mode == "buy" and (
             (
                 row["close"][0] < row[self.constants["rolling_mean_col"]][0]
-                and self.trading_state_constants["buy_has_crossed_mean"][0]
+                and self.trading_state_constants[self.coin_to_predict][
+                    "buy_has_crossed_mean"
+                ][0]
             )
             or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
             or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
@@ -145,12 +155,14 @@ class DetermineTradingState:
         # or, if we are below the bottom band (mean reversion)
         elif self.mode == "short" and (
             (
-                row["close"] > row[self.constants["rolling_mean_col"]]
-                and self.trading_state_constants["short_has_crossed_mean"]
+                row["close"][0] > row[self.constants["rolling_mean_col"]][0]
+                and self.trading_state_constants[self.coin_to_predict][
+                    "short_has_crossed_mean"
+                ]
             )
-            or (row["close"] < row[self.constants["bollinger_low_col"]])
-            or (row["close"] > row[self.constants["bollinger_high_col"]])
-            or row[self.constants["rolling_mean_col"]] > self.short_entry_price
+            or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
+            or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
+            or row[self.constants["rolling_mean_col"]][0] > self.short_entry_price
         ):
             self._check_short_to_no_position(row)
 
@@ -180,85 +192,76 @@ class DetermineTradingState:
         # short s
 
         # stop loss for short
-        if self.mode == "short" and self.short_entry_price < row["close"]:
-            lost_amount = row["close"] - self.short_entry_price
+        if self.mode == "short" and self.short_entry_price < row["close"][0]:
+            lost_amount = row["close"][0] - self.short_entry_price
             logger.info(f"Lost {lost_amount} on this trade")
 
-            self.win_and_lose_amount_dict["n_short_lost"] += 1
-            self.win_and_lose_amount_dict["$_short_lost"] += lost_amount
+            self.n_short_lost += 1
+            self.dollar_amount_short_lost += lost_amount
 
         # made money
-        elif self.mode == "short" and self.short_entry_price > row["close"]:
+        elif self.mode == "short" and self.short_entry_price > row["close"][0]:
 
-            win_amount = self.short_entry_price - row["close"]
+            win_amount = self.short_entry_price - row["close"][0]
             logger.info(f"Won {win_amount} on this trade")
-            self.win_and_lose_amount_dict["n_short_won"] += 1
-            self.win_and_lose_amount_dict["$_short_won"] += win_amount
+            self.n_short_won += 1
+            self.dollar_amount_short_won += win_amount
         # end short
         # buys
 
         # lost money
-        elif self.mode == "buy" and self.buy_entry_price > row["close"]:
+        elif self.mode == "buy" and self.buy_entry_price > row["close"][0]:
 
-            lost_amount = self.buy_entry_price - row["close"]
+            lost_amount = self.buy_entry_price - row["close"][0]
             logger.info(f"Lost {lost_amount} on this trade")
-            self.win_and_lose_amount_dict["n_buy_lost"] += 1
-            self.win_and_lose_amount_dict["$_buy_lost"] += lost_amount
+
+            self.n_buy_lost += 1
+            self.dollar_amount_buy_lost += lost_amount
 
         # made money
         elif self.mode == "buy" and self.buy_entry_price < row["close"]:
 
-            won_amount = row["close"] - self.buy_entry_price
+            won_amount = row["close"][0] - self.buy_entry_price
             logger.info(f"Won {won_amount} on this trade")
-            self.win_and_lose_amount_dict["n_buy_won"] += 1
-            self.win_and_lose_amount_dict["$_buy_won"] += won_amount
+            self.n_buy_won += 1
+            self.dollar_amount_buy_won += won_amount
+        else:
+            raise ValueError(
+                "Something went wrong calculating win/lose amount")
 
-        days_in_trade = row.name - self.position_entry_date
-        logger.info(days_in_trade.days, "days in trade")
-        self.n_total_days_in_trades += days_in_trade.days
+        days_in_trade = row.index - self.position_entry_date
+        logger.info(f"days in trades = {days_in_trade.days}")
+        self.n_total_days_in_trades += days_in_trade.days[0]
 
         # info logging
 
         logger.info(
-            f"Average days in trades = {self.n_total_days_in_trades/(self.win_and_lose_amount_dict['n_buy_won']  + self.win_and_lose_amount_dict['n_buy_lost'] + self.win_and_lose_amount_dict['n_short_won']  + self.win_and_lose_amount_dict['n_short_lost'] )}"
+            f"Average days in trades = {self.n_total_days_in_trades/(self.n_buy_won  + self.n_buy_lost + self.n_short_won  + self.n_short_lost )}"
         )
-        if (
-            self.win_and_lose_amount_dict["n_buy_won"] > 0
-            or self.win_and_lose_amount_dict["n_buy_lost"] > 0
-        ):
+        if self.n_buy_won > 0 or self.n_buy_lost > 0:
             logger.info(
-                f"Bat rate buy so far = {self.win_and_lose_amount_dict['n_buy_won'] / (self.win_and_lose_amount_dict['n_buy_won'] + self.win_and_lose_amount_dict['n_buy_lost'])}"
+                f"Bat rate buy so far = {self.n_buy_won / (self.n_buy_won + self.n_buy_lost)}"
             )
-        if (
-            self.win_and_lose_amount_dict["n_short_won"] > 0
-            or self.win_and_lose_amount_dict["n_short_lost"] > 0
-        ):
+        if self.n_short_won > 0 or self.n_short_lost > 0:
             logger.info(
-                f"Bat rate short so far = {self.win_and_lose_amount_dict['n_short_won'] / (self.win_and_lose_amount_dict['n_short_won'] + self.win_and_lose_amount_dict['n_short_lost'])}"
+                f"Bat rate short so far = {self.n_short_won / (self.n_short_won + self.n_short_lost)}"
             )
 
-        if (
-            self.win_and_lose_amount_dict["$_buy_won"] > 0
-            or self.win_and_lose_amount_dict["$_buy_lost"] > 0
-        ):
+        if self.dollar_amount_buy_won > 0 or self.dollar_amount_buy_lost > 0:
             logger.info(
-                f"Win rate buy so far = {self.win_and_lose_amount_dict['$_buy_won'] / (self.win_and_lose_amount_dict['$_buy_won'] + self.win_and_lose_amount_dict['$_buy_lost'])}"
+                f"Win rate buy so far = {self.dollar_amount_buy_won / (self.dollar_amount_buy_won + self.dollar_amount_buy_lost)}"
             )
-        if (
-            self.win_and_lose_amount_dict["$_short_won"] > 0
-            or self.win_and_lose_amount_dict["$_short_lost"] > 0
-        ):
+        if self.dollar_amount_short_won > 0 or self.dollar_amount_short_lost > 0:
             logger.info(
-                f"Win rate short so far = {self.win_and_lose_amount_dict['$_short_won'] / (self.win_and_lose_amount_dict['$_short_won'] + self.win_and_lose_amount_dict['$_short_lost'])}"
+                f"Win rate short so far = {self.dollar_amount_short_won / (self.dollar_amount_short_won + self.dollar_amount_short_lost)}"
             )
-        logger.info(f"WIn / lost dict {self.win_and_lose_amount_dict}")
 
         logger.info(f"Total days in trades = {self.n_total_days_in_trades }")
 
         # reset for sanity
         self.position_entry_date = None
 
-    def _check_short_to_no_position(self, index, row):
+    def _check_short_to_no_position(self, row):
         """
         While in a short position, check if we should exit
         """
@@ -280,6 +283,8 @@ class DetermineTradingState:
 
             self.mode = "no_position"
             self.short_has_crossed_mean = False
+            self.short_entry_price = 0
+            self.stop_loss_price = 0
         else:
             logger.info("not exiting out short position")
 
@@ -366,14 +371,12 @@ class DetermineTradingState:
     def update_state(self):
         """Convenience method to update  our state params
         """
-        self.trading_state_constants["buy_entry_price"] = self.buy_entry_price
-        self.trading_state_constants["short_entry_price"] = self.short_entry_price
-        self.trading_state_constants["mode"] = self.mode
-        self.trading_state_constants["stop_loss_pct"] = self.stop_loss_pct
-        self.trading_state_constants["stop_loss_price"] = self.stop_loss_price
-        self.trading_state_constants["buy_has_crossed_mean"] = self.buy_has_crossed_mean
-        self.trading_state_constants["short_has_crossed_mean"] = self.short_has_crossed_mean
-        self.trading_state_constants["position_entry_date"] = self.position_entry_date
+        for k, v in self.trading_state_constants[self.coin_to_predict].items():
+            self.trading_state_constants[self.coin_to_predict][k] = getattr(
+                self, k, v)
+        for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
+            self.won_and_lose_amount_dict[self.coin_to_predict][k] = getattr(
+                self, k, v)
 
 
 def main():
@@ -381,8 +384,8 @@ def main():
 
     constants = read_in_constants("app/constants.yml")
     trading_constants = read_in_constants("app/trading_state_config.yml")
-    win_and_lost_amount_constants = read_in_constants(
-        "app/win_and_lost_amount.yml")
+    won_and_lost_amount_constants = read_in_constants(
+        "app/won_and_lost_amount.yml")
     # data should already be downloaded from the golang app
     bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
     etherum_df = read_in_data(constants["etherum_csv_filename"])
@@ -401,15 +404,23 @@ def main():
     # btc_predictor.df has the bollinger bands
     trading_state_class = DetermineTradingState(
         "btc",
-        price_prediction, constants, trading_constants, btc_predictor.df, win_and_lost_amount_constants
+        price_prediction,
+        constants,
+        trading_constants,
+        btc_predictor.df,
+        won_and_lost_amount_constants,
     )
     trading_state_class.calculate_positions()
     logger.info("---- Finished determinig trading strategy --- ")
     trading_state_class.update_state()
     # this works
-    update_yaml_config("app/trading_state_config.yml",
-                       trading_state_class.trading_state_constants)
-    logger.info("---- Updated trading state config --- ")
+    update_yaml_config(
+        "app/trading_state_config.yml", trading_state_class.trading_state_constants
+    )
+    update_yaml_config(
+        "app/won_and_lost_amount_config.yml", trading_state_class.won_and_lose_amount_dict
+    )
+    logger.info("---- Updated win/lost state config --- ")
 
 
 if __name__ == "__main__":

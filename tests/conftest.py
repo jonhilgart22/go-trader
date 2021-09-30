@@ -6,6 +6,11 @@ from app.mlcode.utils import read_in_constants
 
 
 @pytest.fixture
+def won_and_lost_amount_constants():
+    return read_in_constants("tests/configs/won_and_lost_amount_config.yml")
+
+
+@pytest.fixture
 def constants():
     return read_in_constants("tests/configs/constants.yml")
 
@@ -26,6 +31,16 @@ def trading_state_config_buy():
 
 
 @pytest.fixture
+def trading_state_config_short():
+    return read_in_constants("tests/configs/trading_state_config_short.yml")
+
+
+@pytest.fixture
+def trading_state_config_short_stop_loss():
+    return read_in_constants("tests/configs/trading_state_config_short_stop_loss.yml")
+
+
+@pytest.fixture
 def example_btc_df():
     df = pd.DataFrame(
         {
@@ -41,11 +56,11 @@ def example_btc_df():
             "volume": [147775008, 222184992, 177875208],
         }
     )
-    return df.set_index('date')
+    return df.set_index("date")
 
 
 @pytest.fixture
-def example_btc_df_bollinger_buy():
+def example_btc_df_bollinger_exit_position():
     df = pd.DataFrame(
         {
             "date": [
@@ -60,10 +75,10 @@ def example_btc_df_bollinger_buy():
             "volume": [147775008, 222184992, 177875208],
             "Rolling Mean": [50, 50, 50],
             "Bollinger High": [1000, 900, 1000],
-            "Bollinger Low": [1000, 900, 1000]
+            "Bollinger Low": [1000, 900, 1000],
         }
     )
-    return df.set_index('date')
+    return df.set_index("date")
 
 
 @pytest.fixture
@@ -82,10 +97,10 @@ def example_btc_df_bollinger_buy_to_no_position():
             "volume": [147775008, 222184992, 177875208],
             "Rolling Mean": [500, 500, 500],
             "Bollinger High": [1000, 900, 1000],
-            "Bollinger Low": [1000, 900, 1000]
+            "Bollinger Low": [1000, 900, 1000],
         }
     )
-    return df.set_index('date')
+    return df.set_index("date")
 
 
 @pytest.fixture
@@ -104,10 +119,10 @@ def example_btc_df_bollinger_short():
             "volume": [147775008, 222184992, 177875208],
             "Rolling Mean": [5000, 5000, 5000],
             "Bollinger High": [1000, 900, 1000],
-            "Bollinger Low": [1000, 900, 1000]
+            "Bollinger Low": [1000, 900, 1000],
         }
     )
-    return df.set_index('date')
+    return df.set_index("date")
 
 
 @pytest.fixture
@@ -126,7 +141,7 @@ def example_eth_df():
             "volume": [14731700, 14579600, 12579800],
             "Rolling Mean": [10, 10, 10],
             "Bollinger High": [10, 10, 10],
-            "Bollinger Low": [10, 10, 10]
+            "Bollinger Low": [10, 10, 10],
         }
     )
-    return df.set_index('date')
+    return df.set_index("date")

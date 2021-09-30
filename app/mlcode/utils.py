@@ -38,7 +38,7 @@ def read_in_constants(input_file: str):
         try:
             constants = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
-            logger.info(exc)
+            logger.error(exc)
             return
 
     for k, v in constants.items():
