@@ -1,0 +1,6 @@
+# valid values are None, buy_to_no_position, short_to_no_position, none_to_buy, none_to_short, buy_to_continue_buy, short_to_continue_short
+btc:
+  action_to_take: None
+eth:
+  action_to_take: None
+  

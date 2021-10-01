@@ -209,7 +209,8 @@ func main() {
 
 	runPythonMlProgram(constantsMap)
 
-	// upload the model files after training
+	// Read in the constants  that have been updated from our python ML program. Determine what to do based
+	tradingStateConstants := readYamlFile("app/trading_state_config.yml")
 
 	// upload any config changes that we need to maintain state
 

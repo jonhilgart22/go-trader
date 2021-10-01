@@ -13,6 +13,7 @@ import yaml
 from datetime import date
 from datetime import timedelta
 import numpy as np
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +120,7 @@ class DetermineTradingState:
             # record keeping
 
             self.mode = "no_position"
+            self.action_to_take = "buy_to_no_position"
             self.buy_has_crossed_mean = False
             self.buy_entry_price = 0
             self.stop_loss_price = 0
@@ -132,6 +134,7 @@ class DetermineTradingState:
             self._determine_win_or_loss_amount(row)
             # record keeping
             self.mode = "no_position"
+            self.action_to_take = "short_to_no_position"
             self.short_has_crossed_mean = False
             self.short_entry_price = 0
             self.stop_loss_price = 0
@@ -282,6 +285,7 @@ class DetermineTradingState:
             self._determine_win_or_loss_amount(row)
 
             self.mode = "no_position"
+            self.action_to_take = "short_to_no_position"
             self.short_has_crossed_mean = False
             self.short_entry_price = 0
             self.stop_loss_price = 0
@@ -309,6 +313,7 @@ class DetermineTradingState:
             # record keeping
 
             self.mode = "no_position"
+            self.action_to_take = "buy_to_no_position"
             self.buy_has_crossed_mean = False
             self.buy_entry_price = 0
             self.stop_loss_price = 0
@@ -327,9 +332,10 @@ class DetermineTradingState:
             logger.info(f"ml pred higher than mean taking position")
 
             self.mode = "buy"
+            self.action_to_take = "none_to_buy"
             self.buy_entry_price = row["close"][0]
             self.stop_loss_price = row["close"][0] * (1 - self.stop_loss_pct)
-            self.position_entry_date = row.index[0]
+            self.position_entry_date = str(row.index[0])
         else:
             logger.info(
                 "self.price_prediction is not higher than the Rolling Mean. Not going to buy"
@@ -350,7 +356,7 @@ class DetermineTradingState:
             self.mode = "short"
             self.short_entry_price = row["close"][0]
             self.stop_loss_price = row["close"][0] * (1 + self.stop_loss_pct)
-            self.position_entry_date = row.index[0]
+            self.position_entry_date = str(row.index[0])
         else:
             logger.info("not taking a position to short")
 
@@ -379,23 +385,27 @@ class DetermineTradingState:
                 self, k, v)
 
 
-def main():
+# TODO: accept either btc or eth as param
+def main() -> str:
     logger.info("Running determine trading state")
 
     constants = read_in_constants("app/constants.yml")
+    sys.stdout.flush()
     trading_constants = read_in_constants("app/trading_state_config.yml")
+    sys.stdout.flush()
     won_and_lost_amount_constants = read_in_constants(
-        "app/won_and_lost_amount.yml")
+        "app/won_and_lost_amount_config.yml")
     # data should already be downloaded from the golang app
     bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
     etherum_df = read_in_data(constants["etherum_csv_filename"])
     ml_constants = read_in_constants("app/ml_config.yml")
     btc_predictor = BollingerBandsPredictor(
-        "bitcoin", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
+        "btc", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
     )
+    sys.stdout.flush()
 
-    # TODO: uncomment
     btc_predictor._build_bollinger_bands()
+    # TODO: uncomment
     # price_prediction = btc_predictor.predict()
     # print(price_prediction, "price_prediction")
     price_prediction = 100
@@ -410,6 +420,7 @@ def main():
         btc_predictor.df,
         won_and_lost_amount_constants,
     )
+    sys.stdout.flush()
     trading_state_class.calculate_positions()
     logger.info("---- Finished determinig trading strategy --- ")
     trading_state_class.update_state()
@@ -417,6 +428,7 @@ def main():
     update_yaml_config(
         "app/trading_state_config.yml", trading_state_class.trading_state_constants
     )
+    logger.info("---- Updated trading state config --- ")
     update_yaml_config(
         "app/won_and_lost_amount_config.yml", trading_state_class.won_and_lose_amount_dict
     )
