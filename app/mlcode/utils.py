@@ -32,7 +32,7 @@ def update_yaml_config(file_name: str, data):
         yaml_file.write(yaml.dump(data, default_flow_style=False))
 
 
-def read_in_constants(input_file: str):
+def read_in_yaml(input_file: str):
     logger.info(f"Reading in {input_file}")
     with open(input_file, "r") as stream:
         try:

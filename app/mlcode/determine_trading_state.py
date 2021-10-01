@@ -1,9 +1,9 @@
 try:  # need modules for pytest to work
     from app.mlcode.predict_price_movements import BollingerBandsPredictor
-    from app.mlcode.utils import read_in_constants, read_in_data, update_yaml_config
+    from app.mlcode.utils import read_in_yaml, read_in_data, update_yaml_config
 except ModuleNotFoundError:  # Go is unable to run python modules -m
     from predict_price_movements import BollingerBandsPredictor
-    from utils import read_in_constants, read_in_data, update_yaml_config
+    from utils import read_in_yaml, read_in_data, update_yaml_config
 import pandas as pd
 
 from typing import Dict, Union
@@ -27,6 +27,7 @@ class DetermineTradingState:
         trading_state_constants: Dict[str, str],
         prediction_df: pd.DataFrame,
         won_and_lost_amount_constants: Dict[str, Dict[str, Union[int, float]]],
+        actions_to_take_constants:  Dict[str, Dict[str, Union[int, float]]],
     ):
         """Determine the current state we should be in for trading. Buy Short, entering, or exiting positions.
 
@@ -37,6 +38,7 @@ class DetermineTradingState:
             trading_state_constants (Dict[str, str]): the current state we are in for trading (buy short no_position)
             prediction_df (pd.DataFrame):  the DF with Bolligner bands to predict against
             won_and_lost_amount_constants: track win and lost trades and amount
+            actions_to_take_constants: determine which actions to take for each coin (buy, short, none ...etc)
         """
         if coin_to_predict not in ["btc", "eth"]:
             raise ValueError(
@@ -44,8 +46,10 @@ class DetermineTradingState:
             )
         self.coin_to_predict = coin_to_predict
         self.price_prediction = price_prediction
-        self.constants = constants
+        self.constants = constants.copy()
         self.trading_state_constants = trading_state_constants.copy()
+        self.won_and_lose_amount_dict = won_and_lost_amount_constants.copy()
+        self.actions_to_take_constants = actions_to_take_constants.copy()
         self.prediction_df = prediction_df
 
         # trading state args
@@ -54,8 +58,12 @@ class DetermineTradingState:
             logger.info(f"Setting the class var self.{k} = {v}")
 
         # Record keeping for how this program is doing
-        self.won_and_lose_amount_dict = won_and_lost_amount_constants
         for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
+            setattr(self, k, v)
+            logger.info(f"Setting the class var self.{k} = {v}")
+
+        # actions to take
+        for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
@@ -67,7 +75,6 @@ class DetermineTradingState:
         prev_row = self.prediction_df.iloc[-2:-1]
         logger.info(f"prev_row = {prev_row}")
         # assert date is yesterday date
-
         yesterday = pd.to_datetime(date.today() - timedelta(days=1))
         two_days_ago = pd.to_datetime(date.today() - timedelta(days=2))
         try:
@@ -120,7 +127,7 @@ class DetermineTradingState:
             # record keeping
 
             self.mode = "no_position"
-            self.action_to_take = "buy_to_no_position"
+            self.action_to_take = "buy_to_none"
             self.buy_has_crossed_mean = False
             self.buy_entry_price = 0
             self.stop_loss_price = 0
@@ -134,7 +141,7 @@ class DetermineTradingState:
             self._determine_win_or_loss_amount(row)
             # record keeping
             self.mode = "no_position"
-            self.action_to_take = "short_to_no_position"
+            self.action_to_take = "short_to_none"
             self.short_has_crossed_mean = False
             self.short_entry_price = 0
             self.stop_loss_price = 0
@@ -152,7 +159,7 @@ class DetermineTradingState:
             or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
             or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
-            self._check_buy_to_no_position(row)
+            self._check_buy_to_none(row)
 
         # short -> no_position? no position if above running mean
         # or, if we are below the bottom band (mean reversion)
@@ -167,7 +174,7 @@ class DetermineTradingState:
             or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
             or row[self.constants["rolling_mean_col"]][0] > self.short_entry_price
         ):
-            self._check_short_to_no_position(row)
+            self._check_short_to_none(row)
 
         # buy check with ML model
         elif (
@@ -188,7 +195,7 @@ class DetermineTradingState:
         else:
             self._print_log_statements("Taking no action today", row)
 
-    def _determine_win_or_loss_amount(self, row):
+    def _determine_win_or_loss_amount(self, row: pd.Series):
         """
         For position we've exited, did we win? if so, by how much
         """
@@ -264,7 +271,7 @@ class DetermineTradingState:
         # reset for sanity
         self.position_entry_date = None
 
-    def _check_short_to_no_position(self, row):
+    def _check_short_to_none(self, row: pd.Series):
         """
         While in a short position, check if we should exit
         """
@@ -280,19 +287,20 @@ class DetermineTradingState:
             or (self.price_prediction > self.short_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] > self.short_entry_price)
         ):
-            logger.info("short_to_no_position")
+            logger.info("short_to_none")
 
             self._determine_win_or_loss_amount(row)
 
             self.mode = "no_position"
-            self.action_to_take = "short_to_no_position"
+            self.action_to_take = "short_to_none"
             self.short_has_crossed_mean = False
             self.short_entry_price = 0
             self.stop_loss_price = 0
         else:
             logger.info("not exiting out short position")
+            self.action_to_take = "short_to_contine_short"
 
-    def _check_buy_to_no_position(self, row):
+    def _check_buy_to_none(self, row: pd.Series):
         """
         While in a buy/long position, check if we should exit
         """
@@ -307,20 +315,21 @@ class DetermineTradingState:
             or (self.price_prediction < self.buy_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
-            logger.info("buy_to_no_position")
+            logger.info("buy_to_none")
 
             self._determine_win_or_loss_amount(row)
             # record keeping
 
             self.mode = "no_position"
-            self.action_to_take = "buy_to_no_position"
+            self.action_to_take = "buy_to_none"
             self.buy_has_crossed_mean = False
             self.buy_entry_price = 0
             self.stop_loss_price = 0
         else:
             logger.info("Not exiting buy position")
+            self.action_to_take = "buy_to_continue_buy"
 
-    def _check_if_we_should_buy(self, row):
+    def _check_if_we_should_buy(self, row: pd.Series):
         """
         Determine if we should enter a buy position
         """
@@ -340,10 +349,11 @@ class DetermineTradingState:
             logger.info(
                 "self.price_prediction is not higher than the Rolling Mean. Not going to buy"
             )
+            self.action_to_take = "none_to_none"
 
         end_time = time.time()
 
-    def _check_if_we_should_short(self, row):
+    def _check_if_we_should_short(self, row: pd.Series):
         """
         Check if we should enter a short position
         """
@@ -354,11 +364,13 @@ class DetermineTradingState:
             logger.info("pred  lower than mean taking position to short")
 
             self.mode = "short"
+            self.action_to_take = "none_to_short"
             self.short_entry_price = row["close"][0]
             self.stop_loss_price = row["close"][0] * (1 + self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
             logger.info("not taking a position to short")
+            self.action_to_take = "none_to_none"
 
     def _print_log_statements(self, message: str, row: pd.Series):
         logger.info("------------")
@@ -383,22 +395,26 @@ class DetermineTradingState:
         for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
             self.won_and_lose_amount_dict[self.coin_to_predict][k] = getattr(
                 self, k, v)
+        for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
+            self.actions_to_take_constants[self.coin_to_predict][k] = getattr(
+                self, k, v)
 
 
 # TODO: accept either btc or eth as param
 def main() -> str:
     logger.info("Running determine trading state")
 
-    constants = read_in_constants("app/constants.yml")
+    constants = read_in_yaml("app/constants.yml")
     sys.stdout.flush()
-    trading_constants = read_in_constants("app/trading_state_config.yml")
+    trading_constants = read_in_yaml("app/trading_state_config.yml")
     sys.stdout.flush()
-    won_and_lost_amount_constants = read_in_constants(
+    won_and_lost_amount_constants = read_in_yaml(
         "app/won_and_lost_amount_config.yml")
+    actions_to_take_constants = read_in_yaml("app/actions_to_take.yml")
     # data should already be downloaded from the golang app
     bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
     etherum_df = read_in_data(constants["etherum_csv_filename"])
-    ml_constants = read_in_constants("app/ml_config.yml")
+    ml_constants = read_in_yaml("app/ml_config.yml")
     btc_predictor = BollingerBandsPredictor(
         "btc", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
     )
@@ -419,6 +435,7 @@ def main() -> str:
         trading_constants,
         btc_predictor.df,
         won_and_lost_amount_constants,
+        actions_to_take_constants,
     )
     sys.stdout.flush()
     trading_state_class.calculate_positions()

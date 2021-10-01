@@ -23,9 +23,9 @@ from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 
 try:  # need modules for pytest to work
-    from app.mlcode.utils import read_in_constants, read_in_data
+    from app.mlcode.utils import read_in_yaml, read_in_data
 except ModuleNotFoundError:  # Go is unable to run python modules -m
-    from utils import read_in_constants, read_in_data
+    from utils import read_in_yaml, read_in_data
 
 
 warnings.filterwarnings("ignore")
@@ -176,7 +176,8 @@ class BollingerBandsPredictor:
     ):
         ts_transformers = {}
         ts_stacked_series = None
-        ts_transformers, ts_stacked_series = self._scale_time_series_df(input_df)
+        ts_transformers, ts_stacked_series = self._scale_time_series_df(
+            input_df)
 
         # build year and month and day series:
         for col in time_cols:
@@ -332,7 +333,8 @@ class BollingerBandsPredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        prediction = self._make_prediction(train_close_series, ts_stacked_series)
+        prediction = self._make_prediction(
+            train_close_series, ts_stacked_series)
         logger.info("prediction")
         logger.info(prediction)
         sys.stdout.flush()
@@ -341,11 +343,11 @@ class BollingerBandsPredictor:
 
 
 # if __name__ == "__main__":
-# constants = read_in_constants("app/constants.yml")
+# constants = read_in_yaml("app/constants.yml")
 # # data should already be downloaded from the golang app
 # bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
 # etherum_df = read_in_data(constants["etherum_csv_filename"])
-# ml_constants = read_in_constants("app/ml_config.yml")
+# ml_constants = read_in_yaml("app/ml_config.yml")
 # btc_predictor = BollingerBandsPredictor(
 #     "bitcoin", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
 # )
