@@ -1,7 +1,7 @@
 prediction_params:
     bollinger_window: 7
     no_of_std: 1.5
-    lookback_window: 15
+    lookback_window: [15, 30]
     prediction_n_days: 14
     additional_dfs: [bitcoin_df]
     model_name: ["TCN", "NBEATS"]

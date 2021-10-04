@@ -63,6 +63,11 @@ class BollingerBandsPredictor:
         self.ml_train_cols = ["open", "high", "low", "Rolling Mean", "volume"]
         self.pred_col = "close"
 
+        if type(self.ml_constants["prediction_params"]["lookback_window"]) != list:
+            raise ValueError(f"Need to enter a list for loockback_window")
+
+        self.models = []  # store models here
+
     def _create_models(self, load_model: bool = False):
 
         if self.coin_to_predict.lower() == "btc":
@@ -82,61 +87,66 @@ class BollingerBandsPredictor:
         logger.info("------")
         logger.info(f"Creating models for coin {self.coin_to_predict}")
 
-        logger.info(f"Creating model {nbeats_model_name},{nbeats_filename}")
+        for lookback_window in self.ml_constants["prediction_params"][
+            "lookback_window"
+        ]:
 
-        self.nbeats_model = NBEATSModel(
-            input_chunk_length=self.ml_constants["prediction_params"][
-                "lookback_window"
-            ],
-            output_chunk_length=self.ml_constants["prediction_params"][
-                "prediction_n_days"
-            ],
-            random_state=0,
-            model_name=nbeats_model_name,
-            num_blocks=self.ml_constants["hyperparameters_nbeats"]["num_blocks"],
-            layer_widths=self.ml_constants["hyperparameters_nbeats"]["layer_widths"],
-            force_reset=True,
-            log_tensorboard=True,
-        )
-        if load_model:
-            self.nbeats_model.load_from_checkpoint(
-                model_name=nbeats_model_name,
-                filename=nbeats_filename,
-                work_dir=self.constants["ml_models_dir"],
-                best=False,
+            logger.info(
+                f"Creating model lookback = {lookback_window}_{nbeats_model_name},{nbeats_filename}"
             )
 
-            logger.info(f"Loading model {tcn_model_name}, {tcn_filename}")
-
-        logger.info(f"Creating model {tcn_model_name},{tcn_filename}")
-
-        self.tcn_model = TCNModel(
-            dropout=self.ml_constants["hyperparameters_tcn"]["dropout"],
-            random_state=0,
-            dilation_base=self.ml_constants["hyperparameters_tcn"]["dilation_base"],
-            weight_norm=self.ml_constants["hyperparameters_tcn"]["weight_norm"],
-            kernel_size=self.ml_constants["hyperparameters_tcn"]["kernel_size"],
-            num_filters=self.ml_constants["hyperparameters_tcn"]["num_filters"],
-            num_layers=self.ml_constants["hyperparameters_tcn"]["num_layers"],
-            input_chunk_length=self.ml_constants["prediction_params"][
-                "lookback_window"
-            ],
-            output_chunk_length=self.ml_constants["prediction_params"][
-                "prediction_n_days"
-            ],
-            model_name=tcn_model_name,
-            force_reset=True,
-            log_tensorboard=True,
-        )
-        # This works
-        if load_model:
-            self.tcn_model.load_from_checkpoint(
-                model_name=tcn_model_name,
-                work_dir=self.constants["ml_models_dir"],
-                filename=tcn_filename,
-                best=False,
+            nbeats_model = NBEATSModel(
+                input_chunk_length=lookback_window,
+                output_chunk_length=self.ml_constants["prediction_params"][
+                    "prediction_n_days"
+                ],
+                random_state=0,
+                model_name=nbeats_model_name + f"_lookback_{lookback_window}",
+                num_blocks=self.ml_constants["hyperparameters_nbeats"]["num_blocks"],
+                layer_widths=self.ml_constants["hyperparameters_nbeats"][
+                    "layer_widths"
+                ],
+                force_reset=True,
+                log_tensorboard=True,
             )
-        logger.info("---- Finished creating models ----")
+            if load_model:
+                self.nbeats_model.load_from_checkpoint(
+                    model_name=nbeats_model_name,
+                    filename=nbeats_filename,
+                    work_dir=self.constants["ml_models_dir"],
+                    best=False,
+                )
+
+                logger.info(f"Loading model {tcn_model_name}, {tcn_filename}")
+
+            logger.info(f"Creating model {tcn_model_name},{tcn_filename}")
+
+            tcn_model = TCNModel(
+                dropout=self.ml_constants["hyperparameters_tcn"]["dropout"],
+                random_state=0,
+                dilation_base=self.ml_constants["hyperparameters_tcn"]["dilation_base"],
+                weight_norm=self.ml_constants["hyperparameters_tcn"]["weight_norm"],
+                kernel_size=self.ml_constants["hyperparameters_tcn"]["kernel_size"],
+                num_filters=self.ml_constants["hyperparameters_tcn"]["num_filters"],
+                num_layers=self.ml_constants["hyperparameters_tcn"]["num_layers"],
+                input_chunk_length=lookback_window,
+                output_chunk_length=self.ml_constants["prediction_params"][
+                    "prediction_n_days"
+                ],
+                model_name=tcn_model_name + f"_lookback_{lookback_window}",
+                force_reset=True,
+                log_tensorboard=True,
+            )
+            # This works
+            if load_model:
+                self.tcn_model.load_from_checkpoint(
+                    model_name=tcn_model_name,
+                    work_dir=self.constants["ml_models_dir"],
+                    filename=tcn_filename,
+                    best=False,
+                )
+            logger.info("---- Finished creating models ----")
+            self.models.append([nbeats_model, tcn_model])
 
     def _build_bollinger_bands(self):
 
@@ -283,38 +293,42 @@ class BollingerBandsPredictor:
 
     def _train_models(self, train_close_series, ts_stacked_series):
 
-        self.nbeats_model.fit(
-            series=train_close_series,
-            past_covariates=[ts_stacked_series],
-            verbose=self.verbose,
-            epochs=self.ml_constants["hyperparameters_nbeats"]["epochs"],
-        )
-        self.tcn_model.fit(
-            series=train_close_series,
-            past_covariates=[ts_stacked_series],
-            verbose=self.verbose,
-            epochs=self.ml_constants["hyperparameters_tcn"]["epochs"],
-        )
+        for lookback_window_models in self.models:  # lookback windows
+            for model in lookback_window_models:
+                if "nbeats" in model.model_name:
+                    model.fit(
+                        series=train_close_series,
+                        past_covariates=[ts_stacked_series],
+                        verbose=self.verbose,
+                        epochs=self.ml_constants["hyperparameters_nbeats"]["epochs"],
+                    )
+                elif "tcn" in model.model_name:
+                    model.fit(
+                        series=train_close_series,
+                        past_covariates=[ts_stacked_series],
+                        verbose=self.verbose,
+                        epochs=self.ml_constants["hyperparameters_tcn"]["epochs"],
+                    )
+                else:
+                    raise ValueError(
+                        f"We have an incorrect model name of {model.model_name} we need tcn or nbeats")
 
     def _make_prediction(self, train_close_series, ts_stacked_series):
-        nbeats_prediction = self.nbeats_model.predict(
-            n=self.ml_constants["prediction_params"]["prediction_n_days"],
-            series=train_close_series,
-            past_covariates=[ts_stacked_series],
-        ).last_value()  # grab the last value
-        logger.info(
-            f" Model = { self.nbeats_model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {nbeats_prediction}"
-        )
-        tcn_prediction = self.tcn_model.predict(
-            n=self.ml_constants["prediction_params"]["prediction_n_days"],
-            series=train_close_series,
-            past_covariates=[ts_stacked_series],
-        ).last_value()  # grab the last value
-        logger.info(
-            f" Model = { self.tcn_model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {tcn_prediction}"
-        )
+        all_predictions = []
 
-        return np.mean([tcn_prediction, nbeats_prediction])
+        for lookback_window_models in self.models:  # lookback windows
+            for model in lookback_window_models:
+                prediction = model.predict(
+                    n=self.ml_constants["prediction_params"]["prediction_n_days"],
+                    series=train_close_series,
+                    past_covariates=[ts_stacked_series],
+                ).last_value()  # grab the last value
+                logger.info(
+                    f" Model = { model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {prediction}"
+                )
+                all_predictions.append(prediction)
+
+        return np.mean(all_predictions)
 
     def predict(self) -> float:
         logger.info("Building Bollinger Bands")

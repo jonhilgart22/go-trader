@@ -27,7 +27,7 @@ class DetermineTradingState:
         trading_state_constants: Dict[str, str],
         prediction_df: pd.DataFrame,
         won_and_lost_amount_constants: Dict[str, Dict[str, Union[int, float]]],
-        actions_to_take_constants:  Dict[str, Dict[str, Union[int, float]]],
+        actions_to_take_constants: Dict[str, Dict[str, Union[int, float]]],
     ):
         """Determine the current state we should be in for trading. Buy Short, entering, or exiting positions.
 
@@ -397,7 +397,8 @@ class DetermineTradingState:
                 self, k, v)
         for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
             self.actions_to_take_constants[self.coin_to_predict][k] = getattr(
-                self, k, v)
+                self, k, v
+            )
 
 
 # TODO: accept either btc or eth as param
@@ -415,8 +416,14 @@ def main() -> str:
     bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
     etherum_df = read_in_data(constants["etherum_csv_filename"])
     ml_constants = read_in_yaml("app/ml_config.yml")
+
+    coin_to_predict = "eth"
     btc_predictor = BollingerBandsPredictor(
-        "btc", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
+        coin_to_predict,
+        constants,
+        ml_constants,
+        bitcoin_df,
+        additional_dfs=[etherum_df],
     )
     sys.stdout.flush()
 
@@ -429,7 +436,7 @@ def main() -> str:
 
     # btc_predictor.df has the bollinger bands
     trading_state_class = DetermineTradingState(
-        "btc",
+        coin_to_predict,
         price_prediction,
         constants,
         trading_constants,
@@ -447,9 +454,14 @@ def main() -> str:
     )
     logger.info("---- Updated trading state config --- ")
     update_yaml_config(
-        "app/won_and_lost_amount_config.yml", trading_state_class.won_and_lose_amount_dict
+        "app/won_and_lost_amount_config.yml",
+        trading_state_class.won_and_lose_amount_dict,
     )
     logger.info("---- Updated win/lost state config --- ")
+    update_yaml_config(
+        "app/actions_to_take.yml", trading_state_class.actions_to_take_constants
+    )
+    logger.info("---- Updated actions to take state config --- ")
 
 
 if __name__ == "__main__":

@@ -58,6 +58,29 @@ func readCsvFile(filePath string) []structs.HistoricCandles {
 	return records
 }
 
+func readNestedYamlFile(fileLocation string) map[string]map[string]string {
+	fmt.Println(" ")
+	yfile, err := ioutil.ReadFile(fileLocation)
+
+	if err != nil {
+		panic(err)
+	}
+	doubleLevelData := make(map[string]map[string]string)
+	errDouble := yaml.Unmarshal(yfile, &doubleLevelData)
+	if errDouble != nil {
+		panic(errDouble)
+	} else {
+		for k, v := range doubleLevelData {
+
+			fmt.Printf("%s -> %s\n", k, v)
+
+		}
+		fmt.Println("Finished reading in yaml constants")
+		fmt.Println(" ")
+	}
+	return doubleLevelData
+}
+
 func readYamlFile(fileLocation string) map[string]string {
 	fmt.Println(" ")
 	yfile, err := ioutil.ReadFile(fileLocation)
@@ -65,20 +88,22 @@ func readYamlFile(fileLocation string) map[string]string {
 	if err != nil {
 		panic(err)
 	}
-	data := make(map[string]string)
-	err2 := yaml.Unmarshal(yfile, &data)
-	if err2 != nil {
-		panic(err)
+	singleLevelData := make(map[string]string)
+
+	errSingle := yaml.Unmarshal(yfile, &singleLevelData)
+	if errSingle != nil {
+		fmt.Println("Signle level didn't work, test two levels")
+	} else {
+		for k, v := range singleLevelData {
+
+			fmt.Printf("%s -> %s\n", k, v)
+
+		}
+		fmt.Println("Finished reading in yaml constants")
+		fmt.Println(" ")
 	}
-	for k, v := range data {
+	return singleLevelData
 
-		fmt.Printf("%s -> %s\n", k, v)
-
-	}
-	fmt.Println("Finished reading in yaml constants")
-	fmt.Println(" ")
-
-	return data
 }
 
 func downloadUpdateReuploadData(currentBitcoinRecords *markets.ResponseForCandles, currentEthereumRecords *markets.ResponseForCandles, constantsMap map[string]string) {
@@ -184,6 +209,8 @@ func runPythonMlProgram(constantsMap map[string]string) {
 
 func main() {
 
+	const coinToPredict string = "btc"
+
 	// Read in the constants from yaml
 	constantsMap := readYamlFile("app/constants.yml")
 
@@ -207,10 +234,34 @@ func main() {
 	// Call the Python Program here. This is kinda jank
 	fmt.Println("Calling our Python program")
 
-	runPythonMlProgram(constantsMap)
+	// runPythonMlProgram(constantsMap)
 
 	// Read in the constants  that have been updated from our python ML program. Determine what to do based
-	tradingStateConstants := readYamlFile("app/trading_state_config.yml")
+	fmt.Println("Determining actions to take")
+	actionsToTakeConstants := readNestedYamlFile("app/actions_to_take.yml") // read in nested yaml?
+	fmt.Println(actionsToTakeConstants[coinToPredict]["action_to_take"])
+	actionToTake := actionsToTakeConstants[coinToPredict]["action_to_take"]
+
+	switch actionToTake {
+	case "none":
+		fmt.Printf("Action for coin %v to take = none", coinToPredict)
+	case "none_to_none":
+		fmt.Printf("Action for coin %v to take = none_to_non", coinToPredict)
+	case "buy_to_none":
+		fmt.Printf("Action for coin %v to take = buy_to_none", coinToPredict)
+	case "short_to_none":
+		fmt.Printf("Action for coin %v to take = short_to_none", coinToPredict)
+	case "none_to_buy":
+		fmt.Printf("Action for coin %v to take = none_to_buy", coinToPredict)
+	case "none_to_short":
+		fmt.Printf("Action for coin %v to take = none_to_short", coinToPredict)
+	case "buy_to_continue_buy":
+		fmt.Printf("Action for coin %v to take = buy_to_continue_buy", coinToPredict)
+	case "short_to_continue_short":
+		fmt.Printf("Action for coin %v to take = short_to_continue_short", coinToPredict)
+	default:
+		panic("We didn't hit a case statement for action to take")
+	}
 
 	// upload any config changes that we need to maintain state
 
