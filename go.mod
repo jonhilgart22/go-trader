@@ -20,3 +20,10 @@ require (
 	github.com/valyala/fasthttp v1.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
+
+require (
+	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/grishinsana/goftx v1.2.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/shopspring/decimal v1.2.0 // indirect
+)

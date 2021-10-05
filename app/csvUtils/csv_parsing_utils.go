@@ -4,10 +4,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
-	"github.com/go-numb/go-ftx/rest/public/markets"
+	"github.com/shopspring/decimal"
+
+	"github.com/grishinsana/goftx/models"
 	"github.com/jonhilgart22/go-trader/app/structs"
 )
 
@@ -26,10 +27,10 @@ func RoundTimeToDay(inputTime time.Time) time.Time {
 	return time.Date(inputTime.Year(), inputTime.Month(), inputTime.Day(), 0, 0, 0, 0, inputTime.Location())
 }
 
-func ConvertStringToFloat(inputFloat string) float64 {
+func ConvertStringToFloat(inputFloat string) decimal.Decimal {
 	const bitSize = 64 // Don't think about it to much. It's just 64 bits.
 
-	float_, err := strconv.ParseFloat(inputFloat, bitSize)
+	float_, err := decimal.NewFromString(inputFloat)
 	if err != nil {
 		panic(err)
 	}
@@ -48,13 +49,14 @@ func Contains(s []string, str string) bool {
 	return false
 }
 
-func WriteNewCsvData(currentRecords *markets.ResponseForCandles, newestDate time.Time, csvFileName string) int {
+func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.Time, csvFileName string) int {
 	loc, _ := time.LoadLocation("UTC")
 	today := time.Now().In(loc)
 	roundedToday := RoundTimeToDay(today)
 
 	numRecordsWritten := 0
-	for _, currentVal := range *currentRecords {
+	for _, currentVal := range currentRecords {
+		fmt.Println("currentVal", currentVal)
 
 		if currentVal.StartTime.After(newestDate) && !currentVal.StartTime.Equal(roundedToday) { // add this data, but not today's data
 			fmt.Println("Adding data from this date =", currentVal.StartTime)
@@ -72,11 +74,11 @@ func WriteNewCsvData(currentRecords *markets.ResponseForCandles, newestDate time
 					currentVal.StartTime.Year(),
 					currentVal.StartTime.Month(),
 					currentVal.StartTime.Day()),
-				fmt.Sprintf("%f", currentVal.Open),
-				fmt.Sprintf("%f", currentVal.High),
-				fmt.Sprintf("%f", currentVal.Low),
-				fmt.Sprintf("%f", currentVal.Close),
-				fmt.Sprintf("%f", currentVal.Volume)})
+				fmt.Sprintf("%v", currentVal.Open),
+				fmt.Sprintf("%v", currentVal.High),
+				fmt.Sprintf("%v", currentVal.Low),
+				fmt.Sprintf("%v", currentVal.Close),
+				fmt.Sprintf("%v", currentVal.Volume)})
 			w.Flush()
 			numRecordsWritten += 1
 		}
@@ -84,12 +86,15 @@ func WriteNewCsvData(currentRecords *markets.ResponseForCandles, newestDate time
 	return numRecordsWritten
 }
 
-func FindNewestCsvDate(inputRecords []structs.HistoricCandles) time.Time {
+func FindNewestData(inputRecords []structs.HistoricCandles) (time.Time, decimal.Decimal) {
 	var newestDate time.Time
+	var newestClosePrice decimal.Decimal
 	for _, historicVal := range inputRecords {
 		if historicVal.Date.After(newestDate) {
 			newestDate = historicVal.Date
+			newestClosePrice = historicVal.Close
 		}
 	}
-	return newestDate
+
+	return newestDate, newestClosePrice
 }

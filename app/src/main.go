@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -14,13 +15,14 @@ import (
 
 	"path/filepath"
 
-	"github.com/go-numb/go-ftx/auth"
-	"github.com/go-numb/go-ftx/rest"
+	"github.com/shopspring/decimal"
 
 	// "github.com/go-numb/go-ftx/rest/private/orders"
-	// "github.com/go-numb/go-ftx/rest/private/account"
+
 	// "github.com/go-numb/go-ftx/rest/public/futures"
-	"github.com/go-numb/go-ftx/rest/public/markets"
+
+	"github.com/grishinsana/goftx"
+	"github.com/grishinsana/goftx/models"
 	"github.com/jonhilgart22/go-trader/app/csvUtils"
 	"github.com/jonhilgart22/go-trader/app/s3Utils"
 	"github.com/jonhilgart22/go-trader/app/structs"
@@ -106,7 +108,7 @@ func readYamlFile(fileLocation string) map[string]string {
 
 }
 
-func downloadUpdateReuploadData(currentBitcoinRecords *markets.ResponseForCandles, currentEthereumRecords *markets.ResponseForCandles, constantsMap map[string]string) {
+func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice, currentEthereumRecords []*models.HistoricalPrice, constantsMap map[string]string) (decimal.Decimal, decimal.Decimal) {
 
 	// download the files from s3
 	// TODO: mkdir for data?
@@ -119,10 +121,12 @@ func downloadUpdateReuploadData(currentBitcoinRecords *markets.ResponseForCandle
 	bitcoinRecords := readCsvFile(constantsMap["bitcoin_csv_filename"])
 	etherumRecords := readCsvFile(constantsMap["etherum_csv_filename"])
 
-	newestBitcoinDate := csvUtils.FindNewestCsvDate(bitcoinRecords)
-	newestEtherumDate := csvUtils.FindNewestCsvDate(etherumRecords)
+	newestBitcoinDate, newestClosePriceBtc := csvUtils.FindNewestData(bitcoinRecords)
+	newestEtherumDate, newestClosePriceEth := csvUtils.FindNewestData(etherumRecords)
 	fmt.Println(newestBitcoinDate, "newestBitcoinDate")
 	fmt.Println(newestEtherumDate, "newestEtherumDate")
+	fmt.Println(newestClosePriceBtc, "newestClosePriceBtc")
+	fmt.Println(newestClosePriceEth, "newestClosePriceEth")
 
 	// add new data as needed
 	numBitcoinRecordsWritten := csvUtils.WriteNewCsvData(currentBitcoinRecords, newestBitcoinDate, constantsMap["bitcoin_csv_filename"])
@@ -135,22 +139,33 @@ func downloadUpdateReuploadData(currentBitcoinRecords *markets.ResponseForCandle
 	// upload back to s3
 	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"])
 	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"])
+
+	return newestClosePriceEth, newestClosePriceBtc
 }
 
-func pullDataFromFtx(productCode string, resolution int) *markets.ResponseForCandles {
-	client := rest.New(auth.New(os.Getenv("FTX_KEY"), os.Getenv("FTX_SECRET")))
+func PtrInt(i int) *int {
+	return &i
+}
 
-	records, err := client.Candles(&markets.RequestForCandles{
-		ProductCode: productCode,
-		Resolution:  resolution,
-		Start:       time.Now().Add(-7 * 86400 * time.Second).Unix(), // last 7 days
-		End:         time.Now().Unix(),                               // optional
+func pullDataFromFtx(productCode string, resolution int) []*models.HistoricalPrice {
+	client := goftx.New(
+		goftx.WithAuth(os.Getenv("FTX_KEY"), os.Getenv("FTX_SECRET"), os.Getenv("BTC_SUBACCOUNT_NAME")),
+		goftx.WithHTTPClient(&http.Client{
+			Timeout: 5 * time.Second,
+		}),
+	)
+
+	records, err := client.Markets.GetHistoricalPrices(productCode, &models.GetHistoricalPricesParams{
+		Resolution: models.Day,
+		StartTime:  PtrInt(int(time.Now().Add(-7 * 86400 * time.Second).Unix())), // last 7 days
+		EndTime:    PtrInt(int(time.Now().Unix())),
 	})
+
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Pulled records for", productCode)
-	fmt.Println("Records =", *records)
+	fmt.Println("Records =", records)
 	return records
 }
 
@@ -256,13 +271,63 @@ func main() {
 	case "none_to_short":
 		fmt.Printf("Action for coin %v to take = none_to_short", coinToPredict)
 	case "buy_to_continue_buy":
-		fmt.Printf("Action for coin %v to take = buy_to_continue_buy", coinToPredict)
+		fmt.Printf("Action for coin %v to take = buy_to_continue_buy.  Leaving everything as is for now", coinToPredict)
 	case "short_to_continue_short":
-		fmt.Printf("Action for coin %v to take = short_to_continue_short", coinToPredict)
+		fmt.Printf("Action for coin %v to take = short_to_continue_short. Leaving everything as is for now", coinToPredict)
 	default:
 		panic("We didn't hit a case statement for action to take")
 	}
 
+	// account informations
+	// client or clientWithSubAccounts in this time.
+
+	client := goftx.New(
+		goftx.WithAuth(os.Getenv("BTC_FTX_KEY"), os.Getenv("BTC_FTX_SECRET"), os.Getenv("BTC_SUBACCOUNT_NAME")),
+		goftx.WithFTXUS(),
+	)
+
+	// if coinToPredict == "btc" {
+	marketToOrder := "BTC/USD"
+	// }
+	info, err := client.Account.GetAccountInformation()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(info, "info")
+	fmt.Println(info.TotalAccountValue, "TotalAccountValue")
+
 	// upload any config changes that we need to maintain state
+
+	// TODO: add in stop loss order with any buys
+
+	size, err := decimal.NewFromString(".000001")
+	if err != nil {
+		panic(err)
+	}
+
+	order, err := client.PlaceOrder(&models.PlaceOrderPayload{
+		Market: marketToOrder,
+		Side:   "buy",
+		Size:   size,
+		Type:   "market",
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(order, "Order")
+
+	// STOP LOSS ORDER
+	// client.PlaceTriggerOrder(&models.PlaceTriggerOrderPayload{
+	// 	Market: marketToOrder,
+	// 	Side: "sell",
+	// 	Size: size,
+	// 	Type: "trailingStop",
+	// 	trailValue: "" // 5% of the current price?
+
+	// })
+
+	// upload any config changes that we need to maintain state
+
+	// )
 
 }
