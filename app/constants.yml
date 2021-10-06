@@ -1,19 +1,27 @@
 ## Coins to predict information
-btc_product_code: "BTC/USD"
-eth_product_code: "ETH/USD"
+btc_product_code: BTC/USD
+eth_product_code: ETH/USD
+spy_product_code: SPY/USD
 candle_granularity: 86400
 
 ## S3 and data information
 s3_bucket: go-trader
 s3_data_location: data
+s3_configs_locations:
 # TODO: will need to make a data directory locally?
 bitcoin_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
 etherum_csv_filename: data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
+actions_to_take_filename: app/actions_to_take.yml
+constants_filename: app/constants.yml
+ml_config_filename: app/ml_config.yml
+trading_state_config_filename: app/trading_state_config.yml
+won_and_lost_amount_filename: app/won_and_lost_amount_config.yml
+
 
 ## DF cols
-rolling_mean_col: 'Rolling Mean'
-bollinger_high_col: 'Bollinger High'
-bollinger_low_col: 'Bollinger Low'
+rolling_mean_col: Rolling Mean
+bollinger_high_col: Bollinger High
+bollinger_low_col: Bollinger Low
 
 ## Model filename information
 # TODO: will need to make a models/checkpoints directory locally?

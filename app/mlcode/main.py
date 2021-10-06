@@ -24,15 +24,17 @@ def main(coin_to_predict: str):
 
     constants = read_in_yaml("app/constants.yml")
     sys.stdout.flush()
-    trading_constants = read_in_yaml("app/trading_state_config.yml")
+    trading_constants = read_in_yaml(constants["trading_state_config_filename"])
     sys.stdout.flush()
     won_and_lost_amount_constants = read_in_yaml(
-        "app/won_and_lost_amount_config.yml")
-    actions_to_take_constants = read_in_yaml("app/actions_to_take.yml")
+        constants["won_and_lost_amount_filename"]
+    )
+    actions_to_take_constants = read_in_yaml(constants["actions_to_take_filename"])
     # data should already be downloaded from the golang app
     bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
     etherum_df = read_in_data(constants["etherum_csv_filename"])
-    ml_constants = read_in_yaml("app/ml_config.yml")
+    # spy_df = read_in_data(constants["spu_csv_filename"], missing_dates=True)
+    ml_constants = read_in_yaml(constants["ml_config_filename"])
 
     if coin_to_predict == "btc":
         predictor = BollingerBandsPredictor(
@@ -40,7 +42,7 @@ def main(coin_to_predict: str):
             constants,
             ml_constants,
             bitcoin_df,
-            additional_dfs=[etherum_df],
+            additional_dfs=[etherum_df],  # spy_df
         )
     elif coin_to_predict == "eth":
         predictor = BollingerBandsPredictor(
@@ -48,7 +50,7 @@ def main(coin_to_predict: str):
             constants,
             ml_constants,
             etherum_df,
-            additional_dfs=[bitcoin_df],
+            additional_dfs=[bitcoin_df],  # spy_df
         )
     sys.stdout.flush()
 
@@ -74,16 +76,18 @@ def main(coin_to_predict: str):
     trading_state_class.update_state()
     # this works
     update_yaml_config(
-        "app/trading_state_config.yml", trading_state_class.trading_state_constants
+        constants["trading_state_config_filename"],
+        trading_state_class.trading_state_constants,
     )
     logger.info("---- Updated trading state config --- ")
     update_yaml_config(
-        "app/won_and_lost_amount_config.yml",
+        constants["won_and_lost_amount_filename"],
         trading_state_class.won_and_lose_amount_dict,
     )
     logger.info("---- Updated win/lost state config --- ")
     update_yaml_config(
-        "app/actions_to_take.yml", trading_state_class.actions_to_take_constants
+        constants["actions_to_take_filename"],
+        trading_state_class.actions_to_take_constants,
     )
     logger.info("---- Updated actions to take state config --- ")
 

@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import yaml
-from darts import TimeSeries
+from darts import TimeSeries, timeseries
 from darts.dataprocessing.transformers import Scaler
 from darts.metrics import mape, mse
 from darts.models import NBEATSModel, TCNModel
@@ -43,8 +43,8 @@ class BollingerBandsPredictor:
         ml_constants: Dict[str, Dict[str, any]],
         input_df: pd.DataFrame,
         additional_dfs: List[pd.DataFrame] = None,
-        period="24H",
-        verbose=True,
+        period: str = "24H",
+        verbose: bool = True,
     ):
         if coin_to_predict not in ["btc", "eth"]:
             raise ValueError(
@@ -182,7 +182,7 @@ class BollingerBandsPredictor:
         self.additional_dfs = new_additional_dfs
 
     def _scale_time_series_df_and_time_cols(
-        self, input_df, time_cols=["year", "month", "day"]
+        self, input_df: pd.DataFrame, time_cols: List[str] = ["year", "month", "day"]
     ):
         ts_transformers = {}
         ts_stacked_series = None
@@ -204,7 +204,7 @@ class BollingerBandsPredictor:
             TimeSeries.from_series(input_df[self.pred_col], freq=self.period),
         )
 
-    def _scale_time_series_df(self, input_df, use_pred_col=False):
+    def _scale_time_series_df(self, input_df: pd.DataFrame, use_pred_col: bool = False):
         """
         Scale an input time series col from 0 to 1
 
@@ -234,30 +234,45 @@ class BollingerBandsPredictor:
                 ts_stacked_series = transformed_series
         return ts_transformers, ts_stacked_series
 
-    def _add_additional_training_dfs(self, ts_stacked_series):
+    def _add_additional_training_dfs(
+        self, ts_stacked_series: TimeSeries, verbose=False
+    ):
         """
         Scale any additional DFs provided (such as ETHER)
 
         ts_stacked_series: the current scaled lists from the df_original provided
-
         """
         all_ts_stacked_series = None
+        all_ts_transfomers = []
         for df in self.additional_dfs:
-            (
-                additional_ts_transformers,
-                additional_ts_stacked_series,
-            ) = self._scale_time_series_df(df, use_pred_col=True)
+            additional_ts_transformers, additional_ts_stacked_series = self._scale_time_series_df(
+                df, use_pred_col=True
+            )
             if all_ts_stacked_series is None:
-                if self.verbose:
-                    logger.info("last date for training additional df data")
-                    logger.info((additional_ts_stacked_series.time_index[-1]))
-                all_ts_stacked_series = additional_ts_stacked_series
+                if verbose:
+                    print(
+                        "last date for training additional df data",
+                        additional_ts_stacked_series.time_index[-1],
+                    )
+                all_ts_stacked_series = additional_ts_stacked_series.stack(
+                    ts_stacked_series
+                )
+                if verbose:
+                    print(
+                        "all_ts_stacked_series FIRST", all_ts_stacked_series.components
+                    )
+                all_ts_transfomers.append(additional_ts_transformers)
             else:
-                return "Error. More than one time series for _add_additional_training_dfs not implemented"
-        return (
-            additional_ts_transformers,
-            all_ts_stacked_series.stack(ts_stacked_series),
-        )
+                all_ts_stacked_series = all_ts_stacked_series.stack(
+                    additional_ts_stacked_series
+                )
+                if verbose:
+                    print(
+                        "all_ts_stacked_series SECOND", all_ts_stacked_series.components
+                    )
+                all_ts_transfomers.append(additional_ts_transformers)
+                # return "Error. More than one time series for _add_additional_training_dfs not implemented"
+        return additional_ts_transformers, all_ts_stacked_series
 
     def _convert_data_to_timeseries(self) -> Tuple[TimeSeries, TimeSeries]:
         # combine TS from both DFs

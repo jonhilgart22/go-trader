@@ -7,7 +7,8 @@
 - This data is used in `notebooks/testing_bollinger_bands_and_ts_models.ipynb`
 2. Manually scrape data from [https://coinmarketcap.com/](https://coinmarketcap.com/)
 - This data is more recent, up to 09-04-2021, and is used in `notebooks/bollinger_bands_and_coinbase_data.ipynb`
-
+3. Download SPY data from [here](https://www.nasdaq.com/market-activity/funds-and-etfs/spy/historical)
+4. 
 ## Architecture
 
 1. The go app handles connecting to the FTX exchange, pulling down data from/pushing up data to  S3, adding the new data, launching the python program, and executing orders

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+from datetime import datetime
 from logging import config
 
 import pandas as pd
@@ -48,9 +49,15 @@ def read_in_yaml(input_file: str):
     return constants
 
 
-def read_in_data(input_file: str) -> pd.DataFrame:
+def read_in_data(input_file: str, missing_dates: bool = False) -> pd.DataFrame:
     logger.info(f"Input file {input_file}")
-    df = pd.read_csv(input_file, index_col=0, parse_dates=True)
+    df = pd.read_csv(input_file, index_col=0, parse_dates=True)  # dates are index
+    df = df.sort_index()  # ensure monotonic
+    if missing_dates:  # for SPY
+        idx = pd.date_range(df.index.min(), datetime.utcnow().date())
+        df.index = pd.DatetimeIndex(df.index)
+        df = df.reindex(idx, method="ffill")
+        df.index = df.index.rename("date")
     logger.info(df.head())
     logger.info(df.tail())
     logger.info("---")

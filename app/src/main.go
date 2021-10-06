@@ -81,25 +81,33 @@ func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice,
 	// read the data into memory
 	bitcoinRecords := csvUtils.ReadCsvFile(constantsMap["bitcoin_csv_filename"])
 	etherumRecords := csvUtils.ReadCsvFile(constantsMap["etherum_csv_filename"])
+	// spyRecords := csvUtils.ReadCsvFile(constantsMap["spy_csv_filename"])
 
 	newestBitcoinDate, newestClosePriceBtc := csvUtils.FindNewestData(bitcoinRecords)
 	newestEtherumDate, newestClosePriceEth := csvUtils.FindNewestData(etherumRecords)
+	// newestSpyDate, newestClosePriceSpy := csvUtils.FindNewestData(spyRecords)
 	log.Println(newestBitcoinDate, "newestBitcoinDate")
 	log.Println(newestEtherumDate, "newestEtherumDate")
+	// log.Println(spyRecords, "spyRecords")
 
 	// add new data as needed
 	numBitcoinRecordsWritten := csvUtils.WriteNewCsvData(currentBitcoinRecords, newestBitcoinDate, constantsMap["bitcoin_csv_filename"])
 	log.Println("Finished Bitcoin CSV")
 	log.Println("Records written = ", numBitcoinRecordsWritten)
 	numEtherumRecordsWritten := csvUtils.WriteNewCsvData(currentEthereumRecords, newestEtherumDate, constantsMap["etherum_csv_filename"])
-	log.Println("Finished Etherum CSV")
+	log.Println("Finished ETH CSV")
 	log.Println("Records written = ", numEtherumRecordsWritten)
+	// numSpyRecordsWritten := csvUtils.WriteNewCsvData(currentSpyRecords, newestSpyDate, constantsMap["spy_csv_filename"])
+	// log.Println("Finished SPY CSV")
+	// log.Println("Records written = ", numSpyRecordsWritten)
 
 	// upload back to s3
 	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"])
 	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"])
+	// s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["spy_csv_filename"])
 
 	return newestClosePriceEth, newestClosePriceBtc
+	//newestClosePriceSpy
 }
 
 func downloadModelFiles(constantsMap map[string]string) {
@@ -161,9 +169,20 @@ func runPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
 func main() {
 
 	const coinToPredict string = "btc"
+	// Download all the config files
+	s3Utils.DownloadFromS3("go-trader", "app/constants.yml")
 
 	// Read in the constants from yaml
 	constantsMap := readYamlFile("app/constants.yml")
+
+	// Download the rest of the config files
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"])
+	//ml_config.yml
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"])
+	//trading_state_config.yml
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"])
+	//won_and_lost_amount.yml
+	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"])
 
 	// pull new data from FTX with day candles
 	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
@@ -174,13 +193,17 @@ func main() {
 
 	currentBitcoinRecords := ftx.PullDataFromFtx(ftxClientBtc, constantsMap["btc_product_code"], granularity)
 	currentEthereumRecords := ftx.PullDataFromFtx(ftxClientBtc, constantsMap["eth_product_code"], granularity)
-	// TODO: add SPY
-	// currentSpyRecords := ftx.PullDataFromFtx("SPY/USC", granularity)
+	// currentSpyRecords := ftx.PullDataFromFtx(ftxClientBtc, constantsMap["spy_product_code"], granularity)
 
 	// Add new data to CSV from FTX to s3. This will be used by our Python program
 	newestClosePriceEth, newestClosePriceBtc := downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, constantsMap)
 	log.Println(newestClosePriceBtc, "newestClosePriceBtc")
 	log.Println(newestClosePriceEth, "newestClosePriceEth")
+	// "newestClosePriceSpy")
+	// newestClosePriceEth, newestClosePriceBtc, newestClosePriceSpy := downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, currentSpyRecords, constantsMap)
+	// log.Println(newestClosePriceBtc, "newestClosePriceBtc")
+	// log.Println(newestClosePriceEth, "newestClosePriceEth")
+	// log.Println(newestClosePriceSpy, "newestClosePriceSpy")
 
 	// Download the model files to be used by the python program
 	// models need to be downloaded to models/checkpoints/{model_name}/{filename}
@@ -194,7 +217,7 @@ func main() {
 
 	// Read in the constants  that have been updated from our python ML program. Determine what to do based
 	log.Println("Determining actions to take")
-	actionsToTakeConstants := readNestedYamlFile("app/actions_to_take.yml") // read in nested yaml?
+	actionsToTakeConstants := readNestedYamlFile(constantsMap["actions_to_take_filename"]) // read in nested yaml?
 	log.Println(actionsToTakeConstants[coinToPredict]["action_to_take"])
 	actionToTake := actionsToTakeConstants[coinToPredict]["action_to_take"]
 
@@ -215,17 +238,17 @@ func main() {
 	// TODO: once FTX allows short leveraged tokens in the US, add this to the short action
 	switch actionToTake {
 	case "none":
-		fmt.Printf("Action for coin %v to take = none", coinToPredict)
+		log.Printf("Action for coin %v to take = none", coinToPredict)
 	case "none_to_none":
-		fmt.Printf("Action for coin %v to take = none_to_none", coinToPredict)
+		log.Printf("Action for coin %v to take = none_to_none", coinToPredict)
 	case "buy_to_none": // liquidate all positions
-		fmt.Printf("Action for coin %v to take = buy_to_none", coinToPredict)
+		log.Printf("Action for coin %v to take = buy_to_none", coinToPredict)
 		ftx.SellOrder(ftxClientBtc, marketToOrder)
 
 	case "short_to_none":
-		fmt.Printf("Action for coin %v to take = short_to_none", coinToPredict)
+		log.Printf("Action for coin %v to take = short_to_none", coinToPredict)
 	case "none_to_buy":
-		fmt.Printf("Action for coin %v to take = none_to_buy", coinToPredict)
+		log.Printf("Action for coin %v to take = none_to_buy", coinToPredict)
 
 		log.Println("------")
 
@@ -238,20 +261,26 @@ func main() {
 		ftx.PurchaseOrder(ftxClientBtc, size, marketToOrder)
 
 	case "none_to_short":
-		fmt.Printf("Action for coin %v to take = none_to_short", coinToPredict)
+		log.Printf("Action for coin %v to take = none_to_short", coinToPredict)
 	case "buy_to_continue_buy":
-		fmt.Printf("Action for coin %v to take = buy_to_continue_buy.  Leaving everything as is for now", coinToPredict)
+		log.Printf("Action for coin %v to take = buy_to_continue_buy.  Leaving everything as is for now", coinToPredict)
 	case "short_to_continue_short":
-		fmt.Printf("Action for coin %v to take = short_to_continue_short. Leaving everything as is for now", coinToPredict)
+		log.Printf("Action for coin %v to take = short_to_continue_short. Leaving everything as is for now", coinToPredict)
 	default:
 		panic("We didn't hit a case statement for action to take")
 	}
 
 	// upload any config changes that we need to maintain state
-
-	// Place Order / Liquidate Positions
-
-	// upload any config changes that we need to maintain state
+	//actions_to_take.yml
+	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"])
+	//constants.yml
+	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"])
+	//ml_config.yml
+	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"])
+	//trading_state_config.yml
+	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"])
+	//won_and_lost_amount.yml
+	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"])
 
 	// )
 

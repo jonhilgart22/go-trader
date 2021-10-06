@@ -242,8 +242,7 @@ class DetermineTradingState:
             self.n_buy_won += 1
             self.dollar_amount_buy_won += won_amount
         else:
-            raise ValueError(
-                "Something went wrong calculating win/lose amount")
+            raise ValueError("Something went wrong calculating win/lose amount")
 
         days_in_trade = row.index - self.position_entry_date
         logger.info(f"days in trades = {days_in_trade.days}")
@@ -288,8 +287,7 @@ class DetermineTradingState:
         # check ML predicted trend as well
 
         if (
-            (self.price_prediction >
-             row[self.constants["rolling_mean_col"]][0])
+            (self.price_prediction > row[self.constants["rolling_mean_col"]][0])
             or (self.price_prediction > self.short_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] > self.short_entry_price)
         ):
@@ -310,14 +308,12 @@ class DetermineTradingState:
         """
         While in a buy/long position, check if we should exit
         """
-        self._print_log_statements(
-            "checking if we should exit our buy position", row)
+        self._print_log_statements("checking if we should exit our buy position", row)
 
         # check ML predicted trend as well
 
         if (
-            (self.price_prediction <
-             row[self.constants["rolling_mean_col"]][0])
+            (self.price_prediction < row[self.constants["rolling_mean_col"]][0])
             or (self.price_prediction < self.buy_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
@@ -339,8 +335,7 @@ class DetermineTradingState:
         """
         Determine if we should enter a buy position
         """
-        self._print_log_statements(
-            "Checking if we should enter a buy position", row)
+        self._print_log_statements("Checking if we should enter a buy position", row)
         # check ML predicted trend as well
 
         if self.price_prediction > row[self.constants["rolling_mean_col"]][0]:
@@ -363,8 +358,7 @@ class DetermineTradingState:
         """
         Check if we should enter a short position
         """
-        self._print_log_statements(
-            "Checking if we should enter a short position", row)
+        self._print_log_statements("Checking if we should enter a short position", row)
 
         if self.price_prediction < row[self.constants["rolling_mean_col"]][0]:
             logger.info("pred  lower than mean taking position to short")
@@ -397,11 +391,9 @@ class DetermineTradingState:
         """Convenience method to update  our state params
         """
         for k, v in self.trading_state_constants[self.coin_to_predict].items():
-            self.trading_state_constants[self.coin_to_predict][k] = getattr(
-                self, k, v)
+            self.trading_state_constants[self.coin_to_predict][k] = getattr(self, k, v)
         for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
-            self.won_and_lose_amount_dict[self.coin_to_predict][k] = getattr(
-                self, k, v)
+            self.won_and_lose_amount_dict[self.coin_to_predict][k] = getattr(self, k, v)
         for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
             self.actions_to_take_constants[self.coin_to_predict][k] = getattr(
                 self, k, v

@@ -1,0 +1,8 @@
+.darts*
+data*
+.github*
+models*
+notebooks*
+.pytest_cache*
+.mypy_cache*
+.git*

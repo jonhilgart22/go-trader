@@ -1,6 +1,7 @@
 ## Coins to predict information
 btc_product_code: "BTC/USD"
 eth_product_code: "ETH/USD"
+spy_product_code: "SPY/USD"
 candle_granularity: 86400
 
 ## S3 and data information
@@ -9,6 +10,7 @@ s3_data_location: data
 # TODO: will need to make a data directory locally?
 bitcoin_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
 etherum_csv_filename: data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
+spy_csv_filename: data/historic_crypto_prices - SPY_historicaly.csv
 
 ## DF cols
 rolling_mean_col: 'Rolling Mean'
