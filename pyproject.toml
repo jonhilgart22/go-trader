@@ -15,6 +15,7 @@ tqdm = "^4.62.1"
 darts = "^0.10.1"
 pyyaml = "^5.4.1"
 cbpro = { git = "https://github.com/danpaquin/coinbasepro-python.git" }
+click = "^8.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

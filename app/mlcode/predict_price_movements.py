@@ -23,9 +23,9 @@ from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 
 try:  # need modules for pytest to work
-    from app.mlcode.utils import read_in_yaml, read_in_data
+    from app.mlcode.utils import read_in_data, read_in_yaml
 except ModuleNotFoundError:  # Go is unable to run python modules -m
-    from utils import read_in_yaml, read_in_data
+    from utils import read_in_data, read_in_yaml
 
 
 warnings.filterwarnings("ignore")
@@ -186,8 +186,7 @@ class BollingerBandsPredictor:
     ):
         ts_transformers = {}
         ts_stacked_series = None
-        ts_transformers, ts_stacked_series = self._scale_time_series_df(
-            input_df)
+        ts_transformers, ts_stacked_series = self._scale_time_series_df(input_df)
 
         # build year and month and day series:
         for col in time_cols:
@@ -268,10 +267,10 @@ class BollingerBandsPredictor:
             train_close_series,
         ) = self._scale_time_series_df_and_time_cols(self.df)
         if self.verbose:
-            logger.info("original DF training series")
-            logger.info(ts_stacked_series.components)
-            logger.info("last date for training data")
-            logger.info(ts_stacked_series.time_index[-1])
+            logger.info(f"original DF training series = {ts_stacked_series.components}")
+            logger.info(
+                f"last date for training data = {ts_stacked_series.time_index[-1]}"
+            )
 
         if len(self.additional_dfs) > 0:
             # overwrite the ts_stacked_series var if we have additional DFS
@@ -311,7 +310,8 @@ class BollingerBandsPredictor:
                     )
                 else:
                     raise ValueError(
-                        f"We have an incorrect model name of {model.model_name} we need tcn or nbeats")
+                        f"We have an incorrect model name of {model.model_name} we need tcn or nbeats"
+                    )
 
     def _make_prediction(self, train_close_series, ts_stacked_series):
         all_predictions = []
@@ -347,8 +347,7 @@ class BollingerBandsPredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        prediction = self._make_prediction(
-            train_close_series, ts_stacked_series)
+        prediction = self._make_prediction(train_close_series, ts_stacked_series)
         logger.info("prediction")
         logger.info(prediction)
         sys.stdout.flush()

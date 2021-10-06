@@ -1,5 +1,5 @@
 prediction_params:
-    bollinger_window: 7
+    bollinger_window: 10
     no_of_std: 1.5
     lookback_window: [15, 30]
     prediction_n_days: 14

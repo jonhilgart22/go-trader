@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-import yaml
-import pandas as pd
 import logging
 from logging import config
+
+import pandas as pd
+import yaml
 
 log_config = {
     "version": 1,

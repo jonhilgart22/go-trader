@@ -1,8 +1,11 @@
 package csvUtils
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"time"
 
@@ -56,14 +59,14 @@ func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.T
 
 	numRecordsWritten := 0
 	for _, currentVal := range currentRecords {
-		fmt.Println("currentVal", currentVal)
+		log.Println("currentVal", currentVal)
 
 		if currentVal.StartTime.After(newestDate) && !currentVal.StartTime.Equal(roundedToday) { // add this data, but not today's data
-			fmt.Println("Adding data from this date =", currentVal.StartTime)
+			log.Println("Adding data from this date =", currentVal.StartTime)
 
 			f, err := os.OpenFile(csvFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				return 0
 			}
 			w := csv.NewWriter(f)
@@ -97,4 +100,35 @@ func FindNewestData(inputRecords []structs.HistoricCandles) (time.Time, decimal.
 	}
 
 	return newestDate, newestClosePrice
+}
+
+func ReadCsvFile(filePath string) []structs.HistoricCandles {
+	f, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+	reader := csv.NewReader(bufio.NewReader(f))
+	defer f.Close()
+
+	records := []structs.HistoricCandles{}
+
+	for {
+		line, error := reader.Read()
+		if error == io.EOF {
+			break
+		} else if error != nil {
+			panic(error)
+		} else if Contains(line, "date") && Contains(line, "open") && Contains(line, "close") {
+			continue
+		}
+		records = append(records, structs.HistoricCandles{
+			Date:  ParseDate(line[0]),
+			Open:  ConvertStringToFloat(line[1]),
+			High:  ConvertStringToFloat(line[2]),
+			Low:   ConvertStringToFloat(line[3]),
+			Close: ConvertStringToFloat(line[4]),
+		})
+	}
+
+	return records
 }

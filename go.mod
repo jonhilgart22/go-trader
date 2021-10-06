@@ -2,10 +2,7 @@ module github.com/jonhilgart22/go-trader
 
 go 1.17
 
-require (
-	github.com/aws/aws-sdk-go v1.40.46
-	github.com/go-numb/go-ftx v0.0.0-20210920234327-1ed716ff9977
-)
+require github.com/aws/aws-sdk-go v1.40.46
 
 require (
 	github.com/andybalholm/brotli v1.0.0 // indirect
@@ -23,7 +20,7 @@ require (
 
 require (
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/grishinsana/goftx v1.2.1 // indirect
+	github.com/grishinsana/goftx v1.2.2-0.20210726052311-b7369763f91c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 )

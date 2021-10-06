@@ -1,19 +1,19 @@
 try:  # need modules for pytest to work
     from app.mlcode.predict_price_movements import BollingerBandsPredictor
-    from app.mlcode.utils import read_in_yaml, read_in_data, update_yaml_config
+    from app.mlcode.utils import read_in_data, read_in_yaml, update_yaml_config
 except ModuleNotFoundError:  # Go is unable to run python modules -m
     from predict_price_movements import BollingerBandsPredictor
     from utils import read_in_yaml, read_in_data, update_yaml_config
-import pandas as pd
 
-from typing import Dict, Union
-import time
 import logging
-import yaml
-from datetime import date
-from datetime import timedelta
-import numpy as np
 import sys
+import time
+from datetime import date, datetime, timedelta
+from typing import Dict, Union
+
+import numpy as np
+import pandas as pd
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -75,8 +75,9 @@ class DetermineTradingState:
         prev_row = self.prediction_df.iloc[-2:-1]
         logger.info(f"prev_row = {prev_row}")
         # assert date is yesterday date
-        yesterday = pd.to_datetime(date.today() - timedelta(days=1))
-        two_days_ago = pd.to_datetime(date.today() - timedelta(days=2))
+        today = datetime.utcnow().date()
+        yesterday = pd.to_datetime(today - timedelta(days=1))
+        two_days_ago = pd.to_datetime(today - timedelta(days=2))
         try:
             assert row.index == yesterday
             assert prev_row.index == two_days_ago
@@ -95,14 +96,15 @@ class DetermineTradingState:
                 f"Updating stop loss to {self.stop_loss_price}", row
             )
 
-        if (
-            self.mode == "short"
-            and (1 + self.stop_loss_pct) * row["close"][0] < self.stop_loss_price
-        ):
-            self.stop_loss_price = (1 + self.stop_loss_pct) * row["close"][0]
-            self._print_log_statements(
-                f"Updating stop loss to {self.stop_loss_price}", row
-            )
+        # TODO: uncomment once FTX allows short leveraged tokens
+        # if (
+        #     self.mode == "short"
+        #     and (1 + self.stop_loss_pct) * row["close"][0] < self.stop_loss_price
+        # ):
+        #     self.stop_loss_price = (1 + self.stop_loss_pct) * row["close"][0]
+        #     self._print_log_statements(
+        #         f"Updating stop loss to {self.stop_loss_price}", row
+        #     )
 
         # check if we've previously crossed the mean trailing price
         if (
@@ -111,11 +113,12 @@ class DetermineTradingState:
         ):
             self.buy_has_crossed_mean = True
 
-        if (
-            self.mode == "short"
-            and row["close"][0] < row[self.constants["rolling_mean_col"]][0]
-        ):
-            self.short_has_crossed_mean = True
+        # TODO: uncomment once FTX allows shorts
+        # if (
+        #     self.mode == "short"
+        #     and row["close"][0] < row[self.constants["rolling_mean_col"]][0]
+        # ):
+        #     self.short_has_crossed_mean = True
 
         # stop loss, get out of buy position
         if self.mode == "buy" and self.stop_loss_price > row["close"][0]:
@@ -132,19 +135,20 @@ class DetermineTradingState:
             self.buy_entry_price = 0
             self.stop_loss_price = 0
 
-        # stop loss, get out of short position
-        elif self.mode == "short" and self.stop_loss_price < row["close"][0]:
-            self._print_log_statements(
-                f"stop loss activated for getting out of our short", row
-            )
+        # TODO: uncomment once FTX allows shorts
+        # # stop loss, get out of short position
+        # elif self.mode == "short" and self.stop_loss_price < row["close"][0]:
+        #     self._print_log_statements(
+        #         f"stop loss activated for getting out of our short", row
+        #     )
 
-            self._determine_win_or_loss_amount(row)
-            # record keeping
-            self.mode = "no_position"
-            self.action_to_take = "short_to_none"
-            self.short_has_crossed_mean = False
-            self.short_entry_price = 0
-            self.stop_loss_price = 0
+        #     self._determine_win_or_loss_amount(row)
+        #     # record keeping
+        #     self.mode = "no_position"
+        #     self.action_to_take = "short_to_none"
+        #     self.short_has_crossed_mean = False
+        #     self.short_entry_price = 0
+        #     self.stop_loss_price = 0
 
         # buy -> no_position? no position is below running mean
         # or, if we are above the top band (mean reversion)
@@ -162,19 +166,20 @@ class DetermineTradingState:
             self._check_buy_to_none(row)
 
         # short -> no_position? no position if above running mean
+        # TODO: FTX doesn't support short tokens... yet
         # or, if we are below the bottom band (mean reversion)
-        elif self.mode == "short" and (
-            (
-                row["close"][0] > row[self.constants["rolling_mean_col"]][0]
-                and self.trading_state_constants[self.coin_to_predict][
-                    "short_has_crossed_mean"
-                ]
-            )
-            or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
-            or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
-            or row[self.constants["rolling_mean_col"]][0] > self.short_entry_price
-        ):
-            self._check_short_to_none(row)
+        # elif self.mode == "short" and (
+        #     (
+        #         row["close"][0] > row[self.constants["rolling_mean_col"]][0]
+        #         and self.trading_state_constants[self.coin_to_predict][
+        #             "short_has_crossed_mean"
+        #         ]
+        #     )
+        #     or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
+        #     or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
+        #     or row[self.constants["rolling_mean_col"]][0] > self.short_entry_price
+        # ):
+        #     self._check_short_to_none(row)
 
         # buy check with ML model
         elif (
@@ -185,12 +190,13 @@ class DetermineTradingState:
             self._check_if_we_should_buy(row)
 
         # short?
-        elif (
-            self.mode == "no_position"
-            and row["close"][0] > row[self.constants["bollinger_high_col"]][0]
-            and prev_row["close"][0] < prev_row[self.constants["bollinger_high_col"]][0]
-        ):
-            self._check_if_we_should_short(row)
+        # TODO: FTX doesn't support short tokens... yet. Undue when we are ready to short
+        # elif (
+        #     self.mode == "no_position"
+        #     and row["close"][0] > row[self.constants["bollinger_high_col"]][0]
+        #     and prev_row["close"][0] < prev_row[self.constants["bollinger_high_col"]][0]
+        # ):
+        #     self._check_if_we_should_short(row)
 
         else:
             self._print_log_statements("Taking no action today", row)
@@ -374,6 +380,7 @@ class DetermineTradingState:
 
     def _print_log_statements(self, message: str, row: pd.Series):
         logger.info("------------")
+        logger.info(f"Logging for coin = {self.coin_to_predict}")
         logger.info(message)
 
         logger.info(f"current date = {row.index}")
@@ -399,70 +406,3 @@ class DetermineTradingState:
             self.actions_to_take_constants[self.coin_to_predict][k] = getattr(
                 self, k, v
             )
-
-
-# TODO: accept either btc or eth as param
-def main() -> str:
-    logger.info("Running determine trading state")
-
-    constants = read_in_yaml("app/constants.yml")
-    sys.stdout.flush()
-    trading_constants = read_in_yaml("app/trading_state_config.yml")
-    sys.stdout.flush()
-    won_and_lost_amount_constants = read_in_yaml(
-        "app/won_and_lost_amount_config.yml")
-    actions_to_take_constants = read_in_yaml("app/actions_to_take.yml")
-    # data should already be downloaded from the golang app
-    bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
-    etherum_df = read_in_data(constants["etherum_csv_filename"])
-    ml_constants = read_in_yaml("app/ml_config.yml")
-
-    coin_to_predict = "eth"
-    btc_predictor = BollingerBandsPredictor(
-        coin_to_predict,
-        constants,
-        ml_constants,
-        bitcoin_df,
-        additional_dfs=[etherum_df],
-    )
-    sys.stdout.flush()
-
-    btc_predictor._build_bollinger_bands()
-    # TODO: uncomment
-    # price_prediction = btc_predictor.predict()
-    # print(price_prediction, "price_prediction")
-    price_prediction = 100
-    logger.info("Determine trading state")
-
-    # btc_predictor.df has the bollinger bands
-    trading_state_class = DetermineTradingState(
-        coin_to_predict,
-        price_prediction,
-        constants,
-        trading_constants,
-        btc_predictor.df,
-        won_and_lost_amount_constants,
-        actions_to_take_constants,
-    )
-    sys.stdout.flush()
-    trading_state_class.calculate_positions()
-    logger.info("---- Finished determinig trading strategy --- ")
-    trading_state_class.update_state()
-    # this works
-    update_yaml_config(
-        "app/trading_state_config.yml", trading_state_class.trading_state_constants
-    )
-    logger.info("---- Updated trading state config --- ")
-    update_yaml_config(
-        "app/won_and_lost_amount_config.yml",
-        trading_state_class.won_and_lose_amount_dict,
-    )
-    logger.info("---- Updated win/lost state config --- ")
-    update_yaml_config(
-        "app/actions_to_take.yml", trading_state_class.actions_to_take_constants
-    )
-    logger.info("---- Updated actions to take state config --- ")
-
-
-if __name__ == "__main__":
-    main()

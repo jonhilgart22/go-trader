@@ -2,7 +2,6 @@ package s3Utils
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -39,7 +38,7 @@ func DownloadFromS3(bucket string, item string) {
 		log.Fatalf("Unable to download item %q, %v", item, err)
 	}
 
-	fmt.Println("Downloaded", file.Name(), numBytes, "bytes")
+	log.Println("Downloaded", file.Name(), numBytes, "bytes")
 
 }
 
@@ -86,5 +85,5 @@ func UploadToS3(bucket string, item string) {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Upload successful of file ", item)
+	log.Println("Upload successful of file ", item)
 }
