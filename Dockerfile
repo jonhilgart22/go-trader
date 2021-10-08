@@ -1,59 +1,62 @@
-FROM ubuntu:18.04
+FROM golang:1.17-stretch
 
 # make directories / folders
-RUN mkdir app
-RUN mkdir data
-RUN mkdir app/csvutils
-RUN mkdir app/ftx
-RUN mkdir app/mlcode
-RUN mkdir app/s3utils
-RUN mkdir app/src
-RUN mkdir app/structs
+RUN mkdir home home/app home/data home/app/csvutils home/app/ftx home/app/mlcode home/app/s3utils home/app/src home/app/structs
 
-# COPY files over
-ADD app app
-COPY poetry.lock pyproject.toml ./
-COPY go.mod go.sum ./
+# pyenv
+ENV HOME="/home"
+WORKDIR ${HOME}
+
 
 ## PYTHON
-# Install python/pip. Python3.7 is what is used in .toml
 ENV PYTHONUNBUFFERED=1
 RUN  apt-get -y update && \
     apt-get -y install sudo && \
     sudo apt-get -y install gcc && \
-    sudo apt-get -y clean
+    sudo apt-get -y clean && \
+    sudo apt-get -y install apt-utils && \
+    sudo apt-get -y install build-essential && \
+    sudo apt-get -y install libssl-dev && \
+    sudo apt-get -y install libpcap-dev && \
+    sudo apt-get -y  install libpq-dev && \
+    sudo apt-get -y install zlib1g-dev && \
+    sudo apt-get -y install zlibc && \
+    sudo apt-get -y install  ibssl1.0 && \
+    sudo apt-get -y install libffi-dev && \
+    sudo apt-get -y install git && \
+    sudo apt-get -y install libsqlite3-dev && \
+    sudo apt-get -y install libbz2-dev  && \
+    sudo apt-get -y install liblzma-dev
 
-# Python package management and basic dependencies
-RUN apt-get install -y curl python3.7 python3.7-dev python3.7-distutils
 
-# Register the version in alternatives
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
+RUN git clone --depth=1 https://github.com/pyenv/pyenv.git .pyenv
+ENV PYENV_ROOT="${HOME}/.pyenv"
+ENV PATH="${PYENV_ROOT}/shims:${PYENV_ROOT}/bin:/go/.pyenv/versions/3.7.8/bin:${PATH}"
+ENV PYTHON_VERSION=3.7.8
+RUN pyenv install ${PYTHON_VERSION}
+RUN pyenv global ${PYTHON_VERSION}
 
-# Set python 3 as the default python
-RUN update-alternatives --set python /usr/bin/python3.7
+# COPY poetry env over
+COPY poetry.lock pyproject.toml ./
 
-# Upgrade pip to latest version
-RUN curl -s https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-    python get-pip.py --force-reinstall && \
-    rm get-pip.py
-
-RUN pip install --no-cache --upgrade pip setuptools
-# System deps:
-RUN pip install poetry
-
+# Poetry install
+RUN  pip install poetry
 RUN set -x \
     && pip install --no-cache-dir --upgrade pip \
+    && pip install wheel  \
     && poetry export --without-hashes -f requirements.txt -o requirements.txt \
     && pip install --no-cache-dir -r requirements.txt \
     && rm requirements.txt
 
 ## GOLANG
-# install build tools
-RUN apt-get add go git
-RUN go env -w GOPROXY=direct
-# cache dependencies
-RUN go mod download 
+COPY go.mod go.sum ./
+ENV GO111MODULE=on
 
-RUN go build -o /app/src/main
+# Copy files over
+ADD app app
 
-ENTRYPOINT [ "/app/src/main" ] 
+RUN  go mod download 
+
+RUN cd app/src && go build -o go-trader .
+
+CMD  go run ./app/src/main.go

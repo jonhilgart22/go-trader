@@ -24,12 +24,14 @@ def main(coin_to_predict: str):
 
     constants = read_in_yaml("app/constants.yml")
     sys.stdout.flush()
-    trading_constants = read_in_yaml(constants["trading_state_config_filename"])
+    trading_constants = read_in_yaml(
+        constants["trading_state_config_filename"])
     sys.stdout.flush()
     won_and_lost_amount_constants = read_in_yaml(
         constants["won_and_lost_amount_filename"]
     )
-    actions_to_take_constants = read_in_yaml(constants["actions_to_take_filename"])
+    actions_to_take_constants = read_in_yaml(
+        constants["actions_to_take_filename"])
     # data should already be downloaded from the golang app
     bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
     etherum_df = read_in_data(constants["etherum_csv_filename"])

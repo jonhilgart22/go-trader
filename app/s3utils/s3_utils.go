@@ -28,12 +28,14 @@ func DownloadFromS3(bucket string, item string) {
 
 	// 4) Download the item from the bucket. If an error occurs, log it and exit. Otherwise, notify the user that the download succeeded.
 	file, err := os.Create(item)
+	if err != nil {
+		log.Fatalf("Unable to download item %q, %v", item, err)
+	}
 	numBytes, err := downloader.Download(file,
 		&s3.GetObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(item),
 		})
-
 	if err != nil {
 		log.Fatalf("Unable to download item %q, %v", item, err)
 	}

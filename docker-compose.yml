@@ -1,0 +1,10 @@
+go_trader:
+  image: go-trader:latest
+  environment:
+    - FTX_KEY=${FTX_KEY}
+    - FTX_SECRET=${FTX_SECRET}
+    - BTC_FTX_KEY=${BTC_FTX_KEY}
+    - BTC_FTX_SECRET=${BTC_FTX_SECRET}
+    - BTC_SUBACCOUNT_NAME=${BTC_SUBACCOUNT_NAME}
+    - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
