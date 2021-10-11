@@ -52,12 +52,16 @@ func Contains(s []string, str string) bool {
 	return false
 }
 
-func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.Time, csvFileName string) int {
+func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.Time, csvFileName string, runningOnAws bool) int {
 	loc, _ := time.LoadLocation("UTC")
 	today := time.Now().In(loc)
 	roundedToday := RoundTimeToDay(today)
-
 	numRecordsWritten := 0
+
+	if runningOnAws {
+		csvFileName = "tmp/" + csvFileName
+	}
+
 	for _, currentVal := range currentRecords {
 		log.Println("currentVal", currentVal)
 

@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python
+PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs
 
 PYTHON_VERSION=3.7.8
 
@@ -32,6 +32,19 @@ test_python:
 
 run_python:
 	python -m app.mlcode.determine_trading_state
+
+upload_configs:
+	aws s3 cp app/actions_to_take.yml s3://go-trader/app/actions_to_take.yml --sse aws:kms 
+	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml --sse aws:kms 
+	aws s3 cp app/ml_config.yml s3://go-trader/app/ml_config.yml --sse aws:kms 
+	aws s3 cp app/trading_state_config.yml s3://go-trader/app/trading_state_config.yml --sse aws:kms 
+
+update_image:
+	aws --profile lambda-model \
+  lambda \
+  update-function-code \
+  --function-name go-trader-function \
+  --image-uri 950264656373.dkr.ecr.us-east-1.amazonaws.com/go-trader:latest
 
 # upload_models:
 #  	aws s3 cp ./models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar s3://go-trader/models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar --sse aws:kms 

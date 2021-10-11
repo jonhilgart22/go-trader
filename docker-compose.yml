@@ -1,4 +1,4 @@
-go_trader:
+service:
   image: go-trader:latest
   environment:
     - FTX_KEY=${FTX_KEY}

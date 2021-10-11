@@ -13,3 +13,7 @@ output "s3_hosted_zone_id" {
 output "s3_bucket_region" {
   value = aws_s3_bucket.go_trader_s3_bucket.region
 }
+output "endpoint_url" {
+  value = aws_api_gateway_deployment.lambda_model_deployment.invoke_url
+}
+

@@ -14,3 +14,7 @@ type HistoricCandles struct {
 	Close  decimal.Decimal `csv:"close"`
 	Volume decimal.Decimal `csv:"volume"`
 }
+
+type CloudWatchEvent struct {
+	Trigger string `json:"trigger"`
+}

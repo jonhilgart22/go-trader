@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "go-trader"
 version = "0.1.0"
-description = ""
+description = "Bollinger Bands and ML"
 authors = ["Jonathan <jonathan.hilgart@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7.8"
+python = "^3.8.2"
 pandas = "1.2.0"
 seaborn = "^0.11.1"
 sklearn = "^0.0"
