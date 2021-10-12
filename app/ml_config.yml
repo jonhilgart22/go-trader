@@ -5,6 +5,7 @@ prediction_params:
     prediction_n_days: 14
     additional_dfs: [bitcoin_df]
     model_name: ["TCN", "NBEATS"]
+    work_dir: "/tmp/"
 hyperparameters_tcn:
     dropout: 0.10
     random_state: 0

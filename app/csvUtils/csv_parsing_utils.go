@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -59,7 +60,8 @@ func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.T
 	numRecordsWritten := 0
 
 	if runningOnAws {
-		csvFileName = "tmp/" + csvFileName
+		s := strings.Split(csvFileName, "/")
+		csvFileName = "/tmp/" + s[len(s)-1]
 	}
 
 	for _, currentVal := range currentRecords {
@@ -106,7 +108,13 @@ func FindNewestData(inputRecords []structs.HistoricCandles) (time.Time, decimal.
 	return newestDate, newestClosePrice
 }
 
-func ReadCsvFile(filePath string) []structs.HistoricCandles {
+func ReadCsvFile(filePath string, onAws bool) []structs.HistoricCandles {
+	if onAws {
+		// download with tmp/, keep the same path in S3.
+		s := strings.Split(filePath, "/")
+		filePath = "/tmp/" + s[len(s)-1]
+	}
+
 	f, err := os.Open(filePath)
 	if err != nil {
 		panic(err)

@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs
+PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda
 
 PYTHON_VERSION=3.7.8
 
@@ -33,6 +33,9 @@ test_python:
 run_python:
 	python -m app.mlcode.determine_trading_state
 
+# update_lambda:
+#  aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
+
 upload_configs:
 	aws s3 cp app/actions_to_take.yml s3://go-trader/app/actions_to_take.yml --sse aws:kms 
 	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml --sse aws:kms 
@@ -57,3 +60,5 @@ update_image:
 # 	aws s3 cp "./data/historic_crypto_prices - etherum_jan_2017_sept_4_2021.csv" "s3://go-trader/data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" --sse aws:kms
 # aws s3 cp "data/historic_crypto_prices - SPY_historical.csv" "s3://go-trader/data/historic_crypto_prices - SPY_historical.csv" --sse aws:kms
 
+# test_lambda:
+# 	docker run --rm -v "$PWD":/var/task lambci/lambda:python3.8  '{"Records": []}'

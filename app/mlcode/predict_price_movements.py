@@ -108,6 +108,7 @@ class BollingerBandsPredictor:
                 ],
                 force_reset=True,
                 log_tensorboard=True,
+                work_dir=self.ml_constants["prediction_params"]["work_dir"]
             )
             if load_model:
                 self.nbeats_model.load_from_checkpoint(
@@ -136,6 +137,7 @@ class BollingerBandsPredictor:
                 model_name=tcn_model_name + f"_lookback_{lookback_window}",
                 force_reset=True,
                 log_tensorboard=True,
+                work_dir=self.ml_constants["prediction_params"]["work_dir"]
             )
             # This works
             if load_model:

@@ -79,8 +79,8 @@ func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice,
 	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"], runningOnAws)
 
 	// read the data into memory
-	bitcoinRecords := csvUtils.ReadCsvFile(constantsMap["bitcoin_csv_filename"])
-	etherumRecords := csvUtils.ReadCsvFile(constantsMap["etherum_csv_filename"])
+	bitcoinRecords := csvUtils.ReadCsvFile(constantsMap["bitcoin_csv_filename"], runningOnAws)
+	etherumRecords := csvUtils.ReadCsvFile(constantsMap["etherum_csv_filename"], runningOnAws)
 	// spyRecords := csvUtils.ReadCsvFile(constantsMap["spy_csv_filename"])
 
 	newestBitcoinDate, newestClosePriceBtc := csvUtils.FindNewestData(bitcoinRecords)

@@ -42,6 +42,7 @@ resource "aws_lambda_function" "lambda_model_function" {
 
   # we can check the memory usage in the lambda dashboard, sklearn is a bit memory hungry..
   memory_size = 1024
+  timeout     = 900 # 15 minutes
 
   environment {
     variables = {
@@ -97,9 +98,23 @@ resource "aws_iam_policy" "lambda_model_policy" {
     {
       "Effect": "Allow",
       "Action": [
-        "s3:GetObject"
+        "s3:GetObject",
+        "s3:PutObject"
       ],
       "Resource": "arn:aws:s3:::${local.bucket_name}/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::${local.bucket_name}"]
+    },
+    {
+        "Effect": "Allow",
+        "Action": [
+            "kms:Decrypt",
+            "kms:GenerateDataKey"
+        ],
+        "Resource": "*"
     }
   ]
 }

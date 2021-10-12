@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -18,9 +19,7 @@ func RunningOnAws() bool {
 	return present
 }
 
-func DownloadFromS3(bucket string, item string, onS3 bool) {
-	// NOTE: you need to store your AWS credentials in ~/.aws/credentials or in env vars
-	log.Printf("Attempting to download file %v from bucket %v", item, bucket)
+func DownloadFromS3(bucket string, item string, onAws bool) {
 
 	// 2) Create an AWS session
 	sess, err := session.NewSession(&aws.Config{
@@ -34,41 +33,31 @@ func DownloadFromS3(bucket string, item string, onS3 bool) {
 	downloader := s3manager.NewDownloader(sess)
 
 	// 4) Download the item from the bucket. If an error occurs, log it and exit. Otherwise, notify the user that the download succeeded.
-	if onS3 {
-		// download with tmp/, keep the same path in S3
-		Lambdaitem := "tmp/" + item
-		file, err := os.Create(Lambdaitem)
-		if err != nil {
-			log.Fatalf("Unable to create item %q, %v", item, err)
-		}
-
-		numBytes, err := downloader.Download(file,
-			&s3.GetObjectInput{
-				Bucket: aws.String(bucket),
-				Key:    aws.String(item),
-			})
-		if err != nil {
-			log.Fatalf("Unable to download item %q, %v", item, err)
-		}
-
-		log.Println("Downloaded", file.Name(), numBytes, "bytes")
-	} else {
-		file, err := os.Create(item)
-		if err != nil {
-			log.Fatalf("Unable to create item %q, %v", item, err)
-		}
-
-		numBytes, err := downloader.Download(file,
-			&s3.GetObjectInput{
-				Bucket: aws.String(bucket),
-				Key:    aws.String(item),
-			})
-		if err != nil {
-			log.Fatalf("Unable to download item %q, %v", item, err)
-		}
-
-		log.Println("Downloaded", file.Name(), numBytes, "bytes")
+	s3Item := item
+	if onAws {
+		// download with tmp/, keep the same path in S3.
+		s := strings.Split(item, "/")
+		item = "/tmp/" + s[len(s)-1]
 	}
+	// NOTE: you need to store your AWS credentials in ~/.aws/credentials or in env vars
+	log.Printf("Attempting to download file %v from bucket %v", item, bucket)
+
+	file, err := os.Create(item)
+	if err != nil {
+		log.Fatalf("Unable to create item %q, %v", item, err)
+	}
+	defer file.Close()
+
+	numBytes, err := downloader.Download(file,
+		&s3.GetObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(s3Item),
+		})
+	if err != nil {
+		log.Fatalf("Unable to download item %q, %v", item, err)
+	}
+
+	log.Println("Downloaded", file.Name(), numBytes, "bytes")
 
 }
 
@@ -76,7 +65,8 @@ func UploadToS3(bucket string, item string, runningOnAws bool) {
 	var s3Item string
 	if runningOnAws {
 		s3Item = item
-		item = "tmp/" + item
+		s := strings.Split(item, "/")
+		item = "/tmp/" + s[len(s)-1]
 	} else {
 		s3Item = item
 	}

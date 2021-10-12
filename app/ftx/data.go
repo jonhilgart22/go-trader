@@ -84,7 +84,7 @@ func PullDataFromFtx(client *goftx.Client, productCode string, resolution int) [
 	records, err := client.Markets.GetHistoricalPrices(productCode,
 		&models.GetHistoricalPricesParams{
 			Resolution: models.Day,
-			StartTime:  ptrInt(int(time.Now().Add(-7 * 86400 * time.Second).Unix())), // last 7 days
+			StartTime:  ptrInt(int(time.Now().Add(-14 * 86400 * time.Second).Unix())), // last 14 days
 			EndTime:    ptrInt(int(time.Now().Unix())),
 		})
 

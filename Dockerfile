@@ -1,7 +1,7 @@
 FROM lambci/lambda:build-python3.8
 
 # make directories / folders
-RUN mkdir app app/csvutils app/ftx app/mlcode app/s3utils app/src app/structs tmp tmp/data tmp/app
+RUN mkdir app app/csvUtils app/ftx app/mlcode app/s3utils app/src app/structs 
 
 ## PYTHON
 # COPY poetry env over
@@ -17,16 +17,18 @@ RUN set -x \
     && rm requirements.txt
 
 ## GOLANG
-COPY --from=golang:1.17-alpine /usr/local/go/ /usr/local/go/
-
+RUN yum -y install go
+RUN echo $(ls)
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 COPY go.mod go.sum ./
 ENV GO111MODULE=on
+
 RUN  go mod download 
 
 # Copy files over
 ADD app app
+
 
 RUN cd app/src && go build -o go-trader .
 
