@@ -72,6 +72,3 @@ update_image:
 
 ## complie golang
 # docker run --rm -v "$PWD":/go/src/handler lambci/lambda:build-go1.x sh -c 'go build app/src/main.go'
-
-## run
-# docker run --rm -e AWS_ACCESS_KEY_ID='AKIAJVTWFZXLKZNP3IRA' -e AWS_SECRET_ACCESS_KEY='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'  -v "$PWD":/var/task lambci/lambda:go1.x  main '{"Records": []}'
