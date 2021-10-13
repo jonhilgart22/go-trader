@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import logging
+import os
 from datetime import datetime
 from logging import config
-import os
+from typing import Any, Dict
+
 import pandas as pd
 import yaml
-from typing import Dict, Any
 
 log_config = {
     "version": 1,

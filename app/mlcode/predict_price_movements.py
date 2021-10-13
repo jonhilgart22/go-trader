@@ -254,9 +254,10 @@ class BollingerBandsPredictor:
         all_ts_stacked_series = None
         all_ts_transfomers = []
         for df in self.additional_dfs:
-            additional_ts_transformers, additional_ts_stacked_series = self._scale_time_series_df(
-                df, use_pred_col=True
-            )
+            (
+                additional_ts_transformers,
+                additional_ts_stacked_series,
+            ) = self._scale_time_series_df(df, use_pred_col=True)
             if all_ts_stacked_series is None:
                 if verbose:
                     print(
