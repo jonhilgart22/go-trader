@@ -46,6 +46,7 @@ class BollingerBandsPredictor:
         period: str = "24H",
         verbose: bool = True,
     ):
+        self.n_years_filter = "3Y"  # use last 3 years of data
         if coin_to_predict not in ["btc", "eth"]:
             raise ValueError(
                 f"Incorrect coin to predict = {coin_to_predict} needs to be eth or btc"
@@ -61,11 +62,11 @@ class BollingerBandsPredictor:
         self.verbose = verbose
 
         self.ml_train_cols = [
-            self.constants["open"],
-            self.constants["high"],
-            self.constants["low"],
+            self.constants["open_col"],
+            self.constants["high_col"],
+            self.constants["low_col"],
             self.constants["rolling_mean_col"],
-            self.constants["volume"],
+            self.constants["volume_col"],
             self.constants["bollinger_high_col"],
         ]
         self.pred_col = "close"
@@ -159,6 +160,9 @@ class BollingerBandsPredictor:
 
     def _build_bollinger_bands(self):
 
+        # slice to only include last X years
+        self.df = self.df.last(self.n_years_filter)
+
         rolling_mean = self.df["close"].rolling(self.window).mean()
         rolling_std = self.df["close"].rolling(self.window).std()
 
@@ -175,6 +179,7 @@ class BollingerBandsPredictor:
         new_additional_dfs = []
         if len(self.additional_dfs) > 0:
             for df in self.additional_dfs:
+                df = df.last(self.n_years_filter)
                 rolling_mean = df["close"].rolling(self.window).mean()
                 rolling_std = df["close"].rolling(self.window).std()
 

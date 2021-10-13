@@ -34,7 +34,7 @@ run_python:
 	python -m app.mlcode.main --coin_to_predict btc
 
 # update_lambda:
-#  aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
+# 	aws lambda update-function-code --function-name go-trader-function  	--image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
 
 upload_configs:
 	aws s3 cp app/actions_to_take.yml s3://go-trader/app/actions_to_take.yml --sse aws:kms 

@@ -36,11 +36,6 @@ variable "tags" {
     terraform   = "true"
   }
 }
-variable "bucket_name" {
-  type        = string
-  description = "s3 bucket"
-  default     = "go-trader"
-}
 variable "lambda_function_name" {
   type        = string
   description = "function"

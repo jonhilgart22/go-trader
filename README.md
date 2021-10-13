@@ -32,6 +32,7 @@
 - All contained in the `terraform/` directory. This project uses   `tfswitch` to change between Terraform versions.
 1. `bash terraform plan`
 2. `bash terraform apply`
+Helpful Terraform article for VPC lambdas [here](https://www.maxivanov.io/deploy-aws-lambda-to-vpc-with-terraform/)
 
 S3 bucket: `go-trader`
 

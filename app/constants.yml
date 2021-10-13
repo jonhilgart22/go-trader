@@ -26,6 +26,7 @@ volume_col: volume
 open_col: open
 high_col: high
 low_col: low
+close_col: close
 
 ## Model filename information
 # TODO: will need to make a models/checkpoints directory locally?

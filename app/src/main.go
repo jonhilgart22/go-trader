@@ -263,6 +263,7 @@ func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, e
 
 		log.Println("------")
 
+		// TODO: update this with correct sizing
 		size, err := decimal.NewFromString("0.0001")
 		log.Println("Taking a position worth ~", size.Mul(newestClosePriceBtc))
 		if err != nil {

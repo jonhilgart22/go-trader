@@ -31,7 +31,7 @@ resource "aws_lambda_function" "lambda_model_function" {
   package_type = "Image"
 
   # we can check the memory usage in the lambda dashboard, sklearn is a bit memory hungry..
-  memory_size = 10024
+  memory_size = 10240
   timeout     = 900 # 15 minutes
 
   environment {
@@ -324,4 +324,27 @@ resource "aws_iam_policy" "lambda_model_policy" {
   ]
 }
 EOF
+}
+
+## CLOUDWATCH TRIGGERS ##
+
+resource "aws_cloudwatch_event_rule" "every_day_btc" {
+  name                = "every-day-btc"
+  description         = "Fires every day for btc"
+  schedule_expression = "rate(1 day)"
+}
+
+resource "aws_cloudwatch_event_target" "check_btc_every_day" {
+  rule      = aws_cloudwatch_event_rule.every_day_btc.name
+  target_id = "check_btc_predictions"
+  arn       = aws_lambda_function.lambda_model_function.arn
+  input     = "{\"coinToPredict\": \"btc\"}"
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_model_function" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_model_function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.every_day_btc.arn
 }
