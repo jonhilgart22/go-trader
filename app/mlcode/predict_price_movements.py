@@ -60,7 +60,14 @@ class BollingerBandsPredictor:
         self.period = period
         self.verbose = verbose
 
-        self.ml_train_cols = ["open", "high", "low", "Rolling Mean", "volume"]
+        self.ml_train_cols = [
+            self.constants["open"],
+            self.constants["high"],
+            self.constants["low"],
+            self.constants["rolling_mean_col"],
+            self.constants["volume"],
+            self.constants["bollinger_high_col"],
+        ]
         self.pred_col = "close"
 
         if type(self.ml_constants["prediction_params"]["lookback_window"]) != list:
@@ -107,8 +114,8 @@ class BollingerBandsPredictor:
                     "layer_widths"
                 ],
                 force_reset=True,
-                log_tensorboard=True,
-                work_dir=self.ml_constants["prediction_params"]["work_dir"]
+                log_tensorboard=False,
+                work_dir=self.ml_constants["prediction_params"]["work_dir"],
             )
             if load_model:
                 self.nbeats_model.load_from_checkpoint(
@@ -136,8 +143,8 @@ class BollingerBandsPredictor:
                 ],
                 model_name=tcn_model_name + f"_lookback_{lookback_window}",
                 force_reset=True,
-                log_tensorboard=True,
-                work_dir=self.ml_constants["prediction_params"]["work_dir"]
+                log_tensorboard=False,
+                work_dir=self.ml_constants["prediction_params"]["work_dir"],
             )
             # This works
             if load_model:
@@ -312,6 +319,8 @@ class BollingerBandsPredictor:
         for lookback_window_models in self.models:  # lookback windows
             for model in lookback_window_models:
                 if "nbeats" in model.model_name:
+                    logger.info("Training nbeats")
+                    sys.stdout.flush()
                     model.fit(
                         series=train_close_series,
                         past_covariates=[ts_stacked_series],
@@ -319,6 +328,8 @@ class BollingerBandsPredictor:
                         epochs=self.ml_constants["hyperparameters_nbeats"]["epochs"],
                     )
                 elif "tcn" in model.model_name:
+                    logger.info("Training TCN")
+                    sys.stdout.flush()
                     model.fit(
                         series=train_close_series,
                         past_covariates=[ts_stacked_series],
@@ -355,7 +366,7 @@ class BollingerBandsPredictor:
         sys.stdout.flush()
         # turns out, it's better to create new models than retrain old ones
         self._create_models()
-        # TODO
+
         logger.info("Converting data to timeseries")
         sys.stdout.flush()
         train_close_series, ts_stacked_series = self._convert_data_to_timeseries()
@@ -365,21 +376,6 @@ class BollingerBandsPredictor:
         logger.info("making predictions")
         sys.stdout.flush()
         prediction = self._make_prediction(train_close_series, ts_stacked_series)
-        logger.info("prediction")
-        logger.info(prediction)
+        logger.info(f"prediction = {prediction}")
         sys.stdout.flush()
         return prediction
-        # self._update_state()
-
-
-# if __name__ == "__main__":
-# constants = read_in_yaml("app/constants.yml")
-# # data should already be downloaded from the golang app
-# bitcoin_df = read_in_data(constants["bitcoin_csv_filename"])
-# etherum_df = read_in_data(constants["etherum_csv_filename"])
-# ml_constants = read_in_yaml("app/ml_config.yml")
-# btc_predictor = BollingerBandsPredictor(
-#     "bitcoin", constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]
-# )
-
-# logger.info(btc_predictor.predict(), 'price prediction')

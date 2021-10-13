@@ -1,24 +1,24 @@
 prediction_params:
     bollinger_window: 10
-    no_of_std: 1.5
+    no_of_std: 1.75
     lookback_window: [15, 30]
     prediction_n_days: 14
     additional_dfs: [bitcoin_df]
     model_name: ["TCN", "NBEATS"]
-    work_dir: "/tmp/"
+    work_dir: "/mnt/shared-storage"
 hyperparameters_tcn:
     dropout: 0.10
     random_state: 0
     dilation_base: 2
-    kernel_size: 3
-    num_filters: 6
-    num_layers: 6
+    kernel_size: 14
+    num_filters: 7
+    num_layers: 7
     weight_norm: True
-    epochs: 1
+    epochs: 150
 hyperparameters_nbeats:
     random_state: 0
-    num_blocks: 4
+    num_blocks: 5
     layer_widths: 256
-    epochs: 1
+    epochs: 10
 
 

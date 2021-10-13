@@ -17,9 +17,9 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/grishinsana/goftx/models"
+	"github.com/jonhilgart22/go-trader/app/awsUtils"
 	"github.com/jonhilgart22/go-trader/app/csvUtils"
 	"github.com/jonhilgart22/go-trader/app/ftx"
-	"github.com/jonhilgart22/go-trader/app/s3Utils"
 	"github.com/jonhilgart22/go-trader/app/structs"
 	"gopkg.in/yaml.v3"
 )
@@ -75,8 +75,8 @@ func readYamlFile(fileLocation string) map[string]string {
 func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice, currentEthereumRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool) (decimal.Decimal, decimal.Decimal) {
 
 	// download the files from s3
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"], runningOnAws)
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"], runningOnAws)
 
 	// read the data into memory
 	bitcoinRecords := csvUtils.ReadCsvFile(constantsMap["bitcoin_csv_filename"], runningOnAws)
@@ -102,9 +102,9 @@ func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice,
 	// log.Println("Records written = ", numSpyRecordsWritten)
 
 	// upload back to s3
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"], runningOnAws)
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"], runningOnAws)
-	// s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["spy_csv_filename"])
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"], runningOnAws)
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"], runningOnAws)
+	// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["spy_csv_filename"])
 
 	return newestClosePriceEth, newestClosePriceBtc
 	//newestClosePriceSpy
@@ -118,13 +118,13 @@ func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice,
 // 	nbeatsEthModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["nbeats_modelname_eth"], constantsMap["nbeats_filename_eth"])
 
 // 	log.Println("Downloading = ", tcnEthModelFilePath)
-// 	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], tcnEthModelFilePath)
+// 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], tcnEthModelFilePath)
 // 	log.Println("Downloading = ", tcnBtcModelFilePath)
-// 	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], tcnBtcModelFilePath)
+// 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], tcnBtcModelFilePath)
 // 	log.Println("Downloading = ", nbeatsEthModelFilePath)
-// 	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], nbeatsEthModelFilePath)
+// 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], nbeatsEthModelFilePath)
 // 	log.Println("Downloading = ", nbeatsBtcModelFilePath)
-// 	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], nbeatsBtcModelFilePath)
+// 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], nbeatsBtcModelFilePath)
 
 // }
 
@@ -171,22 +171,25 @@ func main() {
 
 func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, error) {
 
-	var runningOnAws bool = s3Utils.RunningOnAws()
+	var runningOnAws bool = awsUtils.RunningOnAws()
 	const coinToPredict string = "btc"
+	// set env vars
+	awsUtils.SetSsmToEnvVars()
+
 	// Download all the config files
-	s3Utils.DownloadFromS3("go-trader", "app/constants.yml", runningOnAws)
+	awsUtils.DownloadFromS3("go-trader", "app/constants.yml", runningOnAws)
 
 	// Read in the constants from yaml
 	constantsMap := readYamlFile("app/constants.yml")
 
 	// Download the rest of the config files
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws)
 	//ml_config.yml
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws)
 	//trading_state_config.yml
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws)
 	//won_and_lost_amount.yml
-	s3Utils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws)
 
 	// pull new data from FTX with day candles
 	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
@@ -216,9 +219,12 @@ func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, e
 	// downloadModelFiles(constantsMap)
 
 	// Call the Python Program here. This is kinda jank
-	log.Printf("Calling our Python program with coin = %v", coinToPredict)
-	runPythonMlProgram(constantsMap, coinToPredict)
-
+	if runningOnAws {
+		log.Printf("Calling our Python program with coin = %v", coinToPredict)
+		runPythonMlProgram(constantsMap, coinToPredict)
+	} else {
+		log.Println("Not running on AWS. Just running the Golang code and skipping the Python ML code.")
+	}
 	// Read in the constants  that have been updated from our python ML program. Determine what to do based
 	log.Println("Determining actions to take")
 	actionsToTakeConstants := readNestedYamlFile(constantsMap["actions_to_take_filename"]) // read in nested yaml?
@@ -230,6 +236,7 @@ func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, e
 	// if coinToPredict == "btc" {
 	marketToOrder := "BTC/USD"
 	// }
+	log.Println("Logging into FTX to get account info")
 	info, err := ftxClientBtc.Account.GetAccountInformation()
 	if err != nil {
 		panic(err)
@@ -276,15 +283,15 @@ func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, e
 
 	// upload any config changes that we need to maintain state
 	//actions_to_take.yml
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws)
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws)
 	//constants.yml
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"], runningOnAws)
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"], runningOnAws)
 	//ml_config.yml
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws)
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws)
 	//trading_state_config.yml
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws)
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws)
 	//won_and_lost_amount.yml
-	s3Utils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws)
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws)
 
 	// )
 	return "Finished!", nil

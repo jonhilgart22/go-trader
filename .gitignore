@@ -10,3 +10,4 @@ models/
 *mypy_cache
 *DS_Store
 ml_config
+main

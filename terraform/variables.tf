@@ -36,3 +36,24 @@ variable "tags" {
     terraform   = "true"
   }
 }
+variable "bucket_name" {
+  type        = string
+  description = "s3 bucket"
+  default     = "go-trader"
+}
+variable "lambda_function_name" {
+  type        = string
+  description = "function"
+  default     = "go-trader-function"
+}
+variable "image_name" {
+  type        = string
+  description = "image name"
+  default     = "go-trader"
+}
+variable "image_version" {
+  type        = string
+  description = "image version"
+  default     = "latest"
+}
+

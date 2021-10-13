@@ -22,6 +22,10 @@ won_and_lost_amount_filename: app/won_and_lost_amount_config.yml
 rolling_mean_col: Rolling Mean
 bollinger_high_col: Bollinger High
 bollinger_low_col: Bollinger Low
+volume_col: volume
+open_col: open
+high_col: high
+low_col: low
 
 ## Model filename information
 # TODO: will need to make a models/checkpoints directory locally?

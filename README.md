@@ -25,7 +25,9 @@
 
 - Stored in S3 in `s3://go-trader/models`
 
-## Infrastructure
+## Deployment
+
+### Infrastructure
 
 - All contained in the `terraform/` directory. This project uses   `tfswitch` to change between Terraform versions.
 1. `bash terraform plan`
@@ -34,22 +36,28 @@
 S3 bucket: `go-trader`
 
 
-## CI/CD
+### CI/CD
 
 - Use act to test locally
 - `bash brew install act`
 - run act `bash act`
 
-## Deploy
+### Deploy
 
 1. Make any config changes and then `make upload_configs`
 2. Build and push the docker image `./build.sh`
-3. Wait for the next Lambda run! 
+3. If you need to update any env vars, use the `scripts/set_ssm.sh` script with the name and value
+4. Update the Docker Image for the lambda if you've build a new one
+- `aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')`
+5. Wait for the next Lambda run! 
 
+## Testing
+
+1. New Python code
+- `make run_python`
+2. New Golang code (need to build the go binary and run it as if it were a lambda)
+   
 ## Performance
 
 - View the different model performance results [here](https://docs.google.com/spreadsheets/d/1xEaxfYBcXNcGN71LAj_Yw-EDEifm_MficTvFqpLUR3s/edit?usp=sharing)
 - 
-
-## TODO
-- build lambda

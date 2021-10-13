@@ -1,7 +1,7 @@
 FROM lambci/lambda:build-python3.8
 
 # make directories / folders
-RUN mkdir app app/csvUtils app/ftx app/mlcode app/s3utils app/src app/structs 
+RUN mkdir app app/csvUtils app/ftx app/mlcode app/awsUtils app/src app/structs 
 
 ## PYTHON
 # COPY poetry env over
