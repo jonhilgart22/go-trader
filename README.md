@@ -57,6 +57,8 @@ S3 bucket: `go-trader`
 1. New Python code
 - `make run_python`
 2. New Golang code (need to build the go binary and run it as if it were a lambda)
+- `docker run --rm -v "$PWD":/go/src/handler lambci/lambda:build-go1.x sh -c 'go build app/src/main.go'`
+- ` docker run --rm -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"Records": []}'`
    
 ## Performance
 

@@ -320,6 +320,14 @@ resource "aws_iam_policy" "lambda_model_policy" {
         "ec2:AttachNetworkInterface"
       ],
       "Resource": "*"
+    },
+    {
+        "Effect": "Allow",
+        "Action":[
+            "ses:SendEmail",
+            "ses:SendRawEmail"
+        ],
+        "Resource":"*"
     }
   ]
 }
@@ -348,3 +356,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_model_function
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.every_day_btc.arn
 }
+
+## SES ##
+
+

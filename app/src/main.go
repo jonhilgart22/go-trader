@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +17,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/shopspring/decimal"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/grishinsana/goftx/models"
 	"github.com/jonhilgart22/go-trader/app/awsUtils"
 	"github.com/jonhilgart22/go-trader/app/csvUtils"
@@ -110,24 +112,6 @@ func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice,
 	//newestClosePriceSpy
 }
 
-// func downloadModelFiles(constantsMap map[string]string) {
-// 	tcnEthModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["tcn_modelname_eth"], constantsMap["tcn_filename_eth"])
-// 	tcnBtcModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["tcn_modelname_btc"], constantsMap["tcn_filename_btc"])
-
-// 	nbeatsBtcModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["nbeats_modelname_btc"], constantsMap["nbeats_filename_btc"])
-// 	nbeatsEthModelFilePath := filepath.Join(constantsMap["ml_model_dir_prefix"], constantsMap["nbeats_modelname_eth"], constantsMap["nbeats_filename_eth"])
-
-// 	log.Println("Downloading = ", tcnEthModelFilePath)
-// 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], tcnEthModelFilePath)
-// 	log.Println("Downloading = ", tcnBtcModelFilePath)
-// 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], tcnBtcModelFilePath)
-// 	log.Println("Downloading = ", nbeatsEthModelFilePath)
-// 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], nbeatsEthModelFilePath)
-// 	log.Println("Downloading = ", nbeatsBtcModelFilePath)
-// 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], nbeatsBtcModelFilePath)
-
-// }
-
 func copyOutput(r io.Reader) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -169,7 +153,23 @@ func main() {
 	lambda.Start(HandleRequest)
 }
 
-func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, error) {
+func HandleRequest(ctx context.Context, jsonEvent events.CloudWatchEvent) (string, error) {
+
+	var eventDetails structs.CloudWatchEventDetails
+
+	//Unmarshall the CloudWatchEvent Struct Details
+	// err := json.Unmarshal(jsonEvent.Detail, &eventDetails)
+	// if err != nil {
+	// 	log.Fatal("Could not unmarshal scheduled event: ", err)
+	// 	fmt.Println("Could not unmarshal scheduled event: ", err)
+	// }
+	outputJSON, err := json.Marshal(eventDetails)
+	if err != nil {
+		log.Fatal("Could not unmarshal scheduled event: ", err)
+		fmt.Println("Could not unmarshal scheduled event: ", err)
+	}
+
+	fmt.Println("This is the JSON for event details", string(outputJSON))
 
 	var runningOnAws bool = awsUtils.RunningOnAws()
 	const coinToPredict string = "btc"
@@ -212,18 +212,13 @@ func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, e
 	// log.Println(newestClosePriceEth, "newestClosePriceEth")
 	// log.Println(newestClosePriceSpy, "newestClosePriceSpy")
 
-	// Download the model files to be used by the python program
-	// models need to be downloaded to models/checkpoints/{model_name}/{filename}
-	// TODO: uncomment
-	// don't need to do this
-	// downloadModelFiles(constantsMap)
-
 	// Call the Python Program here. This is kinda jank
-	if runningOnAws {
+	_, runningLocally := os.LookupEnv(("ON_LOCAL"))
+	if runningLocally {
+		log.Printf("Running only golang code locally")
+	} else if runningOnAws {
 		log.Printf("Calling our Python program with coin = %v", coinToPredict)
 		runPythonMlProgram(constantsMap, coinToPredict)
-	} else {
-		log.Println("Not running on AWS. Just running the Golang code and skipping the Python ML code.")
 	}
 	// Read in the constants  that have been updated from our python ML program. Determine what to do based
 	log.Println("Determining actions to take")
@@ -264,7 +259,7 @@ func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, e
 		log.Println("------")
 
 		// TODO: update this with correct sizing
-		size, err := decimal.NewFromString("0.0001")
+		size, err := decimal.NewFromString("0.001")
 		log.Println("Taking a position worth ~", size.Mul(newestClosePriceBtc))
 		if err != nil {
 			panic(err)
@@ -294,7 +289,9 @@ func HandleRequest(ctx context.Context, name structs.CloudWatchEvent) (string, e
 	//won_and_lost_amount.yml
 	awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws)
 
-	// )
+	// send email
+	awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict))
+	// all done!
 	return "Finished!", nil
 
 }
