@@ -14,9 +14,9 @@ hyperparameters_tcn:
     num_filters: 7
     num_layers: 7
     weight_norm: True
-    epochs: 1 #50
+    epochs: 55
 hyperparameters_nbeats:
     random_state: 0
     num_blocks: 5
     layer_widths: 256
-    epochs: 1 #6
+    epochs: 7

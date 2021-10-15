@@ -32,7 +32,6 @@ func RoundTimeToDay(inputTime time.Time) time.Time {
 }
 
 func ConvertStringToFloat(inputFloat string) decimal.Decimal {
-    const bitSize = 64 // Don't think about it to much. It's just 64 bits.
 
     float_, err := decimal.NewFromString(inputFloat)
     if err != nil {
@@ -78,7 +77,7 @@ func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.T
             w := csv.NewWriter(f)
             // csv format is date,open,high,low,close,volume
             // need to convert all to strings
-            w.Write([]string{
+            wErr := w.Write([]string{
                 fmt.Sprintf("%d-%02d-%02d",
                     currentVal.StartTime.Year(),
                     currentVal.StartTime.Month(),
@@ -88,6 +87,9 @@ func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.T
                 fmt.Sprintf("%v", currentVal.Low),
                 fmt.Sprintf("%v", currentVal.Close),
                 fmt.Sprintf("%v", currentVal.Volume)})
+            if wErr != nil {
+                panic(wErr)
+            }
             w.Flush()
             numRecordsWritten += 1
         }

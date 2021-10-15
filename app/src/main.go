@@ -86,7 +86,10 @@ func runPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
 
     go utils.CopyOutput(stdout)
     go utils.CopyOutput(stderr)
-    cmd.Wait()
+    waitErr := cmd.Wait()
+    if waitErr != nil {
+        panic(waitErr)
+    }
 }
 
 func main() {
@@ -237,7 +240,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
     // send email
     if !runningLocally {
-        awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict), constantsMap["logs_filename"], runningOnAws)
+        awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict), constantsMap["log_filename"], runningOnAws)
     } else {
         log.Println("No emails, running locally")
     }
