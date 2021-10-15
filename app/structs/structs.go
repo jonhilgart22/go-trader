@@ -6,6 +6,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type CloudWatchEvent struct {
+	CoinToPredict string `json:"coinToPredict"`
+}
+
 type HistoricCandles struct {
 	Date   time.Time       `csv:"date"`
 	Open   decimal.Decimal `csv:"open"`

@@ -39,10 +39,17 @@ func SetSsmToEnvVars() {
 	btcSubaccountName := v.Get(`BTC_SUBACCOUNT_NAME`)
 	btcFtxKey := v.Get(`BTC_FTX_KEY`)
 	btcFtxSecret := v.Get(`BTC_FTX_SECRET`)
+	ethSubaccountName := v.Get(`ETH_SUBACCOUNT_NAME`)
+	ethFtxKey := v.Get(`ETH_FTX_KEY`)
+	ethFtxSecret := v.Get(`ETH_FTX_SECRET`)
 	//value should be `a`
 	os.Setenv("FTX_KEY", fmt.Sprintf("%v", ftxKey))
 	os.Setenv("FTX_SECRET", fmt.Sprintf("%v", ftxSecret))
 	os.Setenv("BTC_SUBACCOUNT_NAME", fmt.Sprintf("%v", btcSubaccountName))
 	os.Setenv("BTC_FTX_KEY", fmt.Sprintf("%v", btcFtxKey))
 	os.Setenv("BTC_FTX_SECRET", fmt.Sprintf("%v", btcFtxSecret))
+	// # ETH
+	os.Setenv("ETH_SUBACCOUNT_NAME", fmt.Sprintf("%v", ethSubaccountName))
+	os.Setenv("ETH_FTX_KEY", fmt.Sprintf("%v", ethFtxKey))
+	os.Setenv("ETH_FTX_SECRET", fmt.Sprintf("%v", ethFtxSecret))
 }

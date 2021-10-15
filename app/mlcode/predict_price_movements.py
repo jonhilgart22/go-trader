@@ -315,8 +315,7 @@ class BollingerBandsPredictor:
         self.ts_transformers = ts_transformers
 
         if self.verbose:
-            logger.info("all series now stacked")
-            logger.info(ts_stacked_series.components)
+            logger.info(f"all series now stacked = {ts_stacked_series.components}")
 
         return train_close_series, ts_stacked_series
 

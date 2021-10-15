@@ -8,42 +8,42 @@ from app.mlcode.utils import read_in_yaml
 
 @pytest.fixture
 def won_and_lost_amount_constants():
-    return read_in_yaml("tests/configs/won_and_lost_amount_config.yml")
+    return read_in_yaml("tests/configs/won_and_lost_amount_config.yml", False)
 
 
 @pytest.fixture
 def constants():
-    return read_in_yaml("tests/configs/constants.yml")
+    return read_in_yaml("tests/configs/constants.yml", False)
 
 
 @pytest.fixture
 def ml_config():
-    return read_in_yaml("tests/configs/ml_config.yml")
+    return read_in_yaml("tests/configs/ml_config.yml", False)
 
 
 @pytest.fixture
 def trading_state_config():
-    return read_in_yaml("tests/configs/trading_state_config.yml")
+    return read_in_yaml("tests/configs/trading_state_config.yml", False)
 
 
 @pytest.fixture
 def trading_state_config_buy():
-    return read_in_yaml("tests/configs/trading_state_config_buy.yml")
+    return read_in_yaml("tests/configs/trading_state_config_buy.yml", False)
 
 
 @pytest.fixture
 def trading_state_config_short():
-    return read_in_yaml("tests/configs/trading_state_config_short.yml")
+    return read_in_yaml("tests/configs/trading_state_config_short.yml", False)
 
 
 @pytest.fixture
 def trading_state_config_short_stop_loss():
-    return read_in_yaml("tests/configs/trading_state_config_short_stop_loss.yml")
+    return read_in_yaml("tests/configs/trading_state_config_short_stop_loss.yml", False)
 
 
 @pytest.fixture
 def actions_to_take_constants():
-    return read_in_yaml("tests/configs/actions_to_take.yml")
+    return read_in_yaml("tests/configs/actions_to_take.yml", False)
 
 
 @pytest.fixture

@@ -13,9 +13,14 @@ etherum_csv_filename: data/historic_crypto_prices - etherum_jan_2017_sept_4_2021
 spy_csv_filename: data/historic_crypto_prices - SPY_historicaly.csv
 
 ## DF cols
-rolling_mean_col: 'Rolling Mean'
-bollinger_high_col: 'Bollinger High'
-bollinger_low_col: 'Bollinger Low'
+rolling_mean_col: Rolling Mean
+bollinger_high_col: Bollinger High
+bollinger_low_col: Bollinger Low
+volume_col: volume
+open_col: open
+high_col: high
+low_col: low
+close_col: close
 
 ## Model filename information
 # TODO: will need to make a models/checkpoints directory locally?

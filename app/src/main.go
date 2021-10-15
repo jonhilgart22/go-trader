@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,7 +16,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/shopspring/decimal"
 
-	"github.com/aws/aws-lambda-go/events"
+	"github.com/grishinsana/goftx"
 	"github.com/grishinsana/goftx/models"
 	"github.com/jonhilgart22/go-trader/app/awsUtils"
 	"github.com/jonhilgart22/go-trader/app/csvUtils"
@@ -153,26 +152,10 @@ func main() {
 	lambda.Start(HandleRequest)
 }
 
-func HandleRequest(ctx context.Context, jsonEvent events.CloudWatchEvent) (string, error) {
-
-	var eventDetails structs.CloudWatchEventDetails
-
-	//Unmarshall the CloudWatchEvent Struct Details
-	// err := json.Unmarshal(jsonEvent.Detail, &eventDetails)
-	// if err != nil {
-	// 	log.Fatal("Could not unmarshal scheduled event: ", err)
-	// 	fmt.Println("Could not unmarshal scheduled event: ", err)
-	// }
-	outputJSON, err := json.Marshal(eventDetails)
-	if err != nil {
-		log.Fatal("Could not unmarshal scheduled event: ", err)
-		fmt.Println("Could not unmarshal scheduled event: ", err)
-	}
-
-	fmt.Println("This is the JSON for event details", string(outputJSON))
+func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, error) {
 
 	var runningOnAws bool = awsUtils.RunningOnAws()
-	const coinToPredict string = "btc"
+	var coinToPredict string = req.CoinToPredict
 	// set env vars
 	awsUtils.SetSsmToEnvVars()
 
@@ -196,11 +179,16 @@ func HandleRequest(ctx context.Context, jsonEvent events.CloudWatchEvent) (strin
 	if e != nil {
 		panic(e)
 	}
-	ftxClientBtc := ftx.NewClient(os.Getenv("BTC_FTX_KEY"), os.Getenv("BTC_FTX_SECRET"), os.Getenv("BTC_SUBACCOUNT_NAME"))
+	var ftxClient *goftx.Client
+	if coinToPredict == "btc" {
+		ftxClient = ftx.NewClient(os.Getenv("BTC_FTX_KEY"), os.Getenv("BTC_FTX_SECRET"), os.Getenv("BTC_SUBACCOUNT_NAME"))
+	} else if coinToPredict == "eth" {
+		ftxClient = ftx.NewClient(os.Getenv("ETH_FTX_KEY"), os.Getenv("ETH_FTX_SECRET"), os.Getenv("ETH_SUBACCOUNT_NAME"))
+	}
 
-	currentBitcoinRecords := ftx.PullDataFromFtx(ftxClientBtc, constantsMap["btc_product_code"], granularity)
-	currentEthereumRecords := ftx.PullDataFromFtx(ftxClientBtc, constantsMap["eth_product_code"], granularity)
-	// currentSpyRecords := ftx.PullDataFromFtx(ftxClientBtc, constantsMap["spy_product_code"], granularity)
+	currentBitcoinRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["btc_product_code"], granularity)
+	currentEthereumRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["eth_product_code"], granularity)
+	// currentSpyRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["spy_product_code"], granularity)
 
 	// Add new data to CSV from FTX to s3. This will be used by our Python program
 	newestClosePriceEth, newestClosePriceBtc := downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, constantsMap, runningOnAws)
@@ -232,7 +220,7 @@ func HandleRequest(ctx context.Context, jsonEvent events.CloudWatchEvent) (strin
 	marketToOrder := "BTC/USD"
 	// }
 	log.Println("Logging into FTX to get account info")
-	info, err := ftxClientBtc.Account.GetAccountInformation()
+	info, err := ftxClient.Account.GetAccountInformation()
 	if err != nil {
 		panic(err)
 	}
@@ -249,7 +237,7 @@ func HandleRequest(ctx context.Context, jsonEvent events.CloudWatchEvent) (strin
 		log.Printf("Action for coin %v to take = none_to_none", coinToPredict)
 	case "buy_to_none": // liquidate all positions
 		log.Printf("Action for coin %v to take = buy_to_none", coinToPredict)
-		ftx.SellOrder(ftxClientBtc, marketToOrder)
+		ftx.SellOrder(ftxClient, marketToOrder)
 
 	case "short_to_none":
 		log.Printf("Action for coin %v to take = short_to_none", coinToPredict)
@@ -265,7 +253,7 @@ func HandleRequest(ctx context.Context, jsonEvent events.CloudWatchEvent) (strin
 			panic(err)
 		}
 
-		ftx.PurchaseOrder(ftxClientBtc, size, marketToOrder)
+		ftx.PurchaseOrder(ftxClient, size, marketToOrder)
 
 	case "none_to_short":
 		log.Printf("Action for coin %v to take = none_to_short", coinToPredict)

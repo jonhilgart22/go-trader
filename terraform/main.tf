@@ -336,6 +336,7 @@ EOF
 
 ## CLOUDWATCH TRIGGERS ##
 
+# BTC
 resource "aws_cloudwatch_event_rule" "every_day_btc" {
   name                = "every-day-btc"
   description         = "Fires every day for btc"
@@ -350,13 +351,33 @@ resource "aws_cloudwatch_event_target" "check_btc_every_day" {
 }
 
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_model_function" {
-  statement_id  = "AllowExecutionFromCloudWatch"
+  statement_id  = "AllowExecutionFromCloudWatchBTC"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_model_function.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.every_day_btc.arn
 }
 
-## SES ##
 
+# ETH
+resource "aws_cloudwatch_event_rule" "every_day_eth" {
+  name                = "every-day-eth"
+  description         = "Fires every day for eth"
+  schedule_expression = "rate(1 day)"
+}
+
+resource "aws_cloudwatch_event_target" "check_eth_every_day" {
+  rule      = aws_cloudwatch_event_rule.every_day_eth.name
+  target_id = "check_eth_predictions"
+  arn       = aws_lambda_function.lambda_model_function.arn
+  input     = "{\"coinToPredict\": \"eth\"}"
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_eth" {
+  statement_id  = "AllowExecutionFromCloudWatchETH"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_model_function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.every_day_eth.arn
+}
 

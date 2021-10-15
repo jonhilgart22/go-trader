@@ -65,8 +65,6 @@ def main(coin_to_predict: str):
         )
     sys.stdout.flush()
 
-    predictor._build_bollinger_bands()
-
     price_prediction = predictor.predict()
     # print(price_prediction, "price_prediction")
     logger.info("Determine trading state")

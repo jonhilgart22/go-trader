@@ -4,6 +4,9 @@
 - Golang lambda app that trigger buy signals alongside a Python ML model
 
 ![bollinger](media/bollinger.png)
+Above, we can see a sample run on historic Bitcoin prices.
+
+## Data
 
 1. `wget http://api.bitcoincharts.com/v1/csv/localbtcUSD.csv.gz`
 - This data is used in `notebooks/testing_bollinger_bands_and_ts_models.ipynb`
@@ -39,6 +42,7 @@ S3 bucket: `go-trader`
 
 ### CI/CD
 
+Via Github Actions
 - Use act to test locally
 - `bash brew install act`
 - run act `bash act`
@@ -47,7 +51,7 @@ S3 bucket: `go-trader`
 
 1. Make any config changes and then `make upload_configs`
 2. Build and push the docker image `./build.sh`
-3. If you need to update any env vars, use the `scripts/set_ssm.sh` script with the name and value
+3. If you need to update any env vars, use the `scripts/set_ssm.sh` script with the name and value. This includes new FTX env vars for different accounts.
 4. Update the Docker Image for the lambda if you've build a new one
 - `aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')`
 5. Wait for the next Lambda run! 
@@ -58,7 +62,8 @@ S3 bucket: `go-trader`
 - `make run_python`
 2. New Golang code (need to build the go binary and run it as if it were a lambda)
 - `docker run --rm -v "$PWD":/go/src/handler lambci/lambda:build-go1.x sh -c 'go build app/src/main.go'`
-- ` docker run --rm -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"Records": []}'`
+- `docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x  main '{"coinToPredict": "btc"}'`
+- To test the full app, you need to build the docker image, update the lambda, and test the lambda
    
 ## Performance
 
