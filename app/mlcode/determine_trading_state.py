@@ -1,19 +1,8 @@
-try:  # need modules for pytest to work
-    from app.mlcode.predict_price_movements import BollingerBandsPredictor
-    from app.mlcode.utils import read_in_data, read_in_yaml, update_yaml_config
-except ModuleNotFoundError:  # Go is unable to run python modules -m
-    from predict_price_movements import BollingerBandsPredictor
-    from utils import read_in_yaml, read_in_data, update_yaml_config
-
 import logging
-import sys
-import time
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Dict, Union
 
-import numpy as np
 import pandas as pd
-import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +17,7 @@ class DetermineTradingState:
         prediction_df: pd.DataFrame,
         won_and_lost_amount_constants: Dict[str, Dict[str, Union[int, float]]],
         actions_to_take_constants: Dict[str, Dict[str, Union[int, float]]],
+        running_on_aws: bool,
     ):
         """Determine the current state we should be in for trading. Buy Short, entering, or exiting positions.
 
@@ -39,11 +29,10 @@ class DetermineTradingState:
             prediction_df (pd.DataFrame):  the DF with Bolligner bands to predict against
             won_and_lost_amount_constants: track win and lost trades and amount
             actions_to_take_constants: determine which actions to take for each coin (buy, short, none ...etc)
+            running_on_aws: are on we lambda?
         """
         if coin_to_predict not in ["btc", "eth"]:
-            raise ValueError(
-                f"Incorrect prediction coin entered = {coin_to_predict}. Needs to be eth or btc"
-            )
+            raise ValueError(f"Incorrect prediction coin entered = {coin_to_predict}. Needs to be eth or btc")
         self.coin_to_predict = coin_to_predict
         self.price_prediction = price_prediction
         self.constants = constants.copy()
@@ -51,6 +40,7 @@ class DetermineTradingState:
         self.won_and_lose_amount_dict = won_and_lost_amount_constants.copy()
         self.actions_to_take_constants = actions_to_take_constants.copy()
         self.prediction_df = prediction_df
+        self.running_on_aws = running_on_aws
 
         # trading state args
         for k, v in self.trading_state_constants[self.coin_to_predict].items():
@@ -84,19 +74,12 @@ class DetermineTradingState:
             assert row.index == yesterday
             assert prev_row.index == two_days_ago
         except ValueError:
-            raise (
-                f"Incorrect dates passed. Yesterday = {yesterday} Two days ago = {two_days_ago}"
-            )
+            raise (f"Incorrect dates passed. Yesterday = {yesterday} Two days ago = {two_days_ago}")
 
         # update stop loss
-        if (
-            self.mode == "buy"
-            and (1 - self.stop_loss_pct) * row["close"][0] > self.stop_loss_price
-        ):
+        if self.mode == "buy" and (1 - self.stop_loss_pct) * row["close"][0] > self.stop_loss_price:
             self.stop_loss_price = (1 - self.stop_loss_pct) * row["close"]
-            self._print_log_statements(
-                f"Updating stop loss to {self.stop_loss_price}", row
-            )
+            self._print_log_statements(f"Updating stop loss to {self.stop_loss_price}", row)
 
         # TODO: uncomment once FTX allows short leveraged tokens
         # if (
@@ -109,10 +92,7 @@ class DetermineTradingState:
         #     )
 
         # check if we've previously crossed the mean trailing price
-        if (
-            self.mode == "buy"
-            and row["close"][0] > row[self.constants["rolling_mean_col"]][0]
-        ):
+        if self.mode == "buy" and row["close"][0] > row[self.constants["rolling_mean_col"]][0]:
             self.buy_has_crossed_mean = True
 
         # TODO: uncomment once FTX allows shorts
@@ -124,9 +104,7 @@ class DetermineTradingState:
 
         # stop loss, get out of buy position
         if self.mode == "buy" and self.stop_loss_price > row["close"][0]:
-            self._print_log_statements(
-                f"stop loss activated for getting out of our buy", row
-            )
+            self._print_log_statements("stop loss activated for getting out of our buy", row)
 
             self._determine_win_or_loss_amount(row)
             # record keeping
@@ -157,9 +135,7 @@ class DetermineTradingState:
         elif self.mode == "buy" and (
             (
                 row["close"][0] < row[self.constants["rolling_mean_col"]][0]
-                and self.trading_state_constants[self.coin_to_predict][
-                    "buy_has_crossed_mean"
-                ][0]
+                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"][0]
             )
             or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
             or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
@@ -256,13 +232,9 @@ class DetermineTradingState:
             f"Average days in trades = {self.n_total_days_in_trades/(self.n_buy_won  + self.n_buy_lost + self.n_short_won  + self.n_short_lost )}"
         )
         if self.n_buy_won > 0 or self.n_buy_lost > 0:
-            logger.info(
-                f"Bat rate buy so far = {self.n_buy_won / (self.n_buy_won + self.n_buy_lost)}"
-            )
+            logger.info(f"Bat rate buy so far = {self.n_buy_won / (self.n_buy_won + self.n_buy_lost)}")
         if self.n_short_won > 0 or self.n_short_lost > 0:
-            logger.info(
-                f"Bat rate short so far = {self.n_short_won / (self.n_short_won + self.n_short_lost)}"
-            )
+            logger.info(f"Bat rate short so far = {self.n_short_won / (self.n_short_won + self.n_short_lost)}")
 
         if self.dollar_amount_buy_won > 0 or self.dollar_amount_buy_lost > 0:
             logger.info(
@@ -282,9 +254,7 @@ class DetermineTradingState:
         """
         While in a short position, check if we should exit
         """
-        self._print_log_statements(
-            "checking if we should get out of our short position", row
-        )
+        self._print_log_statements("checking if we should get out of our short position", row)
 
         # check ML predicted trend as well
 
@@ -341,7 +311,7 @@ class DetermineTradingState:
         # check ML predicted trend as well
 
         if self.price_prediction > row[self.constants["rolling_mean_col"]][0]:
-            logger.info(f"ml pred higher than mean taking position")
+            logger.info("ml pred higher than mean taking position")
 
             self.mode = "buy"
             self.action_to_take = "none_to_buy"
@@ -349,12 +319,8 @@ class DetermineTradingState:
             self.stop_loss_price = row["close"][0] * (1 - self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
-            logger.info(
-                "self.price_prediction is not higher than the Rolling Mean. Not going to buy"
-            )
+            logger.info("self.price_prediction is not higher than the Rolling Mean. Not going to buy")
             self.action_to_take = "none_to_none"
-
-        end_time = time.time()
 
     def _check_if_we_should_short(self, row: pd.Series):
         """
@@ -375,28 +341,44 @@ class DetermineTradingState:
             self.action_to_take = "none_to_none"
 
     def _print_log_statements(self, message: str, row: pd.Series):
+
         logger.info("------------")
         logger.info(f"Logging for coin = {self.coin_to_predict}")
         logger.info(message)
 
         logger.info(f"current date = {row.index}")
-        logger.info(f"close = {row['close'][0]}")
+        logger.info(f"close = {row[self.constants['close_col']][0]}")
 
-        logger.info(f"mean = {row['Rolling Mean'][0]}")
+        logger.info(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}")
+        logger.info(f"bollinger high = {row[self.constants['bollinger_high_col']][0]}")
+
         logger.info(f"self.buy_entry_price = {self.buy_entry_price}")
-        logger.info(f"self.short_entry_price = {self.short_entry_price}")
+        # logger.info(f"self.short_entry_price = {self.short_entry_price}")
         logger.info(f"ml price_prediction  = {self.price_prediction}")
+
+        if self.running_on_aws:
+            filename = "/tmp/" + self.constants["log_filename"]
+        else:
+            filename = self.constants["log_filename"]
+        with open(filename, "w") as text_file:
+            text_file.write("------------\n")
+            text_file.write(f"Logging for coin = {self.coin_to_predict}\n")
+            text_file.write(message + "\n")
+            text_file.write(f"current date = {row.index}\n")
+            text_file.write(f"close = {row[self.constants['close_col']][0]}\n")
+            text_file.write(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}\n")
+            text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} \n")
+            text_file.write(f"self.buy_entry_price = {self.buy_entry_price}\n")
+            text_file.write(f"ml price_prediction  = {self.price_prediction}\n")
+            text_file.write("------------\n")
 
         logger.info("------------")
 
     def update_state(self):
-        """Convenience method to update  our state params
-        """
+        """Convenience method to update  our state params"""
         for k, v in self.trading_state_constants[self.coin_to_predict].items():
             self.trading_state_constants[self.coin_to_predict][k] = getattr(self, k, v)
         for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
             self.won_and_lose_amount_dict[self.coin_to_predict][k] = getattr(self, k, v)
         for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
-            self.actions_to_take_constants[self.coin_to_predict][k] = getattr(
-                self, k, v
-            )
+            self.actions_to_take_constants[self.coin_to_predict][k] = getattr(self, k, v)

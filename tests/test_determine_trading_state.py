@@ -1,11 +1,5 @@
-import logging
-import unittest
-
-import pytest
-
 from app.mlcode.determine_trading_state import DetermineTradingState
 from app.mlcode.predict_price_movements import BollingerBandsPredictor
-from app.mlcode.utils import update_yaml_config
 
 
 def test_no_btc_action(
@@ -17,8 +11,7 @@ def test_no_btc_action(
     won_and_lost_amount_constants,
     actions_to_take_constants,
 ):
-    """verify everyting works as intended
-    """
+    """verify everyting works as intended"""
     price_prediction = 900
     coin_to_predict = "btc"
     btc_predictor = BollingerBandsPredictor(
@@ -38,6 +31,7 @@ def test_no_btc_action(
         btc_predictor.df,
         won_and_lost_amount_constants,
         actions_to_take_constants,
+        False,
     )
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
@@ -64,28 +58,15 @@ def test_buy_btc_action(
         example_btc_df_bollinger_exit_position,
         won_and_lost_amount_constants,
         actions_to_take_constants,
+        False,
     )
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
     assert trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "buy"
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict][
-            "short_entry_price"
-        ]
-        == 0
-    )
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"]
-        == 982
-    )
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"]
-        == 932.9
-    )
-    assert (
-        trading_state_class.actions_to_take_constants[coin_to_predict]["action_to_take"]
-        == "none_to_buy"
-    )
+    assert trading_state_class.trading_state_constants[coin_to_predict]["short_entry_price"] == 0
+    assert trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"] == 982
+    assert trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"] == 932.9
+    assert trading_state_class.actions_to_take_constants[coin_to_predict]["action_to_take"] == "none_to_buy"
 
 
 # def test_short_btc_action(
@@ -152,61 +133,23 @@ def test_buy_to_none_via_prediction_btc(
         example_btc_df_bollinger_exit_position,
         won_and_lost_amount_constants,
         actions_to_take_constants,
+        False,
     )
 
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
-    assert (
-        trading_state_class.actions_to_take_constants[coin_to_predict]["action_to_take"]
-        == "buy_to_none"
-    )
+    assert trading_state_class.actions_to_take_constants[coin_to_predict]["action_to_take"] == "buy_to_none"
     # assert trading state is correct
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict]["mode"]
-        == "no_position"
-    )
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict][
-            "short_entry_price"
-        ]
-        == 0
-    )
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict][
-            "buy_has_crossed_mean"
-        ]
-        == False
-    )
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict][
-            "short_has_crossed_mean"
-        ]
-        == False
-    )
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"]
-        == 0
-    )
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"]
-        == 0
-    )
-    assert (
-        trading_state_class.trading_state_constants[coin_to_predict][
-            "position_entry_date"
-        ]
-        == None
-    )
+    assert trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "no_position"
+    assert trading_state_class.trading_state_constants[coin_to_predict]["short_entry_price"] == 0
+    assert trading_state_class.trading_state_constants[coin_to_predict]["buy_has_crossed_mean"] == False
+    assert trading_state_class.trading_state_constants[coin_to_predict]["short_has_crossed_mean"] == False
+    assert trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"] == 0
+    assert trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"] == 0
+    assert trading_state_class.trading_state_constants[coin_to_predict]["position_entry_date"] == None
     ## assert win/lose is correct
-    assert (
-        trading_state_class.won_and_lose_amount_dict[coin_to_predict]["n_buy_lost"] == 1
-    )
-    assert (
-        trading_state_class.won_and_lose_amount_dict[coin_to_predict][
-            "dollar_amount_buy_lost"
-        ]
-        == 18
-    )
+    assert trading_state_class.won_and_lose_amount_dict[coin_to_predict]["n_buy_lost"] == 1
+    assert trading_state_class.won_and_lose_amount_dict[coin_to_predict]["dollar_amount_buy_lost"] == 18
 
 
 # TODO: uncomment once FTX.US supports short tokens

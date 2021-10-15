@@ -11,10 +11,11 @@ jobs:
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v2
+
       - name: Set up python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: 3.8
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -54,10 +55,9 @@ jobs:
           poetry run python -m pytest
       - name: lint
         run: poetry run black . --check
-      - name: flake8 
-        run: poetry run flake8 . 
-      - name: isort 
+      - name: flake8
+        run: poetry run flake8 .
+      - name: isort
         run: poetry run isort . --check
-      - name: mypy 
+      - name: mypy
         run: poetry run mypy  . --check
-        

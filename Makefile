@@ -1,6 +1,6 @@
 PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go
 
-PYTHON_VERSION=3.7.8
+PYTHON_VERSION=3.8.2
 
 install:
 	hash pyenv || brew install pyenv
@@ -37,17 +37,17 @@ run_python:
 # 	aws lambda update-function-code --function-name go-trader-function  	--image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
 
 upload_configs:
-	aws s3 cp app/actions_to_take.yml s3://go-trader/app/actions_to_take.yml --sse aws:kms 
-	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml --sse aws:kms 
-	aws s3 cp app/ml_config.yml s3://go-trader/app/ml_config.yml --sse aws:kms 
-	aws s3 cp app/trading_state_config.yml s3://go-trader/app/trading_state_config.yml --sse aws:kms 
-	aws s3 cp env_vars.sh s3://go-trader/env_vars.sh --sse aws:kms 
+	aws s3 cp app/actions_to_take.yml s3://go-trader/app/actions_to_take.yml --sse aws:kms
+	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml --sse aws:kms
+	aws s3 cp app/ml_config.yml s3://go-trader/app/ml_config.yml --sse aws:kms
+	aws s3 cp app/trading_state_config.yml s3://go-trader/app/trading_state_config.yml --sse aws:kms
+	aws s3 cp env_vars.sh s3://go-trader/env_vars.sh --sse aws:kms
 
 download_configs:
-	aws s3 cp s3://go-trader/app/actions_to_take.yml  app/actions_to_take.yml --sse aws:kms 
-	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml  cp app/constants.yml  --sse aws:kms 
-	aws s3 cp s3://go-trader/app/ml_config.yml app/ml_config.yml  --sse aws:kms 
-	aws s3 cp s3://go-trader/app/trading_state_config.yml   app/trading_state_config.yml --sse aws:kms 
+	aws s3 cp s3://go-trader/app/actions_to_take.yml  app/actions_to_take.yml --sse aws:kms
+	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml  cp app/constants.yml  --sse aws:kms
+	aws s3 cp s3://go-trader/app/ml_config.yml app/ml_config.yml  --sse aws:kms
+	aws s3 cp s3://go-trader/app/trading_state_config.yml   app/trading_state_config.yml --sse aws:kms
 
 update_image:
 	aws --profile lambda-model \
@@ -57,7 +57,7 @@ update_image:
   --image-uri 950264656373.dkr.ecr.us-east-1.amazonaws.com/go-trader:latest
 
 # upload_models:
-#  	aws s3 cp ./models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar s3://go-trader/models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar --sse aws:kms 
+#  	aws s3 cp ./models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar s3://go-trader/models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar --sse aws:kms
 # 	aws s3 cp ./models/checkpoints/31_tcn_btc/checkpoint_4499.pth.tar s3://go-trader/models/checkpoints/31_tcn_btc/checkpoint_4499.pth.tar --sse aws:kms
 # 	aws s3 cp ./models/checkpoints/31_nbeats_btc/checkpoint_257.pth.tar s3://go-trader/models/checkpoints/31_nbeats_btc/checkpoint_257.pth.tar --sse aws:kms
 # 	aws s3 cp ./models/checkpoints/31_nbeats_eth/checkpoint_257.pth.tar s3://go-trader/models/checkpoints/31_nbeats_eth/checkpoint_257.pth.tar --sse aws:kms

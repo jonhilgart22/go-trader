@@ -11,3 +11,4 @@ models/
 *DS_Store
 ml_config
 main
+logs.txt

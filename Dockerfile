@@ -1,7 +1,7 @@
 FROM lambci/lambda:build-python3.8
 
 # make directories / folders
-RUN mkdir app app/csvUtils app/ftx app/mlcode app/awsUtils app/src app/structs 
+RUN mkdir app app/utils app/ftx app/mlcode app/awsUtils app/src app/structs
 
 ## PYTHON
 # COPY poetry env over
@@ -24,7 +24,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 COPY go.mod go.sum ./
 ENV GO111MODULE=on
 
-RUN  go mod download 
+RUN  go mod download
 
 # Copy files over
 ADD app app
@@ -33,4 +33,3 @@ ADD app app
 RUN cd app/src && go build -o go-trader .
 
 ENTRYPOINT  ["app/src/go-trader"]
-

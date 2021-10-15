@@ -1,5 +1,5 @@
 service:
-  image: go-trader:latest
+  image: lambci/lambda:go1.x
   environment:
     - FTX_KEY=${FTX_KEY}
     - FTX_SECRET=${FTX_SECRET}
@@ -8,3 +8,4 @@ service:
     - BTC_SUBACCOUNT_NAME=${BTC_SUBACCOUNT_NAME}
     - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
     - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    - ON_LOCAL=true

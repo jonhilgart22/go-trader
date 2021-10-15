@@ -38,3 +38,5 @@ ml_models_dir: models
 ml_model_dir_prefix: models/checkpoints
 
 python_script_path: app/mlcode/determine_trading_state.py
+
+log_filename: logs.txt

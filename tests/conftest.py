@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 
 import pandas as pd
 import pytest
@@ -48,12 +48,13 @@ def actions_to_take_constants():
 
 @pytest.fixture
 def example_btc_df():
+    today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
             "date": [
-                pd.to_datetime(date.today() - timedelta(days=3)),
-                pd.to_datetime(date.today() - timedelta(days=2)),
-                pd.to_datetime(date.today() - timedelta(days=1)),
+                pd.to_datetime(today - timedelta(days=3)),
+                pd.to_datetime(today - timedelta(days=2)),
+                pd.to_datetime(today - timedelta(days=1)),
             ],
             "open": [963.66, 993.66, 988],
             "high": [1103, 1031, 11024],
@@ -67,12 +68,13 @@ def example_btc_df():
 
 @pytest.fixture
 def example_btc_df_bollinger_exit_position():
+    today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
             "date": [
-                pd.to_datetime(date.today() - timedelta(days=3)),
-                pd.to_datetime(date.today() - timedelta(days=2)),
-                pd.to_datetime(date.today() - timedelta(days=1)),
+                pd.to_datetime(today - timedelta(days=3)),
+                pd.to_datetime(today - timedelta(days=2)),
+                pd.to_datetime(today - timedelta(days=1)),
             ],
             "open": [963.66, 993.66, 988],
             "high": [1103, 1031, 11024],
@@ -89,12 +91,13 @@ def example_btc_df_bollinger_exit_position():
 
 @pytest.fixture
 def example_btc_df_bollinger_buy_to_none():
+    today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
             "date": [
-                pd.to_datetime(date.today() - timedelta(days=3)),
-                pd.to_datetime(date.today() - timedelta(days=2)),
-                pd.to_datetime(date.today() - timedelta(days=1)),
+                pd.to_datetime(today - timedelta(days=3)),
+                pd.to_datetime(today - timedelta(days=2)),
+                pd.to_datetime(today - timedelta(days=1)),
             ],
             "open": [963.66, 993.66, 988],
             "high": [1103, 1031, 11024],
@@ -111,12 +114,13 @@ def example_btc_df_bollinger_buy_to_none():
 
 @pytest.fixture
 def example_btc_df_bollinger_short():
+    today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
             "date": [
-                pd.to_datetime(date.today() - timedelta(days=3)),
-                pd.to_datetime(date.today() - timedelta(days=2)),
-                pd.to_datetime(date.today() - timedelta(days=1)),
+                pd.to_datetime(today - timedelta(days=3)),
+                pd.to_datetime(today - timedelta(days=2)),
+                pd.to_datetime(today - timedelta(days=1)),
             ],
             "open": [963.66, 993.66, 988],
             "high": [1103, 1031, 11024],
@@ -133,12 +137,13 @@ def example_btc_df_bollinger_short():
 
 @pytest.fixture
 def example_eth_df():
+    today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
             "date": [
-                pd.to_datetime(date.today() - timedelta(days=3)),
-                pd.to_datetime(date.today() - timedelta(days=2)),
-                pd.to_datetime(date.today() - timedelta(days=1)),
+                pd.to_datetime(today - timedelta(days=3)),
+                pd.to_datetime(today - timedelta(days=2)),
+                pd.to_datetime(today - timedelta(days=1)),
             ],
             "open": [7.98, 8.17, 9.12],
             "high": [8.47, 8.44, 10.12],
