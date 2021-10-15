@@ -59,7 +59,7 @@ resource "aws_lambda_function" "lambda_model_function" {
   depends_on = [aws_efs_mount_target.alpha]
 }
 
-## VPC ## 
+## VPC ##
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 }
@@ -340,7 +340,7 @@ EOF
 resource "aws_cloudwatch_event_rule" "every_day_btc" {
   name                = "every-day-btc"
   description         = "Fires every day for btc"
-  schedule_expression = "rate(1 day)"
+  schedule_expression = "cron(02 0 * * ? *)" # run at 12:02am utc
 }
 
 resource "aws_cloudwatch_event_target" "check_btc_every_day" {
@@ -363,7 +363,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_model_function
 resource "aws_cloudwatch_event_rule" "every_day_eth" {
   name                = "every-day-eth"
   description         = "Fires every day for eth"
-  schedule_expression = "rate(1 day)"
+  schedule_expression = "cron(10 0 * * ? *)" # run at 12:10am utc
 }
 
 resource "aws_cloudwatch_event_target" "check_eth_every_day" {
@@ -380,4 +380,3 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_eth" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.every_day_eth.arn
 }
-

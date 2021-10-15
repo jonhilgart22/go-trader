@@ -370,7 +370,7 @@ class DetermineTradingState:
             text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} \n")
             text_file.write(f"bollinger low = {row[self.constants['bollinger_low_col']][0]} \n")
             text_file.write(f"self.buy_entry_price = {self.buy_entry_price}\n")
-            text_file.write(f"ml price_prediction  = {self.price_prediction}\n")
+            text_file.write(f"ml price_prediction for next 14  days= {self.price_prediction}\n")
             text_file.write("------------\n")
 
         logger.info("------------")

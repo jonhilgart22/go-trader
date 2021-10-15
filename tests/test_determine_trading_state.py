@@ -1,5 +1,6 @@
 from app.mlcode.determine_trading_state import DetermineTradingState
 from app.mlcode.predict_price_movements import BollingerBandsPredictor
+import math
 
 
 def test_no_btc_action(
@@ -12,7 +13,8 @@ def test_no_btc_action(
     actions_to_take_constants,
 ):
     """verify everyting works as intended"""
-    price_prediction = 900
+    # for faster tests, uncomment
+    # price_prediction = 900
     coin_to_predict = "btc"
     btc_predictor = BollingerBandsPredictor(
         coin_to_predict,
@@ -22,9 +24,53 @@ def test_no_btc_action(
         additional_dfs=[example_eth_df],
     )
     btc_predictor._build_bollinger_bands()
+    price_prediction = btc_predictor.predict()
+    print(f"Price prediction = {price_prediction}")
+    assert math.isnan(price_prediction) != True
     # btc_predictor.df has the bollinger bands
     trading_state_class = DetermineTradingState(
         "btc",
+        price_prediction,
+        constants,
+        trading_state_config,
+        btc_predictor.df,
+        won_and_lost_amount_constants,
+        actions_to_take_constants,
+        False,
+    )
+    trading_state_class.calculate_positions()
+    trading_state_class.update_state()
+
+    assert trading_state_config == trading_state_class.trading_state_constants
+
+
+def test_no_eth_action(
+    example_btc_df,
+    example_eth_df,
+    constants,
+    ml_config,
+    trading_state_config,
+    won_and_lost_amount_constants,
+    actions_to_take_constants,
+):
+    """verify everyting works as intended"""
+
+    coin_to_predict = "eth"
+    btc_predictor = BollingerBandsPredictor(
+        coin_to_predict,
+        constants,
+        ml_config,
+        example_btc_df,
+        additional_dfs=[example_eth_df],
+    )
+    btc_predictor._build_bollinger_bands()
+    price_prediction = btc_predictor.predict()
+    print(f"Price prediction = {price_prediction}")
+    assert math.isnan(price_prediction) != True
+    price_prediction = 900
+    # btc_predictor.df has the bollinger bands
+    trading_state_class = DetermineTradingState(
+        coin_to_predict,
         price_prediction,
         constants,
         trading_state_config,
@@ -45,7 +91,24 @@ def test_buy_btc_action(
     trading_state_config,
     won_and_lost_amount_constants,
     actions_to_take_constants,
+    ml_config,
+    example_btc_df,
+    example_eth_df,
 ):
+
+    coin_to_predict = "btc"
+    btc_predictor = BollingerBandsPredictor(
+        coin_to_predict,
+        constants,
+        ml_config,
+        example_btc_df,
+        additional_dfs=[example_eth_df],
+    )
+
+    price_prediction = btc_predictor.predict()
+    print(f"Price prediction = {price_prediction}")
+    assert math.isnan(price_prediction) != True
+    # ensure the rest of the tests pass
     price_prediction = 9000
 
     # btc_predictor.df has the bollinger bands
@@ -60,6 +123,7 @@ def test_buy_btc_action(
         actions_to_take_constants,
         False,
     )
+
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
     assert trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "buy"
@@ -120,7 +184,24 @@ def test_buy_to_none_via_prediction_btc(
     trading_state_config_buy,
     won_and_lost_amount_constants,
     actions_to_take_constants,
+    ml_config,
+    example_eth_df,
 ):
+
+    coin_to_predict = "btc"
+    btc_predictor = BollingerBandsPredictor(
+        coin_to_predict,
+        constants,
+        ml_config,
+        example_btc_df_bollinger_exit_position,
+        additional_dfs=[example_eth_df],
+    )
+
+    price_prediction = btc_predictor.predict()
+    print(f"Price prediction = {price_prediction}")
+    assert math.isnan(price_prediction) != True
+
+    # ensure the rest of the tests pass
     price_prediction = 9
 
     # btc_predictor.df has the bollinger bands

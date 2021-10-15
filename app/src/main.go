@@ -25,6 +25,7 @@ func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice,
 
     // download the files from s3
     awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"], runningOnAws)
+
     awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"], runningOnAws)
 
     // read the data into memory
@@ -67,7 +68,7 @@ func runPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
     }
     log.Println("Current working directory = ", pwd)
 
-    cmd := exec.Command("python", filepath.Join(pwd, constantsMap["python_script_path"]), fmt.Sprintf("--coin_to_predict=%v", coinToPredict))
+    cmd := exec.Command("python3", filepath.Join(pwd, constantsMap["python_script_path"]), fmt.Sprintf("--coin_to_predict=%v", coinToPredict))
     stdout, err := cmd.StdoutPipe()
     if err != nil {
         panic(err)
@@ -99,6 +100,8 @@ func main() {
 func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, error) {
 
     var runningOnAws bool = awsUtils.RunningOnAws()
+    // manually setting runningLocally to False will have everything work in the container
+    var runningLocally bool = awsUtils.RunningLocally()
     var coinToPredict string = req.CoinToPredict
     log.Printf("Coin to predict = %v", coinToPredict)
     // set env vars
@@ -153,7 +156,6 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
     // log.Println(newestClosePriceSpy, "newestClosePriceSpy")
 
     // Call the Python Program here. This is kinda jank
-    _, runningLocally := os.LookupEnv(("ON_LOCAL"))
     if runningLocally {
         log.Printf("Running only golang code locally")
     } else if runningOnAws {
@@ -200,9 +202,11 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
             log.Println("------")
 
-            // TODO: update this with correct sizing
-            size, err := decimal.NewFromString("0.001")
-            log.Println("Taking a position worth ~", size.Mul(newestClosePriceBtc))
+            size := info.TotalAccountValue.Div(newestClosePriceEth)
+
+            log.Printf("Taking a position worth of size ~%d", size)
+            log.Printf("Taking a position worth %d", newestClosePriceEth.Mul(size))
+
             if err != nil {
                 panic(err)
             }
