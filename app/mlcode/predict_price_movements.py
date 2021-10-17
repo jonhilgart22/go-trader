@@ -312,6 +312,7 @@ class BollingerBandsPredictor:
                     f" Model = { model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {prediction}"
                 )
                 all_predictions.append(prediction)
+        self.all_predictions = all_predictions
 
         return np.mean(all_predictions)
 

@@ -100,8 +100,10 @@ func main() {
 func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, error) {
 
     var runningOnAws bool = awsUtils.RunningOnAws()
+    log.Printf("Running on AWS = %v", runningOnAws)
     // manually setting runningLocally to False will have everything work in the container
     var runningLocally bool = awsUtils.RunningLocally()
+    log.Printf("Running locally = %v", runningLocally)
     var coinToPredict string = req.CoinToPredict
     log.Printf("Coin to predict = %v", coinToPredict)
     // set env vars

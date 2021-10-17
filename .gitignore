@@ -12,3 +12,5 @@ models/
 ml_config
 main
 logs.txt
+checkpoints
+untrained_models
