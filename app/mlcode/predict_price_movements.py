@@ -50,6 +50,9 @@ class BollingerBandsPredictor:
             self.constants["low_col"],
             self.constants["rolling_mean_col"],
             self.constants["volume_col"],
+            self.constants["macd_col"],
+            self.constants["macd_signal_col"],
+            self.constants["rsi_col"],
         ]
         self.pred_col = "close"
 
@@ -132,7 +135,31 @@ class BollingerBandsPredictor:
             logger.info("---- Finished creating models ----")
             self.models.append([nbeats_model, tcn_model])
 
-    def _build_bollinger_bands(self):
+    def _build_rsi_col(self, input_df: pd.DataFrame) -> pd.DataFrame:
+        input_df["day_over_day_diff"] = input_df.close.diff()
+        input_df["day_over_day_gain"] = input_df.apply(
+            lambda x: x.day_over_day_diff if x.day_over_day_diff > 0 else 0, axis=1
+        )
+        input_df["day_over_day_loss"] = input_df.apply(
+            lambda x: x.day_over_day_diff if x.day_over_day_diff < 0 else 0, axis=1
+        )
+        input_df["window_loss"] = abs(input_df.day_over_day_loss.rolling(window=self.window).sum())
+        input_df["window_gain"] = input_df.day_over_day_gain.rolling(window=self.window).sum()
+        input_df[self.constants["rsi_col"]] = 100 - (100 / (1 + input_df.window_gain / input_df.window_loss))
+        return input_df
+
+    def _build_macd_cols(self, input_df: pd.DataFrame) -> pd.DataFrame:
+
+        exp1 = input_df[self.constants["close_col"]].ewm(span=12, adjust=False).mean()
+        exp2 = input_df[self.constants["close_col"]].ewm(span=26, adjust=False).mean()
+        macd = exp1 - exp2
+        macd_signal = macd.ewm(span=9, adjust=False).mean()
+        input_df[self.constants["macd_col"]] = macd
+        input_df[self.constants["macd_signal_col"]] = macd_signal
+
+        return input_df
+
+    def _build_bollinger_bands_rsi_macd_cols(self):
 
         rolling_mean = self.df["close"].rolling(self.window).mean()
         rolling_std = self.df["close"].rolling(self.window).std()
@@ -143,6 +170,11 @@ class BollingerBandsPredictor:
         logger.info("---- Adding Bollinger Bands ----")
         logger.info(self.df.tail())
 
+        # add rsi
+        self.df = self._build_rsi_col(self.df)
+        # add MACD
+        self.df = self._build_macd_cols(self.df)
+
         new_additional_dfs = []
         if len(self.additional_dfs) > 0:
             for df in self.additional_dfs:
@@ -152,6 +184,11 @@ class BollingerBandsPredictor:
                 df[self.constants["rolling_mean_col"]] = rolling_mean
                 df[self.constants["bollinger_high_col"]] = rolling_mean + (rolling_std * self.no_of_std)
                 df[self.constants["bollinger_low_col"]] = rolling_mean - (rolling_std * self.no_of_std)
+                # add rsi
+                df = self._build_rsi_col(df)
+                # add MACD
+                df = self._build_macd_cols(df)
+
                 df = df.last(self.n_years_filter)
                 new_additional_dfs.append(df)
                 logger.info(df.tail())
@@ -299,7 +336,7 @@ class BollingerBandsPredictor:
     def predict(self) -> float:
         logger.info("Building Bollinger Bands")
         sys.stdout.flush()
-        self._build_bollinger_bands()
+        self._build_bollinger_bands_rsi_macd_cols()
         logger.info("Creating Models")
         sys.stdout.flush()
         # turns out, it's better to create new models than retrain old ones

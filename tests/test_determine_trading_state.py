@@ -1,10 +1,8 @@
 import math
 import os
 
-from app.mlcode.determine_trading_state import \
-    DetermineTradingState  # type: ignore
-from app.mlcode.predict_price_movements import \
-    BollingerBandsPredictor  # type: ignore
+from app.mlcode.determine_trading_state import DetermineTradingState  # type: ignore
+from app.mlcode.predict_price_movements import BollingerBandsPredictor  # type: ignore
 
 os.environ["ON_LOCAL"] = "True"
 
@@ -25,7 +23,7 @@ def test_no_btc_action(
     btc_predictor = BollingerBandsPredictor(
         coin_to_predict, constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
     )
-    btc_predictor._build_bollinger_bands()
+    btc_predictor._build_bollinger_bands_rsi_macd_cols()
     price_prediction = btc_predictor.predict()
     print(f"Price prediction = {price_prediction}")
     assert math.isnan(price_prediction) != True
@@ -61,7 +59,7 @@ def test_no_eth_action(
     btc_predictor = BollingerBandsPredictor(
         coin_to_predict, constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
     )
-    btc_predictor._build_bollinger_bands()
+    btc_predictor._build_bollinger_bands_rsi_macd_cols()
     price_prediction = btc_predictor.predict()
     print(f"Price prediction = {price_prediction}")
     assert math.isnan(price_prediction) != True
