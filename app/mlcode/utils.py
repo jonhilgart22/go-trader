@@ -11,13 +11,7 @@ import yaml
 log_config = {
     "version": 1,
     "root": {"handlers": ["console"], "level": "INFO"},
-    "handlers": {
-        "console": {
-            "formatter": "std_out",
-            "class": "logging.StreamHandler",
-            "level": "INFO",
-        }
-    },
+    "handlers": {"console": {"formatter": "std_out", "class": "logging.StreamHandler", "level": "INFO"}},
     "formatters": {
         "std_out": {
             "format": "[%(asctime)s] : %(levelname)s : %(module)s : %(funcName)s : %(lineno)d  %(message)s",
