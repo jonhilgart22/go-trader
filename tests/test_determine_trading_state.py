@@ -1,8 +1,10 @@
 import math
 import os
 
-from app.mlcode.determine_trading_state import DetermineTradingState  # type: ignore
-from app.mlcode.predict_price_movements import BollingerBandsPredictor  # type: ignore
+from app.mlcode.determine_trading_state import \
+    DetermineTradingState  # type: ignore
+from app.mlcode.predict_price_movements import \
+    BollingerBandsPredictor  # type: ignore
 
 os.environ["ON_LOCAL"] = "True"
 
