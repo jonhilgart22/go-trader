@@ -135,7 +135,7 @@ class DetermineTradingState:
         elif self.mode == "buy" and (
             (
                 row["close"][0] < row[self.constants["rolling_mean_col"]][0]
-                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"][0]
+                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"]
             )
             or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
             or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])

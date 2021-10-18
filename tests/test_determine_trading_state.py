@@ -1,6 +1,9 @@
 from app.mlcode.determine_trading_state import DetermineTradingState
 from app.mlcode.predict_price_movements import BollingerBandsPredictor
 import math
+import os
+
+os.environ["ON_LOCAL"] = "True"
 
 
 def test_no_btc_action(
