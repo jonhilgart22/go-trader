@@ -50,7 +50,7 @@ func SendEmail(inputSubject string, logsFilename string, onAws bool) {
 
     sesEmailInput := &ses.SendEmailInput{
         Destination: &ses.Destination{
-            ToAddresses: []*string{aws.String("jonathan.hilgart@gmail.com")},
+            ToAddresses: []*string{aws.String("jonathan.hilgart@gmail.com"), aws.String("justin.hilgart@gmail.com")},
         },
         Message: &ses.Message{
             Body: &ses.Body{

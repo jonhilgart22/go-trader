@@ -1,6 +1,12 @@
-from app.mlcode.determine_trading_state import DetermineTradingState
-from app.mlcode.predict_price_movements import BollingerBandsPredictor
 import math
+import os
+
+from app.mlcode.determine_trading_state import \
+    DetermineTradingState  # type: ignore
+from app.mlcode.predict_price_movements import \
+    BollingerBandsPredictor  # type: ignore
+
+os.environ["ON_LOCAL"] = "True"
 
 
 def test_no_btc_action(
@@ -17,11 +23,7 @@ def test_no_btc_action(
     # price_prediction = 900
     coin_to_predict = "btc"
     btc_predictor = BollingerBandsPredictor(
-        coin_to_predict,
-        constants,
-        ml_config,
-        example_btc_df,
-        additional_dfs=[example_eth_df],
+        coin_to_predict, constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
     )
     btc_predictor._build_bollinger_bands()
     price_prediction = btc_predictor.predict()
@@ -57,11 +59,7 @@ def test_no_eth_action(
 
     coin_to_predict = "eth"
     btc_predictor = BollingerBandsPredictor(
-        coin_to_predict,
-        constants,
-        ml_config,
-        example_btc_df,
-        additional_dfs=[example_eth_df],
+        coin_to_predict, constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
     )
     btc_predictor._build_bollinger_bands()
     price_prediction = btc_predictor.predict()
@@ -98,11 +96,7 @@ def test_buy_btc_action(
 
     coin_to_predict = "btc"
     btc_predictor = BollingerBandsPredictor(
-        coin_to_predict,
-        constants,
-        ml_config,
-        example_btc_df,
-        additional_dfs=[example_eth_df],
+        coin_to_predict, constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
     )
 
     price_prediction = btc_predictor.predict()
@@ -190,11 +184,7 @@ def test_buy_to_none_via_prediction_btc(
 
     coin_to_predict = "btc"
     btc_predictor = BollingerBandsPredictor(
-        coin_to_predict,
-        constants,
-        ml_config,
-        example_btc_df_bollinger_exit_position,
-        additional_dfs=[example_eth_df],
+        coin_to_predict, constants, ml_config, example_btc_df_bollinger_exit_position, additional_dfs=[example_eth_df]
     )
 
     price_prediction = btc_predictor.predict()

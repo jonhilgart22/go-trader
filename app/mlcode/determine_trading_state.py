@@ -135,7 +135,7 @@ class DetermineTradingState:
         elif self.mode == "buy" and (
             (
                 row["close"][0] < row[self.constants["rolling_mean_col"]][0]
-                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"][0]
+                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"]
             )
             or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
             or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
@@ -362,15 +362,25 @@ class DetermineTradingState:
             filename = self.constants["log_filename"]
         with open(filename, "w") as text_file:
             text_file.write("------------\n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(f"Logging for coin = {self.coin_to_predict}\n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(message + "\n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(f"current date = {row.index}\n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(f"close = {row[self.constants['close_col']][0]}\n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}\n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} \n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(f"bollinger low = {row[self.constants['bollinger_low_col']][0]} \n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(f"self.buy_entry_price = {self.buy_entry_price}\n")
+            text_file.write(" | | | | | | | | |")
             text_file.write(f"ml price_prediction for next 14  days= {self.price_prediction}\n")
+            text_file.write(" | | | | | | | | |")
             text_file.write("------------\n")
 
         logger.info("------------")

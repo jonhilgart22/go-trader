@@ -5,19 +5,13 @@ from datetime import datetime
 from logging import config
 from typing import Any, Dict
 
-import pandas as pd
+import pandas as pd  # type: ignore
 import yaml
 
 log_config = {
     "version": 1,
     "root": {"handlers": ["console"], "level": "INFO"},
-    "handlers": {
-        "console": {
-            "formatter": "std_out",
-            "class": "logging.StreamHandler",
-            "level": "INFO",
-        }
-    },
+    "handlers": {"console": {"formatter": "std_out", "class": "logging.StreamHandler", "level": "INFO"}},
     "formatters": {
         "std_out": {
             "format": "[%(asctime)s] : %(levelname)s : %(module)s : %(funcName)s : %(lineno)d  %(message)s",
@@ -62,9 +56,7 @@ def running_on_aws() -> bool:
     return os.environ.get("AWS_EXECUTION_ENV") is not None
 
 
-def read_in_data(
-    input_file: str, running_on_aws: bool, missing_dates: bool = False
-) -> pd.DataFrame:
+def read_in_data(input_file: str, running_on_aws: bool, missing_dates: bool = False) -> pd.DataFrame:
     if running_on_aws:
         input_file
         s = input_file.split("/")

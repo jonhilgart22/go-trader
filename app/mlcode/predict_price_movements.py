@@ -13,7 +13,6 @@ from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 
-
 warnings.filterwarnings("ignore")
 
 __all__ = ["BollingerBandsPredictor"]
@@ -51,7 +50,6 @@ class BollingerBandsPredictor:
             self.constants["low_col"],
             self.constants["rolling_mean_col"],
             self.constants["volume_col"],
-            self.constants["bollinger_high_col"],
         ]
         self.pred_col = "close"
 
@@ -178,11 +176,7 @@ class BollingerBandsPredictor:
 
             ts_stacked_series = ts_stacked_series.stack(transformed_series)
 
-        return (
-            ts_transformers,
-            ts_stacked_series,
-            TimeSeries.from_series(input_df[self.pred_col], freq=self.period),
-        )
+        return (ts_transformers, ts_stacked_series, TimeSeries.from_series(input_df[self.pred_col], freq=self.period))
 
     def _scale_time_series_df(self, input_df: pd.DataFrame, use_pred_col: bool = False):
         """
@@ -221,16 +215,12 @@ class BollingerBandsPredictor:
         all_ts_stacked_series = None
         all_ts_transfomers = []
         for df in self.additional_dfs:
-            (
-                additional_ts_transformers,
-                additional_ts_stacked_series,
-            ) = self._scale_time_series_df(df, use_pred_col=True)
+            (additional_ts_transformers, additional_ts_stacked_series) = self._scale_time_series_df(
+                df, use_pred_col=True
+            )
             if all_ts_stacked_series is None:
                 if verbose:
-                    print(
-                        "last date for training additional df data",
-                        additional_ts_stacked_series.time_index[-1],
-                    )
+                    print("last date for training additional df data", additional_ts_stacked_series.time_index[-1])
                 all_ts_stacked_series = additional_ts_stacked_series.stack(ts_stacked_series)
                 if verbose:
                     print("all_ts_stacked_series FIRST", all_ts_stacked_series.components)
@@ -245,25 +235,15 @@ class BollingerBandsPredictor:
 
     def _convert_data_to_timeseries(self) -> Tuple[TimeSeries, TimeSeries]:
         # combine TS from both DFs
-        (
-            ts_transformers,
-            ts_stacked_series,
-            train_close_series,
-        ) = self._scale_time_series_df_and_time_cols(self.df)
+        (ts_transformers, ts_stacked_series, train_close_series) = self._scale_time_series_df_and_time_cols(self.df)
         if self.verbose:
             logger.info(f"original DF training series = {ts_stacked_series.components}")
             logger.info(f"last date for training data = {ts_stacked_series.time_index[-1]}")
 
         if len(self.additional_dfs) > 0:
             # overwrite the ts_stacked_series var if we have additional DFS
-            (
-                additional_ts_transformers,
-                ts_stacked_series,
-            ) = self._add_additional_training_dfs(ts_stacked_series)
-            ts_transformers = {
-                **additional_ts_transformers,
-                **ts_transformers,
-            }  # merge dicts
+            (additional_ts_transformers, ts_stacked_series) = self._add_additional_training_dfs(ts_stacked_series)
+            ts_transformers = {**additional_ts_transformers, **ts_transformers}  # merge dicts
         self.ts_transformers = ts_transformers
         self.ts_stacked_series = ts_stacked_series
         self.train_close_series = train_close_series

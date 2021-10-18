@@ -1,7 +1,8 @@
 try:  # need modules for pytest to work
     from app.mlcode.determine_trading_state import DetermineTradingState
     from app.mlcode.predict_price_movements import BollingerBandsPredictor
-    from app.mlcode.utils import read_in_data, read_in_yaml, running_on_aws, update_yaml_config
+    from app.mlcode.utils import (read_in_data, read_in_yaml, running_on_aws,
+                                  update_yaml_config)
 except ModuleNotFoundError:  # Go is unable to run python modules -m
     from predict_price_movements import BollingerBandsPredictor
     from utils import read_in_yaml, read_in_data, update_yaml_config, running_on_aws
@@ -38,19 +39,11 @@ def main(coin_to_predict: str):
 
     if coin_to_predict == "btc":
         predictor = BollingerBandsPredictor(
-            coin_to_predict,
-            constants,
-            ml_constants,
-            bitcoin_df,
-            additional_dfs=[etherum_df],  # spy_df
+            coin_to_predict, constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]  # spy_df
         )
     elif coin_to_predict == "eth":
         predictor = BollingerBandsPredictor(
-            coin_to_predict,
-            constants,
-            ml_constants,
-            etherum_df,
-            additional_dfs=[bitcoin_df],  # spy_df
+            coin_to_predict, constants, ml_constants, etherum_df, additional_dfs=[bitcoin_df]  # spy_df
         )
     else:
         raise ValueError(f"Incorrect coin to predict {coin_to_predict}. Needs to be eth or btc.")
@@ -77,21 +70,15 @@ def main(coin_to_predict: str):
     trading_state_class.update_state()
     # this works
     update_yaml_config(
-        constants["trading_state_config_filename"],
-        trading_state_class.trading_state_constants,
-        is_running_on_aws,
+        constants["trading_state_config_filename"], trading_state_class.trading_state_constants, is_running_on_aws
     )
     logger.info("---- Updated trading state config --- ")
     update_yaml_config(
-        constants["won_and_lost_amount_filename"],
-        trading_state_class.won_and_lose_amount_dict,
-        is_running_on_aws,
+        constants["won_and_lost_amount_filename"], trading_state_class.won_and_lose_amount_dict, is_running_on_aws
     )
     logger.info("---- Updated win/lost state config --- ")
     update_yaml_config(
-        constants["actions_to_take_filename"],
-        trading_state_class.actions_to_take_constants,
-        is_running_on_aws,
+        constants["actions_to_take_filename"], trading_state_class.actions_to_take_constants, is_running_on_aws
     )
     logger.info("---- Updated actions to take state config --- ")
 
