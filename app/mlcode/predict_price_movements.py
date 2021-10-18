@@ -13,7 +13,6 @@ from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 
-
 warnings.filterwarnings("ignore")
 
 __all__ = ["BollingerBandsPredictor"]

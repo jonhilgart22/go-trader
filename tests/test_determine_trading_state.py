@@ -1,7 +1,8 @@
-from app.mlcode.determine_trading_state import DetermineTradingState
-from app.mlcode.predict_price_movements import BollingerBandsPredictor
 import math
 import os
+
+from app.mlcode.determine_trading_state import DetermineTradingState
+from app.mlcode.predict_price_movements import BollingerBandsPredictor
 
 os.environ["ON_LOCAL"] = "True"
 
