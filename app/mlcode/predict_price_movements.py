@@ -150,8 +150,8 @@ class BollingerBandsPredictor:
 
     def _build_macd_cols(self, input_df: pd.DataFrame) -> pd.DataFrame:
 
-        exp1 = input_df[self.constants['close_col']].ewm(span=12, adjust=False).mean()
-        exp2 = input_df[self.constants['close_col']].ewm(span=26, adjust=False).mean()
+        exp1 = input_df[self.constants["close_col"]].ewm(span=12, adjust=False).mean()
+        exp2 = input_df[self.constants["close_col"]].ewm(span=26, adjust=False).mean()
         macd = exp1 - exp2
         macd_signal = macd.ewm(span=9, adjust=False).mean()
         input_df[self.constants["macd_col"]] = macd
