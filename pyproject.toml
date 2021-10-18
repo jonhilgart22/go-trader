@@ -35,3 +35,6 @@ build-backend = "poetry.masonry.api"
 
 [tool.pytest.ini_options]
 env = ["ON_LOCAL=true"]
+
+[tool.black]
+line-length=120
