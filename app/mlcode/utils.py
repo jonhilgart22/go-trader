@@ -5,7 +5,7 @@ from datetime import datetime
 from logging import config
 from typing import Any, Dict
 
-import pandas as pd
+import pandas as pd  # type: ignore
 import yaml
 
 log_config = {
