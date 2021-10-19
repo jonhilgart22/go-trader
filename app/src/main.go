@@ -21,43 +21,23 @@ import (
     "github.com/jonhilgart22/go-trader/app/utils"
 )
 
-func downloadUpdateReuploadData(currentBitcoinRecords []*models.HistoricalPrice, currentEthereumRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool) (decimal.Decimal, decimal.Decimal) {
+func downloadUpdateReuploadData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool) decimal.Decimal {
 
     // download the files from s3
-    awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"], runningOnAws)
-
-    awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"], runningOnAws)
-
+    awsUtils.DownloadFromS3(constantsMap["s3_bucket"], csvFilename, runningOnAws)
     // read the data into memory
-    bitcoinRecords := utils.ReadCsvFile(constantsMap["bitcoin_csv_filename"], runningOnAws)
-    etherumRecords := utils.ReadCsvFile(constantsMap["etherum_csv_filename"], runningOnAws)
-    // spyRecords := utils.ReadCsvFile(constantsMap["spy_csv_filename"])
-
-    newestBitcoinDate, newestClosePriceBtc := utils.FindNewestData(bitcoinRecords)
-    newestEtherumDate, newestClosePriceEth := utils.FindNewestData(etherumRecords)
-    // newestSpyDate, newestClosePriceSpy := utils.FindNewestData(spyRecords)
-    log.Println(newestBitcoinDate, "newestBitcoinDate")
-    log.Println(newestEtherumDate, "newestEtherumDate")
-    // log.Println(spyRecords, "spyRecords")
-
+    records := utils.ReadCsvFile(csvFilename, runningOnAws)
+    newestDate, newestCosePrice := utils.FindNewestData(records)
+    log.Println(newestCosePrice, "newestCosePrice")
+    log.Println(newestDate, "newestDate")
     // add new data as needed
-    numBitcoinRecordsWritten := utils.WriteNewCsvData(currentBitcoinRecords, newestBitcoinDate, constantsMap["bitcoin_csv_filename"], runningOnAws)
-    log.Println("Finished Bitcoin CSV")
-    log.Println("Records written = ", numBitcoinRecordsWritten)
-    numEtherumRecordsWritten := utils.WriteNewCsvData(currentEthereumRecords, newestEtherumDate, constantsMap["etherum_csv_filename"], runningOnAws)
-    log.Println("Finished ETH CSV")
-    log.Println("Records written = ", numEtherumRecordsWritten)
-    // numSpyRecordsWritten := utils.WriteNewCsvData(currentSpyRecords, newestSpyDate, constantsMap["spy_csv_filename"])
-    // log.Println("Finished SPY CSV")
-    // log.Println("Records written = ", numSpyRecordsWritten)
+    numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
+    log.Println("Records written = ", numRecordsWritten)
 
-    // upload back to s3
-    awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["bitcoin_csv_filename"], runningOnAws)
-    awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["etherum_csv_filename"], runningOnAws)
-    // awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["spy_csv_filename"])
+    awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws)
 
-    return newestClosePriceEth, newestClosePriceBtc
-    //newestClosePriceSpy
+    return newestCosePrice
+
 }
 
 func runPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
@@ -140,17 +120,33 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
     } else if coinToPredict == "eth" {
         ftxClient = ftx.NewClient(os.Getenv("ETH_FTX_KEY"), os.Getenv("ETH_FTX_SECRET"), os.Getenv("ETH_SUBACCOUNT_NAME"))
 
-        marketToOrder = "BTC/USD"
+        marketToOrder = "ETH/USD"
+    } else if coinToPredict == "sol" {
+        ftxClient = ftx.NewClient(os.Getenv("SOL_FTX_KEY"), os.Getenv("SOL_FTX_SECRET"), os.Getenv("SOL_SUBACCOUNT_NAME"))
+
+        marketToOrder = "SOL/USD"
     }
 
     currentBitcoinRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["btc_product_code"], granularity)
     currentEthereumRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["eth_product_code"], granularity)
+    currentSolRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["sol_product_code"], granularity)
+    log.Println(currentSolRecords, "currentSolRecords")
     // currentSpyRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["spy_product_code"], granularity)
 
     // Add new data to CSV from FTX to s3. This will be used by our Python program
-    newestClosePriceEth, newestClosePriceBtc := downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, constantsMap, runningOnAws)
+
+    newestClosePriceBtc := downloadUpdateReuploadData(constantsMap["bitcoin_csv_filename"], currentBitcoinRecords, constantsMap, runningOnAws)
+
     log.Println(newestClosePriceBtc, "newestClosePriceBtc")
+
+    newestClosePriceEth := downloadUpdateReuploadData(constantsMap["etherum_csv_filename"], currentEthereumRecords, constantsMap, runningOnAws)
     log.Println(newestClosePriceEth, "newestClosePriceEth")
+
+    newestClosePriceSol := downloadUpdateReuploadData(constantsMap["sol_csv_filename"], currentEthereumRecords, constantsMap, runningOnAws)
+    log.Println(newestClosePriceSol, "newestClosePriceSol")
+
+    // currentSolRecords
+
     // "newestClosePriceSpy")
     // newestClosePriceEth, newestClosePriceBtc, newestClosePriceSpy := downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, currentSpyRecords, constantsMap)
     // log.Println(newestClosePriceBtc, "newestClosePriceBtc")

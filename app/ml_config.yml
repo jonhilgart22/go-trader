@@ -1,9 +1,8 @@
 prediction_params:
     bollinger_window: 10
-    no_of_std: 1.75
-    lookback_window: [15, 30]
+    no_of_std: 1.5
+    lookback_window: [15, 30, 90]
     prediction_n_days: 14
-    additional_dfs: [bitcoin_df]
     model_name: ["TCN", "NBEATS"]
     work_dir: "/mnt/shared-storage"
 hyperparameters_tcn:

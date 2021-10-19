@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go
+oadPHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth
 
 PYTHON_VERSION=3.8.2
 
@@ -49,7 +49,7 @@ download_configs:
 	aws s3 cp s3://go-trader/app/ml_config.yml app/ml_config.yml  --sse aws:kms
 	aws s3 cp s3://go-trader/app/trading_state_config.yml   app/trading_state_config.yml --sse aws:kms
 
-update_image:
+update_lambda:
 	aws --profile lambda-model \
   lambda \
   update-function-code \
@@ -62,21 +62,19 @@ update_image:
 # 	aws s3 cp ./models/checkpoints/31_nbeats_btc/checkpoint_257.pth.tar s3://go-trader/models/checkpoints/31_nbeats_btc/checkpoint_257.pth.tar --sse aws:kms
 # 	aws s3 cp ./models/checkpoints/31_nbeats_eth/checkpoint_257.pth.tar s3://go-trader/models/checkpoints/31_nbeats_eth/checkpoint_257.pth.tar --sse aws:kms
 
-# upload_data:
-# 	aws s3 cp "./data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv" "s3://go-trader/data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv" --sse aws:kms
-# 	aws s3 cp "./data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" "s3://go-trader/data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" --sse aws:kms
-# aws s3 cp "data/historic_crypto_prices - SPY_historical.csv" "s3://go-trader/data/historic_crypto_prices - SPY_historical.csv" --sse aws:kms
+upload_data:
+	aws s3 cp data/ s3://go-trader/data --sse aws:kms --recursive
 
 # download_data:
 # aws s3 cp "s3://go-trader/data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv" "./data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv"  --sse aws:kms
 # aws s3 cp  "s3://go-trader/data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" "./data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" --sse aws:kms
 
 # compile_golang
-# compile_go:
-# 	docker run --rm -v "$PWD":/go/src/handler lambci/lambda:build-go1.x sh -c 'go build app/src/main.go'
+compile_go:
+	docker run --rm -v "$PWD":/go/src/handler lambci/lambda:build-go1.x sh -c 'go build app/src/main.go'
 
-## run_golang_btc
-# docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x  main '{"coinToPredict": "btc"}'
+run_golang_btc:
+	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x  main '{"coinToPredict": "btc"}'
 
-## run_golang_eth
-# docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "eth"}'
+run_golang_eth:
+	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "eth"}'
