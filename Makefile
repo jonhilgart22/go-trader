@@ -76,5 +76,6 @@ compile_go:
 run_golang_btc:
 	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x  main '{"coinToPredict": "btc"}'
 
-run_golang_eth:
+run_golang_eth:notebooks/bollinger_bands_and_coinbase_data.ipynb
+
 	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "eth"}'
