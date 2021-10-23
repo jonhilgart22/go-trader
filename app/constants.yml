@@ -27,6 +27,11 @@ open_col: open
 high_col: high
 low_col: low
 close_col: close
+macd_col: macd
+macd_signal_col: macd_signal
+stc_col: stc
+stoch_col: stoch
+rsi_col: rsi
 
 ## Model filename information
 # TODO: will need to make a models/checkpoints directory locally?

@@ -1,8 +1,7 @@
 try:  # need modules for pytest to work
     from app.mlcode.determine_trading_state import DetermineTradingState
     from app.mlcode.predict_price_movements import BollingerBandsPredictor
-    from app.mlcode.utils import (read_in_data, read_in_yaml, running_on_aws,
-                                  update_yaml_config)
+    from app.mlcode.utils import read_in_data, read_in_yaml, running_on_aws, update_yaml_config
 except ModuleNotFoundError:  # Go is unable to run python modules -m
     from predict_price_movements import BollingerBandsPredictor
     from utils import read_in_yaml, read_in_data, update_yaml_config, running_on_aws

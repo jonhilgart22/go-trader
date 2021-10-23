@@ -50,6 +50,11 @@ class BollingerBandsPredictor:
             self.constants["low_col"],
             self.constants["rolling_mean_col"],
             self.constants["volume_col"],
+            self.constants["macd_col"],
+            self.constants["macd_signal_col"],
+            self.constants["stc_col"],
+            self.constants["stoch_col"],
+            self.constants["rsi_col"],
         ]
         self.pred_col = "close"
 

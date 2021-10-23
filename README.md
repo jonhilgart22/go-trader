@@ -15,6 +15,10 @@ Above, we can see a sample run on historic Bitcoin prices.
 - This data is more recent, up to 09-04-2021, and is used in `notebooks/bollinger_bands_and_coinbase_data.ipynb`
 3. Download SPY data from [here](https://www.nasdaq.com/market-activity/funds-and-etfs/spy/historical)
 
+### Adding a new col of data
+
+1. Add into the `BollingerBandsPredictor`
+2. Update the `self.ml_train_cols` to include this col
 
 ## Architecture
 

@@ -61,6 +61,11 @@ def example_btc_df():
             "low": [958, 996, 978],
             "close": [958, 996, 982],
             "volume": [147775008, 222184992, 177875208],
+            "macd": [1, 2, 3],
+            "macd_signal": [10, 11, 12],
+            "stc": [0.1, 0.5, 0.2],
+            "stoch": [10, 15, 14],
+            "rsi": [100, 120, 150],
         }
     )
     return df.set_index("date")
@@ -84,6 +89,11 @@ def example_btc_df_bollinger_exit_position():
             "Rolling Mean": [50, 50, 50],
             "Bollinger High": [1000, 900, 1000],
             "Bollinger Low": [1000, 900, 1000],
+            "macd": [1, 2, 3],
+            "macd_signal": [10, 11, 12],
+            "stc": [0.1, 0.5, 0.2],
+            "stoch": [10, 15, 14],
+            "rsi": [100, 120, 150],
         }
     )
     return df.set_index("date")
@@ -107,6 +117,11 @@ def example_btc_df_bollinger_buy_to_none():
             "Rolling Mean": [500, 500, 500],
             "Bollinger High": [1000, 900, 1000],
             "Bollinger Low": [1000, 900, 1000],
+            "macd": [1, 2, 3],
+            "macd_signal": [10, 11, 12],
+            "stc": [0.1, 0.5, 0.2],
+            "stoch": [10, 15, 14],
+            "rsi": [100, 120, 150],
         }
     )
     return df.set_index("date")
@@ -130,6 +145,11 @@ def example_btc_df_bollinger_short():
             "Rolling Mean": [5000, 5000, 5000],
             "Bollinger High": [1000, 900, 1000],
             "Bollinger Low": [1000, 900, 1000],
+            "macd": [1, 2, 3],
+            "macd_signal": [10, 11, 12],
+            "stc": [0.1, 0.5, 0.2],
+            "stoch": [10, 15, 14],
+            "rsi": [100, 120, 150],
         }
     )
     return df.set_index("date")
@@ -153,6 +173,11 @@ def example_eth_df():
             "Rolling Mean": [10, 10, 10],
             "Bollinger High": [10, 10, 10],
             "Bollinger Low": [10, 10, 10],
+            "macd": [1, 2, 3],
+            "macd_signal": [10, 11, 12],
+            "stc": [0.1, 0.5, 0.2],
+            "stoch": [10, 15, 14],
+            "rsi": [100, 120, 150],
         }
     )
     return df.set_index("date")

@@ -196,6 +196,10 @@ resource "aws_default_security_group" "sg_for_lambda" {
 
 ## EFS ##
 resource "aws_efs_file_system" "efs_for_lambda" {
+  lifecycle_policy {
+    transition_to_ia = "AFTER_7_DAYS" # infrequent access
+  }
+
   tags = {
     Name = "efs_for_lambda"
   }
