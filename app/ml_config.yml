@@ -3,7 +3,6 @@ prediction_params:
     no_of_std: 1.75
     lookback_window: [15, 30, 45]
     prediction_n_days: 14
-    additional_dfs: [bitcoin_df]
     model_name: ["TCN", "NBEATS"]
     work_dir: "/mnt/shared-storage"
 hyperparameters_tcn:

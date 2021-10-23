@@ -4,7 +4,7 @@ import os
 import sys
 import warnings
 from typing import Any, Dict, List, Tuple
-
+from finta import TA
 import numpy as np
 import pandas as pd
 from darts import TimeSeries
@@ -137,7 +137,18 @@ class BollingerBandsPredictor:
             logger.info("---- Finished creating models ----")
             self.models.append([nbeats_model, tcn_model])
 
-    def _build_bollinger_bands(self):
+    def _add_indicators(self, input_df: pd.DataFrame) -> pd.DataFrame:
+
+        input_df[self.constants["stc_col"]] = TA.STC(input_df)
+        input_df[self.constants["stoch_col"]] = TA.STOCH(input_df)
+        input_df[self.constants["rsi_col"]] = TA.RSI(input_df, period=self.window)
+        macd_df = TA.MACD(input_df)
+        input_df[self.constants["macd_col"]] = macd_df["MACD"]
+        input_df[self.constants["macd_signal_col"]] = macd_df["SIGNAL"]
+
+        return input_df
+
+    def _build_technical_indicators(self):
 
         rolling_mean = self.df["close"].rolling(self.window).mean()
         rolling_std = self.df["close"].rolling(self.window).std()
@@ -148,6 +159,9 @@ class BollingerBandsPredictor:
         logger.info("---- Adding Bollinger Bands ----")
         logger.info(self.df.tail())
 
+        # add rsi
+        self.df = self._add_indicators(self.df)
+
         new_additional_dfs = []
         if len(self.additional_dfs) > 0:
             for df in self.additional_dfs:
@@ -157,6 +171,9 @@ class BollingerBandsPredictor:
                 df[self.constants["rolling_mean_col"]] = rolling_mean
                 df[self.constants["bollinger_high_col"]] = rolling_mean + (rolling_std * self.no_of_std)
                 df[self.constants["bollinger_low_col"]] = rolling_mean - (rolling_std * self.no_of_std)
+                # add rsi
+                df = self._add_indicators(df)
+
                 df = df.last(self.n_years_filter)
                 new_additional_dfs.append(df)
                 logger.info(df.tail())
@@ -304,7 +321,7 @@ class BollingerBandsPredictor:
     def predict(self) -> float:
         logger.info("Building Bollinger Bands")
         sys.stdout.flush()
-        self._build_bollinger_bands()
+        self._build_technical_indicators()
         logger.info("Creating Models")
         sys.stdout.flush()
         # turns out, it's better to create new models than retrain old ones

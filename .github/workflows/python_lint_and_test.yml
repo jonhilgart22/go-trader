@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-${{ hashFiles('**/**/poetry.lock') }}
       #----------------------------------------------
       # install dependencies if cache does not exist
       #----------------------------------------------
@@ -57,7 +57,9 @@ jobs:
         run: poetry run black . --check
       - name: flake8
         run: poetry run flake8 .
-      - name: isort
-        run: poetry run isort . --check
-      - name: mypy
-        run: poetry run mypy  . --check
+        ## black already sorts
+      # - name: isort
+      #   run: poetry run isort . --check
+        # TODO: add back in
+      # - name: mypy
+      #   run: poetry run mypy  . --check

@@ -22,6 +22,8 @@ Above, we can see a sample run on historic Bitcoin prices.
 
 ## Architecture
 
+![atchitecture](media/architecture.png)
+
 1. The go app handles connecting to the FTX exchange, pulling down data from/pushing up data to  S3, adding the new data, launching the python program, and executing orders
 2. The Python program trains the ML models, builds the Bollinger Bands, predict whether to enter/exit trades and returns current trade information to the golang app.
 
