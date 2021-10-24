@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import warnings
+from threading import Thread
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
@@ -12,6 +13,7 @@ from darts.dataprocessing.transformers import Scaler
 from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
+from finta import TA
 
 warnings.filterwarnings("ignore")
 
@@ -52,6 +54,8 @@ class BollingerBandsPredictor:
             self.constants["volume_col"],
             self.constants["macd_col"],
             self.constants["macd_signal_col"],
+            self.constants["stc_col"],
+            self.constants["stoch_col"],
             self.constants["rsi_col"],
         ]
         self.pred_col = "close"
@@ -135,31 +139,18 @@ class BollingerBandsPredictor:
             logger.info("---- Finished creating models ----")
             self.models.append([nbeats_model, tcn_model])
 
-    def _build_rsi_col(self, input_df: pd.DataFrame) -> pd.DataFrame:
-        input_df["day_over_day_diff"] = input_df.close.diff()
-        input_df["day_over_day_gain"] = input_df.apply(
-            lambda x: x.day_over_day_diff if x.day_over_day_diff > 0 else 0, axis=1
-        )
-        input_df["day_over_day_loss"] = input_df.apply(
-            lambda x: x.day_over_day_diff if x.day_over_day_diff < 0 else 0, axis=1
-        )
-        input_df["window_loss"] = abs(input_df.day_over_day_loss.rolling(window=self.window).sum())
-        input_df["window_gain"] = input_df.day_over_day_gain.rolling(window=self.window).sum()
-        input_df[self.constants["rsi_col"]] = 100 - (100 / (1 + input_df.window_gain / input_df.window_loss))
-        return input_df
+    def _add_indicators(self, input_df: pd.DataFrame) -> pd.DataFrame:
 
-    def _build_macd_cols(self, input_df: pd.DataFrame) -> pd.DataFrame:
+        input_df[self.constants["stc_col"]] = TA.STC(input_df)
+        input_df[self.constants["stoch_col"]] = TA.STOCH(input_df)
+        input_df[self.constants["rsi_col"]] = TA.RSI(input_df, period=self.window)
+        macd_df = TA.MACD(input_df)
+        input_df[self.constants["macd_col"]] = macd_df["MACD"]
+        input_df[self.constants["macd_signal_col"]] = macd_df["SIGNAL"]
 
-        exp1 = input_df[self.constants["close_col"]].ewm(span=12, adjust=False).mean()
-        exp2 = input_df[self.constants["close_col"]].ewm(span=26, adjust=False).mean()
-        macd = exp1 - exp2
-        macd_signal = macd.ewm(span=9, adjust=False).mean()
-        input_df[self.constants["macd_col"]] = macd
-        input_df[self.constants["macd_signal_col"]] = macd_signal
+        return input_df.fillna(0)
 
-        return input_df
-
-    def _build_bollinger_bands_rsi_macd_cols(self):
+    def _build_technical_indicators(self):
 
         rolling_mean = self.df["close"].rolling(self.window).mean()
         rolling_std = self.df["close"].rolling(self.window).std()
@@ -171,9 +162,7 @@ class BollingerBandsPredictor:
         logger.info(self.df.tail())
 
         # add rsi
-        self.df = self._build_rsi_col(self.df)
-        # add MACD
-        self.df = self._build_macd_cols(self.df)
+        self.df = self._add_indicators(self.df)
 
         new_additional_dfs = []
         if len(self.additional_dfs) > 0:
@@ -185,9 +174,7 @@ class BollingerBandsPredictor:
                 df[self.constants["bollinger_high_col"]] = rolling_mean + (rolling_std * self.no_of_std)
                 df[self.constants["bollinger_low_col"]] = rolling_mean - (rolling_std * self.no_of_std)
                 # add rsi
-                df = self._build_rsi_col(df)
-                # add MACD
-                df = self._build_macd_cols(df)
+                df = self._add_indicators(df)
 
                 df = df.last(self.n_years_filter)
                 new_additional_dfs.append(df)
@@ -290,30 +277,55 @@ class BollingerBandsPredictor:
 
         return train_close_series, ts_stacked_series
 
+    def _train_model_with_thread(self, model, train_close_series, ts_stacked_series, epochs):
+        # Target function for training within threads
+        model.fit(series=train_close_series, past_covariates=[ts_stacked_series], verbose=self.verbose, epochs=epochs)
+
     def _train_models(self, train_close_series, ts_stacked_series):
+        dict_of_threads = {}
 
         for lookback_window_models in self.models:  # lookback windows
             for model in lookback_window_models:
                 if "nbeats" in model.model_name:
+                    dict_of_threads[str(lookback_window_models) + "_nbeats"] = Thread(
+                        target=self._train_model_with_thread,
+                        args=(
+                            model,
+                            train_close_series,
+                            ts_stacked_series,
+                            self.ml_constants["hyperparameters_nbeats"]["epochs"],
+                        ),
+                    )
+
                     logger.info("Training nbeats")
                     sys.stdout.flush()
-                    model.fit(
-                        series=train_close_series,
-                        past_covariates=[ts_stacked_series],
-                        verbose=self.verbose,
-                        epochs=self.ml_constants["hyperparameters_nbeats"]["epochs"],
-                    )
+
+                    dict_of_threads[str(lookback_window_models) + "_nbeats"].start()
+
                 elif "tcn" in model.model_name:
                     logger.info("Training TCN")
                     sys.stdout.flush()
-                    model.fit(
-                        series=train_close_series,
-                        past_covariates=[ts_stacked_series],
-                        verbose=self.verbose,
-                        epochs=self.ml_constants["hyperparameters_tcn"]["epochs"],
+                    dict_of_threads[str(lookback_window_models) + "_tcn"] = Thread(
+                        target=self._train_model_with_thread,
+                        args=(
+                            model,
+                            train_close_series,
+                            ts_stacked_series,
+                            self.ml_constants["hyperparameters_nbeats"]["epochs"],
+                        ),
                     )
+
+                    logger.info("Training nbeats")
+                    sys.stdout.flush()
+
+                    dict_of_threads[str(lookback_window_models) + "_tcn"].start()
+
                 else:
-                    raise ValueError(f"We have an incorrect model name of {model.model_name} we need tcn or nbeats")
+                    raise ValueError(f"We hdave an incorrect model name of {model.model_name} we need tcn or nbeats")
+        # block until all models are trained
+        for k, v in dict_of_threads.items():
+            logger.info(f"Have thread = {k}")
+            v.join()
 
     def _make_prediction(self, train_close_series, ts_stacked_series):
         all_predictions = []
@@ -336,7 +348,7 @@ class BollingerBandsPredictor:
     def predict(self) -> float:
         logger.info("Building Bollinger Bands")
         sys.stdout.flush()
-        self._build_bollinger_bands_rsi_macd_cols()
+        self._build_technical_indicators()
         logger.info("Creating Models")
         sys.stdout.flush()
         # turns out, it's better to create new models than retrain old ones

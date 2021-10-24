@@ -142,7 +142,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
     newestClosePriceEth := downloadUpdateReuploadData(constantsMap["etherum_csv_filename"], currentEthereumRecords, constantsMap, runningOnAws)
     log.Println(newestClosePriceEth, "newestClosePriceEth")
 
-    newestClosePriceSol := downloadUpdateReuploadData(constantsMap["sol_csv_filename"], currentEthereumRecords, constantsMap, runningOnAws)
+    newestClosePriceSol := downloadUpdateReuploadData(constantsMap["sol_csv_filename"], currentSolRecords, constantsMap, runningOnAws)
     log.Println(newestClosePriceSol, "newestClosePriceSol")
 
     // currentSolRecords

@@ -1,7 +1,7 @@
 prediction_params:
     bollinger_window: 10
-    no_of_std: 1.5
-    lookback_window: [15, 30, 90]
+    no_of_std: 1.75
+    lookback_window: [15, 30, 45]
     prediction_n_days: 14
     model_name: ["TCN", "NBEATS"]
     work_dir: "/mnt/shared-storage"
@@ -13,9 +13,9 @@ hyperparameters_tcn:
     num_filters: 7
     num_layers: 7
     weight_norm: True
-    epochs: 55
+    epochs: 70
 hyperparameters_nbeats:
     random_state: 0
     num_blocks: 5
     layer_widths: 256
-    epochs: 7
+    epochs: 8
