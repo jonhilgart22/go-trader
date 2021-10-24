@@ -3,8 +3,9 @@ import logging
 import os
 import sys
 import warnings
+from threading import Thread
 from typing import Any, Dict, List, Tuple
-from finta import TA
+
 import numpy as np
 import pandas as pd
 from darts import TimeSeries
@@ -12,7 +13,8 @@ from darts.dataprocessing.transformers import Scaler
 from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
-from threading import Thread
+from finta import TA
+
 warnings.filterwarnings("ignore")
 
 __all__ = ["BollingerBandsPredictor"]
@@ -277,8 +279,7 @@ class BollingerBandsPredictor:
 
     def _train_model_with_thread(self, model, train_close_series, ts_stacked_series, epochs):
         # Target function for training within threads
-        model.fit(series=train_close_series, past_covariates=[ts_stacked_series],
-                  verbose=self.verbose, epochs=epochs)
+        model.fit(series=train_close_series, past_covariates=[ts_stacked_series], verbose=self.verbose, epochs=epochs)
 
     def _train_models(self, train_close_series, ts_stacked_series):
         dict_of_threads = {}
@@ -286,7 +287,15 @@ class BollingerBandsPredictor:
         for lookback_window_models in self.models:  # lookback windows
             for model in lookback_window_models:
                 if "nbeats" in model.model_name:
-                    dict_of_threads[str(lookback_window_models) + "_nbeats"] = Thread(target=self._train_model_with_thread, args=(model, train_close_series, ts_stacked_series, self.ml_constants["hyperparameters_nbeats"]["epochs"]))
+                    dict_of_threads[str(lookback_window_models) + "_nbeats"] = Thread(
+                        target=self._train_model_with_thread,
+                        args=(
+                            model,
+                            train_close_series,
+                            ts_stacked_series,
+                            self.ml_constants["hyperparameters_nbeats"]["epochs"],
+                        ),
+                    )
 
                     logger.info("Training nbeats")
                     sys.stdout.flush()
@@ -296,7 +305,15 @@ class BollingerBandsPredictor:
                 elif "tcn" in model.model_name:
                     logger.info("Training TCN")
                     sys.stdout.flush()
-                    dict_of_threads[str(lookback_window_models) + "_tcn"] = Thread(target=self._train_model_with_thread, args=(model, train_close_series, ts_stacked_series, self.ml_constants["hyperparameters_nbeats"]["epochs"]))
+                    dict_of_threads[str(lookback_window_models) + "_tcn"] = Thread(
+                        target=self._train_model_with_thread,
+                        args=(
+                            model,
+                            train_close_series,
+                            ts_stacked_series,
+                            self.ml_constants["hyperparameters_nbeats"]["epochs"],
+                        ),
+                    )
 
                     logger.info("Training nbeats")
                     sys.stdout.flush()
