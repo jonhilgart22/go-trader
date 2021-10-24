@@ -5,12 +5,16 @@ btc_product_code: BTC/USD
 tcn_modelname_btc: tcn_btc
 nbeats_modelname_btc: nbeats_btc
 bitcoin_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
+tcn_filename_btc: checkpoint_4499.pth.tar
+nbeats_filename_btc: checkpoint_257.pth.tar
 
 ## ETH
 eth_product_code: ETH/USD
 tcn_modelname_eth: tcn_eth
 nbeats_modelname_eth: nbeats_eth
 etherum_csv_filename: data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
+tcn_filename_eth: checkpoint_5649.pth.tar
+nbeats_filename_eth: checkpoint_257.pth.tar
 
 ## SPY
 spy_product_code: SPY/USD
@@ -25,10 +29,6 @@ nbeats_modelname_sol: nbeats_sol
 sol_csv_filename: data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv
 
 ## Don'y need to load saved models right now, train from scratch
-# tcn_filename_eth: checkpoint_5649.pth.tar
-# tcn_filename_btc: checkpoint_4499.pth.tar
-# nbeats_filename_btc: checkpoint_257.pth.tar
-# nbeats_filename_eth: checkpoint_257.pth.tar
 
 candle_granularity: 86400
 
