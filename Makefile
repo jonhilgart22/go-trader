@@ -1,4 +1,4 @@
-oadPHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth
+PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth
 
 PYTHON_VERSION=3.8.2
 
@@ -64,10 +64,12 @@ update_lambda:
 
 upload_data:
 	aws s3 cp data/ s3://go-trader/data --sse aws:kms --recursive
+# aws s3 cp   "./data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv"  "s3://go-trader/data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv" --sse aws:kms
 
 # download_data:
 # aws s3 cp "s3://go-trader/data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv" "./data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv"  --sse aws:kms
 # aws s3 cp  "s3://go-trader/data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" "./data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" --sse aws:kms
+# aws s3 cp  "s3://go-trader/data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv" "./data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv" --sse aws:kms
 
 # compile_golang
 compile_go:
@@ -76,6 +78,5 @@ compile_go:
 run_golang_btc:
 	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x  main '{"coinToPredict": "btc"}'
 
-run_golang_eth:notebooks/bollinger_bands_and_coinbase_data.ipynb
-
+run_golang_eth:
 	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "eth"}'

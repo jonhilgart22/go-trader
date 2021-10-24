@@ -12,7 +12,7 @@ from darts.dataprocessing.transformers import Scaler
 from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
-
+from threading import Thread
 warnings.filterwarnings("ignore")
 
 __all__ = ["BollingerBandsPredictor"]
@@ -146,7 +146,7 @@ class BollingerBandsPredictor:
         input_df[self.constants["macd_col"]] = macd_df["MACD"]
         input_df[self.constants["macd_signal_col"]] = macd_df["SIGNAL"]
 
-        return input_df
+        return input_df.fillna(0)
 
     def _build_technical_indicators(self):
 
@@ -275,30 +275,40 @@ class BollingerBandsPredictor:
 
         return train_close_series, ts_stacked_series
 
+    def _train_model_with_thread(self, model, train_close_series, ts_stacked_series, epochs):
+        # Target function for training within threads
+        model.fit(series=train_close_series, past_covariates=[ts_stacked_series],
+                  verbose=self.verbose, epochs=epochs)
+
     def _train_models(self, train_close_series, ts_stacked_series):
+        dict_of_threads = {}
 
         for lookback_window_models in self.models:  # lookback windows
             for model in lookback_window_models:
                 if "nbeats" in model.model_name:
+                    dict_of_threads[str(lookback_window_models) + "_nbeats"] = Thread(target=self._train_model_with_thread, args=(model, train_close_series, ts_stacked_series, self.ml_constants["hyperparameters_nbeats"]["epochs"]))
+
                     logger.info("Training nbeats")
                     sys.stdout.flush()
-                    model.fit(
-                        series=train_close_series,
-                        past_covariates=[ts_stacked_series],
-                        verbose=self.verbose,
-                        epochs=self.ml_constants["hyperparameters_nbeats"]["epochs"],
-                    )
+
+                    dict_of_threads[str(lookback_window_models) + "_nbeats"].start()
+
                 elif "tcn" in model.model_name:
                     logger.info("Training TCN")
                     sys.stdout.flush()
-                    model.fit(
-                        series=train_close_series,
-                        past_covariates=[ts_stacked_series],
-                        verbose=self.verbose,
-                        epochs=self.ml_constants["hyperparameters_tcn"]["epochs"],
-                    )
+                    dict_of_threads[str(lookback_window_models) + "_tcn"] = Thread(target=self._train_model_with_thread, args=(model, train_close_series, ts_stacked_series, self.ml_constants["hyperparameters_nbeats"]["epochs"]))
+
+                    logger.info("Training nbeats")
+                    sys.stdout.flush()
+
+                    dict_of_threads[str(lookback_window_models) + "_tcn"].start()
+
                 else:
-                    raise ValueError(f"We have an incorrect model name of {model.model_name} we need tcn or nbeats")
+                    raise ValueError(f"We hdave an incorrect model name of {model.model_name} we need tcn or nbeats")
+        # block until all models are trained
+        for k, v in dict_of_threads.items():
+            logger.info(f"Have thread = {k}")
+            v.join()
 
     def _make_prediction(self, train_close_series, ts_stacked_series):
         all_predictions = []
