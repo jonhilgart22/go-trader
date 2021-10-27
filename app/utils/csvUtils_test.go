@@ -10,7 +10,9 @@ import (
 )
 
 func TestFindNewestData(t *testing.T) {
-    historicalData := make([]structs.HistoricCandles, 0, 3)
+    fmt.Println("TestFindNewestData")
+    historicalData := []structs.HistoricCandles{}
+
     dayOneOpen, err := decimal.NewFromString("900.0")
     if err != nil {
         panic(err)
@@ -60,24 +62,36 @@ func TestFindNewestData(t *testing.T) {
         panic(err)
     }
 
-    historicalData[0] = structs.HistoricCandles{Date: time.Date(2020, time.Month(9), 1, 0, 0, 0, 0, time.UTC),
+    dayOne := structs.HistoricCandles{Date: time.Date(2020, time.Month(9), 1, 0, 0, 0, 0, time.UTC),
         Open:   dayOneOpen,
         High:   dayOneHigh,
         Close:  dayOneClose,
         Volume: dayOneVolume}
+    historicalData = append(historicalData, dayOne)
 
-    historicalData[1] = structs.HistoricCandles{Date: time.Date(2021, time.Month(10), 1, 0, 0, 0, 0, time.UTC),
+    dayTwo := structs.HistoricCandles{Date: time.Date(2021, time.Month(10), 1, 0, 0, 0, 0, time.UTC),
         Open:   dayTwoOpen,
         High:   dayTwoHigh,
         Close:  dayTwoClose,
         Volume: dayTwoVolume}
+    historicalData = append(historicalData, dayTwo)
 
-    historicalData[2] = structs.HistoricCandles{Date: time.Date(2020, time.Month(10), 1, 0, 0, 0, 0, time.UTC),
+    dayThree := structs.HistoricCandles{Date: time.Date(2020, time.Month(10), 1, 0, 0, 0, 0, time.UTC),
         Open:   dayThreeOpen,
         High:   dayThreeHigh,
         Close:  dayThreeClose,
         Volume: dayThreeVolume}
+    historicalData = append(historicalData, dayThree)
+
     newestDate, NewestClosePrice := FindNewestData(historicalData)
     fmt.Println(newestDate, "newestDate")
     fmt.Println(NewestClosePrice, "NewestClosePrice")
+    // see if newestcloseprice equals 300.0
+    if NewestClosePrice.String() != "300" {
+        t.Error("NewestClosePrice is not 300")
+    }
+    // see if date is 2020-10-01 00:00:00 +0000 UTC
+    if newestDate.Before(time.Date(2020, time.Month(10), 1, 0, 0, 0, 0, time.UTC)) {
+        t.Error("NewestDate is not 2020-10-01 00:00:00 +0000 UTC")
+    }
 }

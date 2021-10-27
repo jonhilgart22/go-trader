@@ -150,6 +150,21 @@ class BollingerBandsPredictor:
 
         return input_df.fillna(0)
 
+    def _slice_df(self):
+        # some dataframes don't have enough data a full lookback window
+        slice_date = self.df.index.min()
+        logger.info(f"Slice date , earliest day of data for main df, = {slice_date}")
+
+        self.df = self.df.loc[slice_date:, :].copy()
+
+        sliced_additional_dfs = []
+        if len(self.additional_dfs) > 0:
+            for add_df in self.additional_dfs:
+                sliced_df = add_df.loc[slice_date:, :].copy()
+                sliced_additional_dfs.append(sliced_df)
+
+        self.additional_dfs = sliced_additional_dfs
+
     def _build_technical_indicators(self):
 
         rolling_mean = self.df["close"].rolling(self.window).mean()
@@ -346,6 +361,8 @@ class BollingerBandsPredictor:
         return np.mean(all_predictions)
 
     def predict(self) -> float:
+        logger.info("Slicing dataframes")
+        self._slice_df()
         logger.info("Building Bollinger Bands")
         sys.stdout.flush()
         self._build_technical_indicators()
