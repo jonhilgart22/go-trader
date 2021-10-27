@@ -19,13 +19,12 @@ jobs:
       - name: Install dependencies
         run: |
           go version
-          go get -u golang.org/x/lint/golint
       - name: Run build
         run: go build app/src/main.go
       - name: Run vet & lint
         run: |
-          go vet .
-          golint .
+          go vet ./...
+          gofmt -l .
       - name: Run testing aws utils
         run: cd app/awsUtils && go test -v
       - name: Run testing ftx
