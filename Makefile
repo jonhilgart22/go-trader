@@ -18,8 +18,8 @@ lint: install
 	poetry run isort .
 	poetry run black .
 	poetry run flake8
-	poetry run mypy .
-	golangci-lint run
+	go vet ./...
+	go fmt ./...
 
 clean:
 	rm -rf notebooks/.darts

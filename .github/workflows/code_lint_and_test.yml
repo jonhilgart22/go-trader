@@ -24,7 +24,7 @@ jobs:
       - name: Run vet & lint
         run: |
           go vet ./...
-          gofmt -l .
+          go fmt ./...
       - name: Run testing aws utils
         run: cd app/awsUtils && go test -v
       - name: Run testing ftx
