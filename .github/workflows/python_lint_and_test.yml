@@ -11,7 +11,28 @@ jobs:
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v2
-
+      ## setup go
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ‘1.17.0’
+      - name: Install dependencies
+        run: |
+          go version
+          go get -u golang.org/x/lint/golint
+      - name: Run build
+        run: go build app/src/main.go
+      - name: Run vet & lint
+        run: |
+          go vet .
+          golint .
+      - name: Run testing aws utils
+        run: cd app/awsUtils && go test -v
+      - name: Run testing ftx
+        run: cd app/ftx && go test -v
+      - name: Run testing utils
+        run: cd app/utils && go test -v
+      ## setup python
       - name: Set up python
         uses: actions/setup-python@v2
         with:
