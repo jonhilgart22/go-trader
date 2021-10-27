@@ -32,7 +32,6 @@ repos:
     rev: v1.1.7
     hooks:
       - id: remove-crlf
-      - id: remove-tabs
       # this doesn't play well with the poetry black
   # - repo: https://github.com/psf/black
   #   rev: 20.8b1
