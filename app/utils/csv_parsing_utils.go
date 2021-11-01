@@ -128,7 +128,6 @@ func ReadCsvFile(filePath string, onAws bool) []structs.HistoricCandles {
 
 	for {
 		line, error := reader.Read()
-		log.Println(line, "line")
 		if error == io.EOF {
 			break
 		} else if error != nil {
