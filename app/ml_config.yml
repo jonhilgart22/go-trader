@@ -1,8 +1,8 @@
 prediction_params:
-    bollinger_window: 10
-    no_of_std: 1.75
+    bollinger_window: 5
+    no_of_std: 1.25
     lookback_window: [15, 30, 45]
-    prediction_n_days: 14
+    prediction_n_days: 7
     model_name: ["TCN", "NBEATS"]
     work_dir: "/mnt/shared-storage"
 hyperparameters_tcn:

@@ -31,6 +31,7 @@ class DetermineTradingState:
             actions_to_take_constants: determine which actions to take for each coin (buy, short, none ...etc)
             running_on_aws: are on we lambda?
         """
+        self.prediction_n_days = 7  # from ml config
         if coin_to_predict not in ["btc", "eth"]:
             raise ValueError(f"Incorrect prediction coin entered = {coin_to_predict}. Needs to be eth or btc")
         self.coin_to_predict = coin_to_predict
@@ -379,7 +380,7 @@ class DetermineTradingState:
             text_file.write(" | | | | | | | | |")
             text_file.write(f"self.buy_entry_price = {self.buy_entry_price}\n")
             text_file.write(" | | | | | | | | |")
-            text_file.write(f"ml price_prediction for next 14  days= {self.price_prediction}\n")
+            text_file.write(f"ml price_prediction for next {self.prediction_n_days}  days= {self.price_prediction}\n")
             text_file.write(" | | | | | | | | |")
             text_file.write("------------\n")
 
