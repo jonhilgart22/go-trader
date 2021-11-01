@@ -70,22 +70,15 @@ func DownloadFromS3(bucket string, item string, onAws bool, s3Client *session.Se
 
 }
 
-func UploadToS3(bucket string, item string, runningOnAws bool) {
+func UploadToS3(bucket string, item string, runningOnAws bool, s3Client *session.Session) {
 	var s3Item string
-	log.Println("Uploading to S3. item", item, "to bucket", bucket)
+	log.Println("Uploading to S3 item", item, "to bucket", bucket)
 	if runningOnAws {
 		s3Item = item
 		s := strings.Split(item, "/")
 		item = "/tmp/" + s[len(s)-1]
 	} else {
 		s3Item = item
-	}
-	//  Create an AWS session
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")},
-	)
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	// open the file for use
@@ -105,7 +98,7 @@ func UploadToS3(bucket string, item string, runningOnAws bool) {
 	// config settings: this is where you choose the bucket,
 	// filename, content-type and storage class of the file
 	// you're uploading
-	_, s3err := s3.New(sess).PutObject(&s3.PutObjectInput{
+	_, s3err := s3.New(s3Client).PutObject(&s3.PutObjectInput{
 		Bucket:               aws.String(bucket),
 		Key:                  aws.String(s3Item),
 		ACL:                  aws.String("private"),

@@ -35,7 +35,7 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
 	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateReuploadData")
 
-	awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws)
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
 
 	return newestCosePrice, numRecordsWritten
 
@@ -232,15 +232,15 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	// upload any config changes that we need to maintain state
 	if !runningLocally {
 		//actions_to_take.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws)
+		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
 		//constants.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"], runningOnAws)
+		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"], runningOnAws, awsSession)
 		//ml_config.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws)
+		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
 		//trading_state_config.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws)
+		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
 		//won_and_lost_amount.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws)
+		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
 	} else {
 		log.Println("Running locally, not upload config files")
 	}
