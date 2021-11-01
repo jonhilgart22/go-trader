@@ -98,7 +98,7 @@ func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.T
 }
 
 func FindNewestData(inputRecords []structs.HistoricCandles) (time.Time, decimal.Decimal) {
-	var newestDate time.Time
+	var newestDate time.Time = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
 	var newestClosePrice decimal.Decimal
 	for _, historicVal := range inputRecords {
 		if historicVal.Date.After(newestDate) {
@@ -128,19 +128,21 @@ func ReadCsvFile(filePath string, onAws bool) []structs.HistoricCandles {
 
 	for {
 		line, error := reader.Read()
+		log.Println(line, "line")
 		if error == io.EOF {
 			break
 		} else if error != nil {
 			panic(error)
-		} else if Contains(line, "date") && Contains(line, "open") && Contains(line, "close") {
+		} else if (Contains(line, "date") && Contains(line, "open") && Contains(line, "close")) || (len(line) == 0) {
 			continue
 		}
 		records = append(records, structs.HistoricCandles{
-			Date:  ParseDate(line[0]),
-			Open:  ConvertStringToFloat(line[1]),
-			High:  ConvertStringToFloat(line[2]),
-			Low:   ConvertStringToFloat(line[3]),
-			Close: ConvertStringToFloat(line[4]),
+			Date:   ParseDate(line[0]),
+			Open:   ConvertStringToFloat(line[1]),
+			High:   ConvertStringToFloat(line[2]),
+			Low:    ConvertStringToFloat(line[3]),
+			Close:  ConvertStringToFloat(line[4]),
+			Volume: ConvertStringToFloat(line[5]),
 		})
 	}
 

@@ -25,18 +25,21 @@ func RunningLocally() bool {
 	return present
 }
 
-func DownloadFromS3(bucket string, item string, onAws bool) {
-
-	// 2) Create an AWS session
+func CreateNewAwsSession() *session.Session {
+	// Create an AWS session
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1")},
 	)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+	return sess
+}
+
+func DownloadFromS3(bucket string, item string, onAws bool, s3Client *session.Session) {
 
 	// 3) Create a new AWS S3 downloader
-	downloader := s3manager.NewDownloader(sess)
+	downloader := s3manager.NewDownloader(s3Client)
 
 	// 4) Download the item from the bucket. If an error occurs, log it and exit. Otherwise, notify the user that the download succeeded.
 	s3Item := item

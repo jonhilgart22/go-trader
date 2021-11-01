@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/shopspring/decimal"
 
 	"github.com/grishinsana/goftx"
@@ -21,10 +22,10 @@ import (
 	"github.com/jonhilgart22/go-trader/app/utils"
 )
 
-func downloadUpdateReuploadData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool) decimal.Decimal {
+func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool, s3Client *session.Session) (decimal.Decimal, int) {
 
 	// download the files from s3
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], csvFilename, runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
 	// read the data into memory
 	records := utils.ReadCsvFile(csvFilename, runningOnAws)
 	newestDate, newestCosePrice := utils.FindNewestData(records)
@@ -32,11 +33,10 @@ func downloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	log.Println(newestDate, "newestDate")
 	// add new data as needed
 	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
-	log.Println("Records written = ", numRecordsWritten)
 
 	awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws)
 
-	return newestCosePrice
+	return newestCosePrice, numRecordsWritten
 
 }
 
@@ -90,19 +90,20 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	awsUtils.SetSsmToEnvVars()
 
 	// Download all the config files
-	awsUtils.DownloadFromS3("go-trader", "app/constants.yml", runningOnAws)
+	awsSession := awsUtils.CreateNewAwsSession()
+	awsUtils.DownloadFromS3("go-trader", "app/constants.yml", runningOnAws, awsSession)
 
 	// Read in the constants from yaml
 	constantsMap := utils.ReadYamlFile("app/constants.yml")
 
 	// Download the rest of the config files
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
 	//ml_config.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
 	//trading_state_config.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
 	//won_and_lost_amount.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws)
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
 
 	// pull new data from FTX with day candles
 	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
@@ -135,20 +136,23 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 	// Add new data to CSV from FTX to s3. This will be used by our Python program
 
-	newestClosePriceBtc := downloadUpdateReuploadData(constantsMap["bitcoin_csv_filename"], currentBitcoinRecords, constantsMap, runningOnAws)
+	newestClosePriceBtc, numRecordsWrittenBtc := DownloadUpdateReuploadData(constantsMap["bitcoin_csv_filename"], currentBitcoinRecords, constantsMap, runningOnAws, awsSession)
+	log.Println("Records written = ", numRecordsWrittenBtc)
 
 	log.Println(newestClosePriceBtc, "newestClosePriceBtc")
 
-	newestClosePriceEth := downloadUpdateReuploadData(constantsMap["etherum_csv_filename"], currentEthereumRecords, constantsMap, runningOnAws)
+	newestClosePriceEth, numRecordsWrittenEth := DownloadUpdateReuploadData(constantsMap["etherum_csv_filename"], currentEthereumRecords, constantsMap, runningOnAws, awsSession)
+	log.Println("Records written = ", numRecordsWrittenEth)
 	log.Println(newestClosePriceEth, "newestClosePriceEth")
 
-	newestClosePriceSol := downloadUpdateReuploadData(constantsMap["sol_csv_filename"], currentSolRecords, constantsMap, runningOnAws)
-	log.Println(newestClosePriceSol, "newestClosePriceSol")
+	newestClosePriceSol, numRecordsWrittenSol := DownloadUpdateReuploadData(constantsMap["sol_csv_filename"], currentSolRecords, constantsMap, runningOnAws, awsSession)
+	log.Println("Records written = ", numRecordsWrittenSol)
+	log.Println(newestClosePriceSol, "newestClosePriceSol", awsSession)
 
 	// currentSolRecords
 
 	// "newestClosePriceSpy")
-	// newestClosePriceEth, newestClosePriceBtc, newestClosePriceSpy := downloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, currentSpyRecords, constantsMap)
+	// newestClosePriceEth, newestClosePriceBtc, newestClosePriceSpy := DownloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, currentSpyRecords, constantsMap, awsSession)
 	// log.Println(newestClosePriceBtc, "newestClosePriceBtc")
 	// log.Println(newestClosePriceEth, "newestClosePriceEth")
 	// log.Println(newestClosePriceSpy, "newestClosePriceSpy")

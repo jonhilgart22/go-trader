@@ -29,8 +29,8 @@ jobs:
         run: cd app/awsUtils && go test -v
       - name: Run testing ftx
         run: cd app/ftx && go test -v
-      - name: Run testing utils
-        run: cd app/utils && go test -v
+      - name: Run testing src
+        run: cd app/src && go test -v
       ## setup python
       - name: Set up python
         uses: actions/setup-python@v2
