@@ -33,6 +33,7 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	log.Println(newestDate, "newestDate")
 	// add new data as needed
 	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
+	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateReuploadData")
 
 	awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws)
 
