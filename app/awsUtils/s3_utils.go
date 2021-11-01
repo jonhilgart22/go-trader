@@ -72,6 +72,7 @@ func DownloadFromS3(bucket string, item string, onAws bool, s3Client *session.Se
 
 func UploadToS3(bucket string, item string, runningOnAws bool) {
 	var s3Item string
+	log.Println("Uploading to S3. item", item, "to bucket", bucket)
 	if runningOnAws {
 		s3Item = item
 		s := strings.Split(item, "/")
