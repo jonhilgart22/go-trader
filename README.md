@@ -72,7 +72,7 @@ Via Github Actions
 5. Update the `main.py` files for this new coin as well as the `determine_trading_state.py` and `predict_price_movements.py`
 6. Update the `*.yml` files to include a new entry for this coin
 7. Create a new Eventbridge trigger in the `main.tf` file
-8. Upload the configs, build the lambda image, update the lambda with the new image!
+8. Upload the configs `make upload_configs`, build the lambda image, update the lambda with the new image!
 NB: be sure to update the various checks that look for the correct input coins
 
 ## Testing
