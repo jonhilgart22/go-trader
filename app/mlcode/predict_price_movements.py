@@ -34,8 +34,7 @@ class BollingerBandsPredictor:
         verbose: bool = True,
     ):
         self.n_years_filter = "3Y"  # use last 3 years of data
-        if coin_to_predict not in ["btc", "eth"]:
-            raise ValueError(f"Incorrect coin to predict = {coin_to_predict} needs to be eth or btc")
+
         self.coin_to_predict = coin_to_predict
         self.constants: Dict[str, Dict[str, Any]] = constants
         self.ml_constants: Dict[str, Dict[str, Any]] = ml_constants
@@ -77,6 +76,12 @@ class BollingerBandsPredictor:
             tcn_filename = self.constants["tcn_filename_eth"]
             nbeats_model_name = self.constants["nbeats_modelname_eth"]
             nbeats_filename = self.constants["nbeats_filename_eth"]
+        elif self.coin_to_predict.lower() == "sol":
+            tcn_model_name = self.constants["tcn_modelname_sol"]
+            tcn_filename = self.constants["tcn_filename_sol"]
+            nbeats_model_name = self.constants["nbeats_modelname_sol"]
+            nbeats_filename = self.constants["nbeats_filename_sol"]
+
         else:
             raise ValueError(f"Incorrect model token to predict given {self. coin_to_predict}")
         logger.info("------")

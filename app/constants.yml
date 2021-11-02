@@ -25,7 +25,9 @@ ada_product_code: ADA/USD
 ## SOL
 sol_product_code: SOL/USD
 tcn_modelname_sol: tcn_sol
+tcn_filename_sol: test_sol_tcn.pth.tar
 nbeats_modelname_sol: nbeats_sol
+nbeats_filename_sol: test_sol_nbeats.pth.tar
 sol_csv_filename: data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv
 
 ## Don'y need to load saved models right now, train from scratch

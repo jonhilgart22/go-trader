@@ -39,9 +39,14 @@ func SetSsmToEnvVars() {
 	btcSubaccountName := v.Get(`BTC_SUBACCOUNT_NAME`)
 	btcFtxKey := v.Get(`BTC_FTX_KEY`)
 	btcFtxSecret := v.Get(`BTC_FTX_SECRET`)
+	// eth
 	ethSubaccountName := v.Get(`ETH_SUBACOUNT_NAME`)
 	ethFtxKey := v.Get(`ETH_FTX_KEY`)
 	ethFtxSecret := v.Get(`ETH_FTX_SECRET`)
+	// sol
+	solSubaccountName := v.Get(`SOL_SUBACOUNT_NAME`)
+	solFtxKey := v.Get(`SOL_FTX_KEY`)
+	solFtxSecret := v.Get(`SOL_FTX_SECRET`)
 	//value should be `a`
 	os.Setenv("FTX_KEY", fmt.Sprintf("%v", ftxKey))
 	os.Setenv("FTX_SECRET", fmt.Sprintf("%v", ftxSecret))
@@ -52,4 +57,8 @@ func SetSsmToEnvVars() {
 	os.Setenv("ETH_SUBACCOUNT_NAME", fmt.Sprintf("%v", ethSubaccountName))
 	os.Setenv("ETH_FTX_KEY", fmt.Sprintf("%v", ethFtxKey))
 	os.Setenv("ETH_FTX_SECRET", fmt.Sprintf("%v", ethFtxSecret))
+	// SOL
+	os.Setenv("SOL_SUBACCOUNT_NAME", fmt.Sprintf("%v", solSubaccountName))
+	os.Setenv("SOL_FTX_KEY", fmt.Sprintf("%v", solFtxKey))
+	os.Setenv("SOL_FTX_SECRET", fmt.Sprintf("%v", solFtxSecret))
 }

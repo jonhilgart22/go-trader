@@ -67,6 +67,26 @@ def example_btc_df():
 
 
 @pytest.fixture
+def example_sol_df():
+    today = datetime.utcnow().date()
+    df = pd.DataFrame(
+        {
+            "date": [
+                pd.to_datetime(today - timedelta(days=3)),
+                pd.to_datetime(today - timedelta(days=2)),
+                pd.to_datetime(today - timedelta(days=1)),
+            ],
+            "open": [963.66, 993.66, 988],
+            "high": [1103, 1031, 11024],
+            "low": [958, 996, 978],
+            "close": [958, 996, 982],
+            "volume": [147775008, 222184992, 177875208],
+        }
+    )
+    return df.set_index("date")
+
+
+@pytest.fixture
 def example_btc_df_bollinger_exit_position():
     today = datetime.utcnow().date()
     df = pd.DataFrame(

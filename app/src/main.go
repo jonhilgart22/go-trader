@@ -6,9 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
-
 	"path/filepath"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,58 +20,6 @@ import (
 	"github.com/jonhilgart22/go-trader/app/structs"
 	"github.com/jonhilgart22/go-trader/app/utils"
 )
-
-func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool, s3Client *session.Session) (decimal.Decimal, int) {
-
-	// download the files from s3
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
-	// read the data into memory
-	records := utils.ReadCsvFile(csvFilename, runningOnAws)
-	newestDate, newestCosePrice := utils.FindNewestData(records)
-	log.Println(newestCosePrice, "newestCosePrice")
-	log.Println(newestDate, "newestDate")
-	// add new data as needed
-	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
-	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateReuploadData")
-
-	awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
-
-	return newestCosePrice, numRecordsWritten
-
-}
-
-func runPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-	log.Println("Current working directory = ", pwd)
-
-	cmd := exec.Command("python3", filepath.Join(pwd, constantsMap["python_script_path"]), fmt.Sprintf("--coin_to_predict=%v", coinToPredict))
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		os.Exit(1)
-		panic(err)
-
-	}
-	err = cmd.Start()
-	if err != nil {
-		os.Exit(1)
-		panic(err)
-	}
-
-	go utils.CopyOutput(stdout)
-	go utils.CopyOutput(stderr)
-	waitErr := cmd.Wait()
-	if waitErr != nil {
-		panic(waitErr)
-	}
-}
 
 func main() {
 	lambda.Start(HandleRequest)
@@ -132,7 +79,6 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	currentBitcoinRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["btc_product_code"], granularity)
 	currentEthereumRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["eth_product_code"], granularity)
 	currentSolRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["sol_product_code"], granularity)
-	log.Println(currentSolRecords, "currentSolRecords")
 	// currentSpyRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["spy_product_code"], granularity)
 
 	// Add new data to CSV from FTX to s3. This will be used by our Python program
@@ -150,20 +96,12 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Println("Records written = ", numRecordsWrittenSol)
 	log.Println(newestClosePriceSol, "newestClosePriceSol", awsSession)
 
-	// currentSolRecords
-
-	// "newestClosePriceSpy")
-	// newestClosePriceEth, newestClosePriceBtc, newestClosePriceSpy := DownloadUpdateReuploadData(currentBitcoinRecords, currentEthereumRecords, currentSpyRecords, constantsMap, awsSession)
-	// log.Println(newestClosePriceBtc, "newestClosePriceBtc")
-	// log.Println(newestClosePriceEth, "newestClosePriceEth")
-	// log.Println(newestClosePriceSpy, "newestClosePriceSpy")
-
 	// Call the Python Program here. This is kinda jank
 	if runningLocally {
 		log.Printf("Running only golang code locally")
 	} else if runningOnAws {
 		log.Printf("Calling our Python program with coin = %v", coinToPredict)
-		runPythonMlProgram(constantsMap, coinToPredict)
+		RunPythonMlProgram(constantsMap, coinToPredict)
 	}
 	// Read in the constants  that have been updated from our python ML program. Determine what to do based
 	log.Println("Determining actions to take")
@@ -254,4 +192,56 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	// all done!
 	return "Finished!", nil
 
+}
+
+func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool, s3Client *session.Session) (decimal.Decimal, int) {
+
+	// download the files from s3
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
+	// read the data into memory
+	records := utils.ReadCsvFile(csvFilename, runningOnAws)
+	newestDate, newestCosePrice := utils.FindNewestData(records)
+	log.Println(newestCosePrice, "newestCosePrice")
+	log.Println(newestDate, "newestDate")
+	// add new data as needed
+	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
+	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateReuploadData")
+
+	awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
+
+	return newestCosePrice, numRecordsWritten
+
+}
+
+func RunPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	log.Println("Current working directory = ", pwd)
+
+	cmd := exec.Command("python3", filepath.Join(pwd, constantsMap["python_script_path"]), fmt.Sprintf("--coin_to_predict=%v", coinToPredict))
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		panic(err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		os.Exit(1)
+		panic(err)
+
+	}
+	err = cmd.Start()
+	if err != nil {
+		os.Exit(1)
+		panic(err)
+	}
+
+	go utils.CopyOutput(stdout)
+	go utils.CopyOutput(stderr)
+	waitErr := cmd.Wait()
+	if waitErr != nil {
+		panic(waitErr)
+	}
 }
