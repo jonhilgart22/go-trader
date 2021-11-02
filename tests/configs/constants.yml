@@ -1,7 +1,37 @@
 ## Coins to predict information
+
+## BTC
 btc_product_code: BTC/USD
+tcn_modelname_btc: tcn_btc
+nbeats_modelname_btc: nbeats_btc
+bitcoin_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
+tcn_filename_btc: checkpoint_4499.pth.tar
+nbeats_filename_btc: checkpoint_257.pth.tar
+
+## ETH
 eth_product_code: ETH/USD
+tcn_modelname_eth: tcn_eth
+nbeats_modelname_eth: nbeats_eth
+etherum_csv_filename: data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
+tcn_filename_eth: checkpoint_5649.pth.tar
+nbeats_filename_eth: checkpoint_257.pth.tar
+
+## SPY
 spy_product_code: SPY/USD
+
+## ADA
+ada_product_code: ADA/USD
+
+## SOL
+sol_product_code: SOL/USD
+tcn_modelname_sol: tcn_sol
+tcn_filename_sol: test_sol_tcn.pth.tar
+nbeats_modelname_sol: nbeats_sol
+nbeats_filename_sol: test_sol_nbeats.pth.tar
+sol_csv_filename: data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv
+
+## Don'y need to load saved models right now, train from scratch
+
 candle_granularity: 86400
 
 ## S3 and data information
@@ -9,8 +39,6 @@ s3_bucket: go-trader
 s3_data_location: data
 s3_configs_locations:
 # TODO: will need to make a data directory locally?
-bitcoin_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
-etherum_csv_filename: data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
 actions_to_take_filename: app/actions_to_take.yml
 constants_filename: app/constants.yml
 ml_config_filename: app/ml_config.yml
@@ -33,17 +61,7 @@ stc_col: stc
 stoch_col: stoch
 rsi_col: rsi
 
-## Model filename information
-# TODO: will need to make a models/checkpoints directory locally?
-tcn_modelname_btc: 31_tcn_btc
-tcn_modelname_eth: 31_tcn_eth
-tcn_filename_eth: checkpoint_5649.pth.tar
-tcn_filename_btc: checkpoint_4499.pth.tar
-
-nbeats_modelname_btc: 31_nbeats_btc
-nbeats_modelname_eth: 31_nbeats_eth
-nbeats_filename_btc: checkpoint_257.pth.tar
-nbeats_filename_eth: checkpoint_257.pth.tar
+# directory information
 
 ml_models_dir: models
 ml_model_dir_prefix: models/checkpoints

@@ -44,6 +44,43 @@ def test_no_btc_action(
     assert trading_state_config == trading_state_class.trading_state_constants
 
 
+def test_no_sol_action(
+    example_sol_df,
+    example_eth_df,
+    constants,
+    ml_config,
+    trading_state_config,
+    won_and_lost_amount_constants,
+    actions_to_take_constants,
+):
+    """verify everyting works as intended"""
+    # for faster tests, uncomment
+    # price_prediction = 900
+    coin_to_predict = "sol"
+    btc_predictor = BollingerBandsPredictor(
+        coin_to_predict, constants, ml_config, example_sol_df, additional_dfs=[example_eth_df]
+    )
+    btc_predictor._build_technical_indicators()
+    price_prediction = btc_predictor.predict()
+    print(f"Price prediction = {price_prediction}")
+    assert math.isnan(price_prediction) != True
+    # btc_predictor.df has the bollinger bands
+    trading_state_class = DetermineTradingState(
+        coin_to_predict,
+        price_prediction,
+        constants,
+        trading_state_config,
+        btc_predictor.df,
+        won_and_lost_amount_constants,
+        actions_to_take_constants,
+        False,
+    )
+    trading_state_class.calculate_positions()
+    trading_state_class.update_state()
+
+    assert trading_state_config == trading_state_class.trading_state_constants
+
+
 def test_no_eth_action(
     example_btc_df,
     example_eth_df,
@@ -121,7 +158,7 @@ def test_buy_btc_action(
     assert trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "buy"
     assert trading_state_class.trading_state_constants[coin_to_predict]["short_entry_price"] == 0
     assert trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"] == 982
-    assert trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"] == 932.9
+    assert trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"] == 883.8000000000001
     assert trading_state_class.actions_to_take_constants[coin_to_predict]["action_to_take"] == "none_to_buy"
 
 

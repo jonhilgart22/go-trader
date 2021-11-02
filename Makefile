@@ -41,6 +41,7 @@ upload_configs:
 	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml --sse aws:kms
 	aws s3 cp app/ml_config.yml s3://go-trader/app/ml_config.yml --sse aws:kms
 	aws s3 cp app/trading_state_config.yml s3://go-trader/app/trading_state_config.yml --sse aws:kms
+	aws s3 cp app/won_and_lost_amount_config.yml s3://go-trader/app/won_and_lost_amount_config.yml --sse aws:kms
 	aws s3 cp env_vars.sh s3://go-trader/env_vars.sh --sse aws:kms
 
 download_configs:
