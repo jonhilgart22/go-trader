@@ -2,3 +2,5 @@ btc:
   action_to_take: none
 eth:
   action_to_take: none
+sol:
+  action_to_take: none

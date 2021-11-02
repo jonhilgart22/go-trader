@@ -32,8 +32,7 @@ class DetermineTradingState:
             running_on_aws: are on we lambda?
         """
         self.prediction_n_days = 7  # from ml config
-        if coin_to_predict not in ["btc", "eth"]:
-            raise ValueError(f"Incorrect prediction coin entered = {coin_to_predict}. Needs to be eth or btc")
+
         self.coin_to_predict = coin_to_predict
         self.price_prediction = price_prediction
         self.constants = constants.copy()

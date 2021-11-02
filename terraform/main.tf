@@ -384,3 +384,26 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_eth" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.every_day_eth.arn
 }
+
+# SOL
+
+resource "aws_cloudwatch_event_rule" "every_day_sol" {
+  name                = "every-day-sol"
+  description         = "Fires every day for sol"
+  schedule_expression = "cron(10 0 * * ? *)" # run at 12:10am utc
+}
+
+resource "aws_cloudwatch_event_target" "check_sol_every_day" {
+  rule      = aws_cloudwatch_event_rule.every_day_sol.name
+  target_id = "check_sol_predictions"
+  arn       = aws_lambda_function.lambda_model_function.arn
+  input     = "{\"coinToPredict\": \"sol\"}"
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_sol" {
+  statement_id  = "AllowExecutionFromCloudWatchSol"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_model_function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.every_day_sol.arn
+}
