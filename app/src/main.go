@@ -42,16 +42,10 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	awsUtils.DownloadFromS3("go-trader", "app/constants.yml", runningOnAws, awsSession)
 
 	// Read in the constants from yaml
-	constantsMap := utils.ReadYamlFile("app/constants.yml")
+	constantsMap := utils.ReadYamlFile("app/constants.yml", runningOnAws)
 
 	// Download the rest of the config files
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
-	//ml_config.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
-	//trading_state_config.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
-	//won_and_lost_amount.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
+	downloadConfigFiles(constantsMap, runningOnAws, awsSession)
 
 	// pull new data from FTX with day candles
 	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
@@ -105,7 +99,8 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 	// Read in the constants  that have been updated from our python ML program. Determine what to do based
 	log.Println("Determining actions to take")
-	actionsToTakeConstants := utils.ReadNestedYamlFile(constantsMap["actions_to_take_filename"]) // read in nested yaml?
+	// only updated the tmp./ folder
+	actionsToTakeConstants := utils.ReadNestedYamlFile(constantsMap["actions_to_take_filename"], runningOnAws) // read in nested yaml?
 	log.Println(actionsToTakeConstants[coinToPredict]["action_to_take"])
 	actionToTake := actionsToTakeConstants[coinToPredict]["action_to_take"]
 
@@ -244,4 +239,14 @@ func RunPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
 	if waitErr != nil {
 		panic(waitErr)
 	}
+}
+
+func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsSession *session.Session) {
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
+	//ml_config.yml
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
+	//trading_state_config.yml
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
+	//won_and_lost_amount.yml
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
 }

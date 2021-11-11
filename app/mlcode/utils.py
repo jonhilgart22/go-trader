@@ -31,6 +31,7 @@ def update_yaml_config(file_name: str, data: Dict[str, Any], running_on_aws: boo
         s = file_name.split("/")
         file_name = "/tmp/" + s[-1]
     with open(file_name, "w") as yaml_file:
+        logger.info(f"Updating {file_name} with {data}")
         yaml_file.write(yaml.dump(data, default_flow_style=False))
 
 

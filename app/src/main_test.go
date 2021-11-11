@@ -95,12 +95,6 @@ func setupHIstoricalPrice() []*models.HistoricalPrice {
 	return historicalData
 }
 
-// func setupS3(bucketName string, fileName string) {
-
-// 	// ... accessing of test.txt through any S3 client would now be possible
-
-// }
-
 func TestDownloadUpdateReuploadData(t *testing.T) {
 	// mock the ftx client with fake data, and the fake data is the same as the real data, call the endpoint, get the fake data, update it with the newest date, and reupload it
 	const bucketName = "go-trader"

@@ -309,7 +309,7 @@ class DetermineTradingState:
         """
         Determine if we should enter a buy position
         """
-        logger.info("self.price_prediction is not higher than the Rolling Mean. Not going to buy")
+        logger.info("Checking if we should buy")
         # check ML predicted trend as well
 
         if self.price_prediction > row[self.constants["rolling_mean_col"]][0]:

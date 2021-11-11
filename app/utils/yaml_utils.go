@@ -6,11 +6,18 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
 
-func ReadNestedYamlFile(fileLocation string) map[string]map[string]string {
+func ReadNestedYamlFile(fileLocation string, runningOnAws bool) map[string]map[string]string {
+	if runningOnAws {
+		// download with tmp/, keep the same path in S3.
+		s := strings.Split(fileLocation, "/")
+		fileLocation = "/tmp/" + s[len(s)-1]
+	}
+
 	log.Println(" ")
 	yfile, err := ioutil.ReadFile(fileLocation)
 
@@ -33,7 +40,12 @@ func ReadNestedYamlFile(fileLocation string) map[string]map[string]string {
 	return doubleLevelData
 }
 
-func ReadYamlFile(fileLocation string) map[string]string {
+func ReadYamlFile(fileLocation string, runningOnAws bool) map[string]string {
+	if runningOnAws {
+		// download with tmp/, keep the same path in S3.
+		s := strings.Split(fileLocation, "/")
+		fileLocation = "/tmp/" + s[len(s)-1]
+	}
 	log.Println(" ")
 	yfile, err := ioutil.ReadFile(fileLocation)
 

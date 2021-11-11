@@ -45,7 +45,7 @@ class BollingerBandsPredictor:
         self.additional_dfs = additional_dfs
         self.period = period
         self.verbose = verbose
-
+        # TODO: remember to add new columns here
         self.ml_train_cols = [
             self.constants["open_col"],
             self.constants["high_col"],
@@ -58,7 +58,7 @@ class BollingerBandsPredictor:
             self.constants["stoch_col"],
             self.constants["rsi_col"],
         ]
-        self.pred_col = "close"
+        self.pred_col = self.constants["close_col"]
 
         if type(self.ml_constants["prediction_params"]["lookback_window"]) != list:
             raise ValueError("Need to enter a list for loockback_window")
@@ -173,8 +173,8 @@ class BollingerBandsPredictor:
 
     def _build_technical_indicators(self):
 
-        rolling_mean = self.df["close"].rolling(self.window).mean()
-        rolling_std = self.df["close"].rolling(self.window).std()
+        rolling_mean = self.df[self.pred_col].rolling(self.window).mean()
+        rolling_std = self.df[self.pred_col].rolling(self.window).std()
 
         self.df[self.constants["rolling_mean_col"]] = rolling_mean
         self.df[self.constants["bollinger_high_col"]] = rolling_mean + (rolling_std * self.no_of_std)
@@ -188,8 +188,8 @@ class BollingerBandsPredictor:
         new_additional_dfs = []
         if len(self.additional_dfs) > 0:
             for df in self.additional_dfs:
-                rolling_mean = df["close"].rolling(self.window).mean()
-                rolling_std = df["close"].rolling(self.window).std()
+                rolling_mean = df[self.pred_col].rolling(self.window).mean()
+                rolling_std = df[self.pred_col].rolling(self.window).std()
 
                 df[self.constants["rolling_mean_col"]] = rolling_mean
                 df[self.constants["bollinger_high_col"]] = rolling_mean + (rolling_std * self.no_of_std)
