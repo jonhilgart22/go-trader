@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict, Union
+
 try:  # need modules for pytest to work
     from app.mlcode.utils import setup_logging
 except ModuleNotFoundError:  # Go is unable to run python modules -m
@@ -321,7 +322,9 @@ class DetermineTradingState:
             self.stop_loss_price = row["close"][0] * (1 - self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
-            self._write_and_print_log_statements("self.price_prediction is not higher than the Rolling Mean. Not going to buy", row)
+            self._write_and_print_log_statements(
+                "self.price_prediction is not higher than the Rolling Mean. Not going to buy", row
+            )
 
             self.action_to_take = "none_to_none"
 

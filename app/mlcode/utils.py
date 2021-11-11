@@ -18,7 +18,7 @@ def setup_logging():
         for handler in root.handlers:
             root.removeHandler(handler)
 
-    logging.basicConfig(format='%(asctime)s: : %(funcName)s  %(message)s', level=logging.INFO)
+    logging.basicConfig(format="%(asctime)s: : %(funcName)s  %(message)s", level=logging.INFO)
 
     return logging.getLogger(__name__)
 

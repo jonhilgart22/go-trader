@@ -12,6 +12,7 @@ from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from finta import TA
+
 try:  # need modules for pytest to work
     from app.mlcode.utils import setup_logging
 except ModuleNotFoundError:  # Go is unable to run python modules -m
