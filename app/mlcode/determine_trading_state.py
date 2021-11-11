@@ -256,7 +256,7 @@ class DetermineTradingState:
         """
         While in a short position, check if we should exit
         """
-        self._write_and_print_log_statements("checking if we should get out of our short position", row)
+        logger.info("checking if we should get out of our short position")
 
         # check ML predicted trend as well
 
@@ -265,7 +265,7 @@ class DetermineTradingState:
             or (self.price_prediction > self.short_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] > self.short_entry_price)
         ):
-            logger.info("short_to_none")
+            self._write_and_print_log_statements("short position to none", row)
 
             self._determine_win_or_loss_amount(row)
 
@@ -275,14 +275,14 @@ class DetermineTradingState:
             self.short_entry_price = 0
             self.stop_loss_price = 0
         else:
-            logger.info("not exiting out short position")
+            self._write_and_print_log_statements("not exiting short position", row)
             self.action_to_take = "short_to_contine_short"
 
     def _check_buy_to_none(self, row: pd.Series):
         """
         While in a buy/long position, check if we should exit
         """
-        self._write_and_print_log_statements("checking if we should exit our buy position", row)
+        logger.info("checking if we should exit our buy position")
 
         # check ML predicted trend as well
 
@@ -291,7 +291,7 @@ class DetermineTradingState:
             or (self.price_prediction < self.buy_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
-            logger.info("buy_to_none")
+            self._write_and_print_log_statements("buy_to_none", row)
 
             self._determine_win_or_loss_amount(row)
             # record keeping
@@ -302,7 +302,7 @@ class DetermineTradingState:
             self.buy_entry_price = 0
             self.stop_loss_price = 0
         else:
-            logger.info("Not exiting buy position")
+            self._write_and_print_log_statements("Not exiting buy position", row)
             self.action_to_take = "buy_to_continue_buy"
 
     def _check_if_we_should_buy(self, row: pd.Series):
@@ -332,7 +332,7 @@ class DetermineTradingState:
         logger.info("Checking if we should enter a short position")
 
         if self.price_prediction < row[self.constants["rolling_mean_col"]][0]:
-            logger.info("pred  lower than mean taking position to short")
+            self._write_and_print_log_statements("pred  lower than mean taking position to short", row)
 
             self.mode = "short"
             self.action_to_take = "none_to_short"
