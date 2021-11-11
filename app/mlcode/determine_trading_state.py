@@ -81,7 +81,7 @@ class DetermineTradingState:
         # update stop loss
         if self.mode == "buy" and (1 - self.stop_loss_pct) * row["close"][0] > self.stop_loss_price:
             self.stop_loss_price = (1 - self.stop_loss_pct) * row["close"]
-            self._print_log_statements(f"Updating stop loss to {self.stop_loss_price}", row)
+            self._write_and_print_log_statements(f"Updating stop loss to {self.stop_loss_price}", row)
 
         # TODO: uncomment once FTX allows short leveraged tokens
         # if (
@@ -89,7 +89,7 @@ class DetermineTradingState:
         #     and (1 + self.stop_loss_pct) * row["close"][0] < self.stop_loss_price
         # ):
         #     self.stop_loss_price = (1 + self.stop_loss_pct) * row["close"][0]
-        #     self._print_log_statements(
+        #     self._write_and_print_log_statements(
         #         f"Updating stop loss to {self.stop_loss_price}", row
         #     )
 
@@ -106,7 +106,7 @@ class DetermineTradingState:
 
         # stop loss, get out of buy position
         if self.mode == "buy" and self.stop_loss_price > row["close"][0]:
-            self._print_log_statements("stop loss activated for getting out of our buy", row)
+            self._write_and_print_log_statements("stop loss activated for getting out of our buy", row)
 
             self._determine_win_or_loss_amount(row)
             # record keeping
@@ -120,7 +120,7 @@ class DetermineTradingState:
         # TODO: uncomment once FTX allows shorts
         # # stop loss, get out of short position
         # elif self.mode == "short" and self.stop_loss_price < row["close"][0]:
-        #     self._print_log_statements(
+        #     self._write_and_print_log_statements(
         #         f"stop loss activated for getting out of our short", row
         #     )
 
@@ -179,7 +179,7 @@ class DetermineTradingState:
         #     self._check_if_we_should_short(row)
 
         else:
-            self._print_log_statements("Taking no action today", row)
+            self._write_and_print_log_statements("Taking no action today", row)
 
     def _determine_win_or_loss_amount(self, row: pd.Series):
         """
@@ -256,7 +256,7 @@ class DetermineTradingState:
         """
         While in a short position, check if we should exit
         """
-        self._print_log_statements("checking if we should get out of our short position", row)
+        self._write_and_print_log_statements("checking if we should get out of our short position", row)
 
         # check ML predicted trend as well
 
@@ -282,7 +282,7 @@ class DetermineTradingState:
         """
         While in a buy/long position, check if we should exit
         """
-        self._print_log_statements("checking if we should exit our buy position", row)
+        self._write_and_print_log_statements("checking if we should exit our buy position", row)
 
         # check ML predicted trend as well
 
@@ -321,7 +321,7 @@ class DetermineTradingState:
             self.stop_loss_price = row["close"][0] * (1 - self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
-            self._print_log_statements("self.price_prediction is not higher than the Rolling Mean. Not going to buy", row)
+            self._write_and_print_log_statements("self.price_prediction is not higher than the Rolling Mean. Not going to buy", row)
 
             self.action_to_take = "none_to_none"
 
@@ -340,10 +340,10 @@ class DetermineTradingState:
             self.stop_loss_price = row["close"][0] * (1 + self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
-            self._print_log_statements("not taking a position to short", row)
+            self._write_and_print_log_statements("not taking a position to short", row)
             self.action_to_take = "none_to_none"
 
-    def _print_log_statements(self, message: str, row: pd.Series):
+    def _write_and_print_log_statements(self, message: str, row: pd.Series):
 
         logger.info("------------")
         logger.info(f"Logging for coin = {self.coin_to_predict}")
@@ -363,6 +363,7 @@ class DetermineTradingState:
             filename = "/tmp/" + self.constants["log_filename"]
         else:
             filename = self.constants["log_filename"]
+        logger.info(f"Writing logs to file {filename}")
         with open(filename, "w") as text_file:
             text_file.write("------------\n")
             text_file.write(" | | | | | | | | |")
