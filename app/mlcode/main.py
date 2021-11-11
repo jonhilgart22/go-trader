@@ -1,20 +1,18 @@
 try:  # need modules for pytest to work
     from app.mlcode.determine_trading_state import DetermineTradingState
     from app.mlcode.predict_price_movements import BollingerBandsPredictor
-    from app.mlcode.utils import read_in_data, read_in_yaml, running_on_aws, update_yaml_config
+    from app.mlcode.utils import read_in_data, read_in_yaml, running_on_aws, update_yaml_config, setup_logging
 except ModuleNotFoundError:  # Go is unable to run python modules -m
     from predict_price_movements import BollingerBandsPredictor
-    from utils import read_in_yaml, read_in_data, update_yaml_config, running_on_aws
+    from utils import read_in_yaml, read_in_data, update_yaml_config, running_on_aws, setup_logging
     from determine_trading_state import DetermineTradingState
 
-import logging
 import sys
 
 import click
 
-# TODO: accept either btc or eth as param
 
-logger = logging.getLogger(__name__)
+logger = setup_logging()
 
 
 @click.command()
@@ -37,6 +35,7 @@ def main(coin_to_predict: str):
     ml_constants = read_in_yaml(constants["ml_config_filename"], is_running_on_aws)
     predictor = None
 
+    sys.stdout.flush()
     if coin_to_predict == "btc":
         predictor = BollingerBandsPredictor(
             coin_to_predict, constants, ml_constants, bitcoin_df, additional_dfs=[etherum_df]  # spy_df
@@ -52,7 +51,8 @@ def main(coin_to_predict: str):
     else:
         raise ValueError(f"Incorrect coin to predict {coin_to_predict}. Needs to be eth or btc.")
     sys.stdout.flush()
-
+    logger.info("Predict Price Movements")
+    sys.stdout.flush()
     price_prediction = predictor.predict()
     # print(price_prediction, "price_prediction")
     logger.info("Determine trading state")

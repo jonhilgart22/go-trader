@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-import logging
 import os
 import sys
-import warnings
 from threading import Thread
 from typing import Any, Dict, List, Tuple
 
@@ -14,12 +12,15 @@ from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from finta import TA
+try:  # need modules for pytest to work
+    from app.mlcode.utils import setup_logging
+except ModuleNotFoundError:  # Go is unable to run python modules -m
+    from utils import setup_logging
 
-warnings.filterwarnings("ignore")
 
 __all__ = ["BollingerBandsPredictor"]
 
-logger = logging.getLogger(__name__)
+logger = setup_logging()
 
 
 class BollingerBandsPredictor:

@@ -1,10 +1,12 @@
-import logging
 from datetime import datetime, timedelta
 from typing import Dict, Union
-
+try:  # need modules for pytest to work
+    from app.mlcode.utils import setup_logging
+except ModuleNotFoundError:  # Go is unable to run python modules -m
+    from utils import setup_logging
 import pandas as pd
 
-logger = logging.getLogger(__name__)
+logger = setup_logging()
 
 
 class DetermineTradingState:
@@ -307,7 +309,7 @@ class DetermineTradingState:
         """
         Determine if we should enter a buy position
         """
-        self._print_log_statements("Checking if we should enter a buy position", row)
+        logger.info("self.price_prediction is not higher than the Rolling Mean. Not going to buy")
         # check ML predicted trend as well
 
         if self.price_prediction > row[self.constants["rolling_mean_col"]][0]:
@@ -319,14 +321,15 @@ class DetermineTradingState:
             self.stop_loss_price = row["close"][0] * (1 - self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
-            logger.info("self.price_prediction is not higher than the Rolling Mean. Not going to buy")
+            self._print_log_statements("self.price_prediction is not higher than the Rolling Mean. Not going to buy", row)
+
             self.action_to_take = "none_to_none"
 
     def _check_if_we_should_short(self, row: pd.Series):
         """
         Check if we should enter a short position
         """
-        self._print_log_statements("Checking if we should enter a short position", row)
+        logger.info("Checking if we should enter a short position")
 
         if self.price_prediction < row[self.constants["rolling_mean_col"]][0]:
             logger.info("pred  lower than mean taking position to short")
@@ -337,7 +340,7 @@ class DetermineTradingState:
             self.stop_loss_price = row["close"][0] * (1 + self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
-            logger.info("not taking a position to short")
+            self._print_log_statements("not taking a position to short", row)
             self.action_to_take = "none_to_none"
 
     def _print_log_statements(self, message: str, row: pd.Series):
