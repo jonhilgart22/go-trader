@@ -137,17 +137,24 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 			log.Printf("Action for coin %v to take = none_to_buy", coinToPredict)
 
 			log.Println("------")
+			sizeToBuy := decimal.NewFromFloat(0.01)
 
-			size := info.TotalAccountValue.Div(newestClosePriceEth)
+			if coinToPredict == "btc" {
+				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceBtc)
+			} else if coinToPredict == "eth" {
+				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceEth)
+			} else if coinToPredict == "sol" {
+				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceSol)
+			}
 
-			log.Printf("Taking a position worth of size ~%d", size)
-			log.Printf("Taking a position worth %d", newestClosePriceEth.Mul(size))
+			log.Println("Taking a position worth of sizeToBuy ~", sizeToBuy)
+			log.Println("Taking a position worth ", newestClosePriceEth.Mul(sizeToBuy))
 
 			if err != nil {
 				panic(err)
 			}
 
-			ftx.PurchaseOrder(ftxClient, size, marketToOrder)
+			ftx.PurchaseOrder(ftxClient, sizeToBuy, marketToOrder)
 
 		case "none_to_short":
 			log.Printf("Action for coin %v to take = none_to_short", coinToPredict)
