@@ -85,3 +85,7 @@ run_golang_eth:
 
 run_golang_sol:
 	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "sol"}'
+
+clean_up_efs:
+	terraform destroy -target=aws_efs_file_system.efs_for_lambda
+	terraform apply -target=aws_efs_file_system.efs_for_lambda
