@@ -313,7 +313,7 @@ class DetermineTradingState:
         # check ML predicted trend as well
 
         if self.price_prediction > row[self.constants["rolling_mean_col"]][0]:
-            logger.info("ml pred higher than mean taking position")
+            self._write_and_print_log_statements("ml pred higher than mean taking position", row)
 
             self.mode = "buy"
             self.action_to_take = "none_to_buy"
