@@ -51,11 +51,7 @@ download_configs:
 	aws s3 cp s3://go-trader/tmp/trading_state_config.yml   tmp/trading_state_config.yml --sse aws:kms
 
 update_lambda:
-	aws --profile lambda-model \
-  lambda \
-  update-function-code \
-  --function-name go-trader-function \
-  --image-uri 950264656373.dkr.ecr.us-east-1.amazonaws.com/go-trader:latest
+	aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
 
 # upload_models:
 #  	aws s3 cp ./models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar s3://go-trader/models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar --sse aws:kms
