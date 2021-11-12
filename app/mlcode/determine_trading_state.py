@@ -389,6 +389,9 @@ class DetermineTradingState:
             text_file.write(" | | | | | | | | |")
             text_file.write(f"ml price_prediction for next {self.prediction_n_days}  days= {self.price_prediction}\n")
             text_file.write(" | | | | | | | | |")
+            text_file.write(f"Self.mode = {self.mode}")
+            text_file.write(" | | | | | | | | |")
+            text_file.write(f"Self.action_to_take = {self.action_to_take}")
             text_file.write("------------\n")
 
         logger.info("------------")
