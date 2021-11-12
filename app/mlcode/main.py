@@ -21,7 +21,7 @@ def main(coin_to_predict: str):
     is_running_on_aws = running_on_aws()
     logger.info("Running determine trading state")
 
-    constants = read_in_yaml("app/constants.yml", is_running_on_aws)
+    constants = read_in_yaml("tmp/constants.yml", is_running_on_aws)
     sys.stdout.flush()
     trading_constants = read_in_yaml(constants["trading_state_config_filename"], is_running_on_aws)
     sys.stdout.flush()
