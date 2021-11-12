@@ -37,18 +37,18 @@ run_python:
 # 	aws lambda update-function-code --function-name go-trader-function  	--image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
 
 upload_configs:
-	aws s3 cp app/actions_to_take.yml s3://go-trader/app/actions_to_take.yml --sse aws:kms
-	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml --sse aws:kms
-	aws s3 cp app/ml_config.yml s3://go-trader/app/ml_config.yml --sse aws:kms
-	aws s3 cp app/trading_state_config.yml s3://go-trader/app/trading_state_config.yml --sse aws:kms
-	aws s3 cp app/won_and_lost_amount_config.yml s3://go-trader/app/won_and_lost_amount_config.yml --sse aws:kms
+	aws s3 cp tmp/actions_to_take.yml s3://go-trader/tmp/actions_to_take.yml --sse aws:kms
+	aws s3 cp tmp/constants.yml s3://go-trader/tmp/constants.yml --sse aws:kms
+	aws s3 cp tmp/ml_config.yml s3://go-trader/tmp/ml_config.yml --sse aws:kms
+	aws s3 cp tmp/trading_state_config.yml s3://go-trader/tmp/trading_state_config.yml --sse aws:kms
+	aws s3 cp tmp/won_and_lost_amount_config.yml s3://go-trader/tmp/won_and_lost_amount_config.yml --sse aws:kms
 	aws s3 cp env_vars.sh s3://go-trader/env_vars.sh --sse aws:kms
 
 download_configs:
-	aws s3 cp s3://go-trader/app/actions_to_take.yml  app/actions_to_take.yml --sse aws:kms
-	aws s3 cp app/constants.yml s3://go-trader/app/constants.yml  cp app/constants.yml  --sse aws:kms
-	aws s3 cp s3://go-trader/app/ml_config.yml app/ml_config.yml  --sse aws:kms
-	aws s3 cp s3://go-trader/app/trading_state_config.yml   app/trading_state_config.yml --sse aws:kms
+	aws s3 cp s3://go-trader/tmp/actions_to_take.yml  tmp/actions_to_take.yml --sse aws:kms
+	aws s3 cp s3://go-trader/tmp/constants.yml   tmp/constants.yml  --sse aws:kms
+	aws s3 cp s3://go-trader/tmp/ml_config.yml tmp/ml_config.yml  --sse aws:kms
+	aws s3 cp s3://go-trader/tmp/trading_state_config.yml   tmp/trading_state_config.yml --sse aws:kms
 
 update_lambda:
 	aws --profile lambda-model \

@@ -39,10 +39,10 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 	// Download all the config files
 	awsSession := awsUtils.CreateNewAwsSession()
-	awsUtils.DownloadFromS3("go-trader", "app/constants.yml", runningOnAws, awsSession)
+	awsUtils.DownloadFromS3("go-trader", "tmp/constants.yml", runningOnAws, awsSession)
 
 	// Read in the constants from yaml
-	constantsMap := utils.ReadYamlFile("app/constants.yml", runningOnAws)
+	constantsMap := utils.ReadYamlFile("tmp/constants.yml", runningOnAws)
 
 	// Download the rest of the config files
 	downloadConfigFiles(constantsMap, runningOnAws, awsSession)

@@ -28,6 +28,12 @@ RUN  go mod download
 
 # Copy files over
 ADD app app
+# except the configs
+RUN rm app/actions_to_take.yml
+RUN rm app/ml_config.yml
+RUN rm app/constants.yml
+RUN rm app/trading_state_config.yml
+RUN rm app/won_and_lost_amount_config.yml
 
 
 RUN cd app/src && go build -o go-trader .

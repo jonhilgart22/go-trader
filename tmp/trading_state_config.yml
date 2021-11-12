@@ -5,7 +5,7 @@ btc:
   position_entry_date: None
   short_entry_price: 0
   short_has_crossed_mean: false
-  stop_loss_pct: 0.10
+  stop_loss_pct: 0.1
   stop_loss_price: 0
 eth:
   buy_entry_price: 0
@@ -14,14 +14,14 @@ eth:
   position_entry_date: None
   short_entry_price: 0
   short_has_crossed_mean: false
-  stop_loss_pct: 0.10
+  stop_loss_pct: 0.1
   stop_loss_price: 0
 sol:
-  buy_entry_price: 0
+  buy_entry_price: 233.1425
   buy_has_crossed_mean: false
-  mode: no_position
-  position_entry_date: None
+  mode: buy
+  position_entry_date: '2021-11-10 00:00:00'
   short_entry_price: 0
   short_has_crossed_mean: false
-  stop_loss_pct: 0.10
-  stop_loss_price: 0
+  stop_loss_pct: 0.1
+  stop_loss_price: 209.82825000000003

@@ -393,10 +393,22 @@ class DetermineTradingState:
         logger.info("------------")
 
     def update_state(self):
-        """Convenience method to update  our state params"""
+        """Convenience method to update  our state params. Try to convert everything to floats for serializable"""
         for k, v in self.trading_state_constants[self.coin_to_predict].items():
-            self.trading_state_constants[self.coin_to_predict][k] = getattr(self, k, v)
+            try:
+                item = float(getattr(self, k, v))
+            except Exception:
+                item = getattr(self, k, v)
+            self.trading_state_constants[self.coin_to_predict][k] = item
         for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
-            self.won_and_lose_amount_dict[self.coin_to_predict][k] = getattr(self, k, v)
+            try:
+                item = float(getattr(self, k, v))
+            except Exception:
+                item = getattr(self, k, v)
+            self.won_and_lose_amount_dict[self.coin_to_predict][k] = item
         for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
-            self.actions_to_take_constants[self.coin_to_predict][k] = getattr(self, k, v)
+            try:
+                item = float(getattr(self, k, v))
+            except Exception:
+                item = getattr(self, k, v)
+            self.actions_to_take_constants[self.coin_to_predict][k] = item

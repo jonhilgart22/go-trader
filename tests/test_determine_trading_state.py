@@ -155,6 +155,7 @@ def test_buy_btc_action(
 
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
+
     assert trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "buy"
     assert trading_state_class.trading_state_constants[coin_to_predict]["short_entry_price"] == 0
     assert trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"] == 982
