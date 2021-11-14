@@ -121,6 +121,12 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Println(info.Positions, "Positions")
 
 	// TODO: once FTX allows short leveraged tokens in the US, add this to the short action
+	log.Println("default_purchase_size", constantsMap["default_purchase_size"])
+	sizeToBuy, err := decimal.NewFromString(constantsMap["default_purchase_size"])
+	if err != nil {
+		panic(err)
+	}
+
 	if !runningLocally {
 		switch actionToTake {
 		case "none":
@@ -137,7 +143,6 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 			log.Printf("Action for coin %v to take = none_to_buy", coinToPredict)
 
 			log.Println("------")
-			sizeToBuy := decimal.NewFromFloat(0.01)
 
 			if coinToPredict == "btc" {
 				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceBtc)
@@ -186,8 +191,13 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 
 	// send email
+	defaultPurchaseSize, err := decimal.NewFromString(constantsMap["default_purchase_size"])
+	if err != nil {
+		panic(err)
+	}
+
 	if !runningLocally {
-		awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict), constantsMap["log_filename"], runningOnAws)
+		awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict), constantsMap["log_filename"], sizeToBuy, runningOnAws, constantsMap["email_separator"], defaultPurchaseSize)
 	} else {
 		log.Println("No emails, running locally")
 	}

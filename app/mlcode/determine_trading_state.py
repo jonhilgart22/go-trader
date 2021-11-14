@@ -180,6 +180,10 @@ class DetermineTradingState:
         # ):
         #     self._check_if_we_should_short(row)
 
+        elif self.action_to_take == "none_to_buy":  # not in a position, continue holidng
+            self.action_to_take = "buy_to_continue_buy"
+            self._write_and_print_log_statements("Taking no action today. Updating none_to_buy to buy_to_continue_buy", row)
+
         else:
             self._write_and_print_log_statements("Taking no action today", row)
 
@@ -370,29 +374,29 @@ class DetermineTradingState:
         logger.info(f"Writing logs to file {filename}")
         with open(filename, "w") as text_file:
             text_file.write("------------\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"Logging for coin = {self.coin_to_predict}\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(message + "\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"current date = {row.index}\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"close = {row[self.constants['close_col']][0]}\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} \n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"bollinger low = {row[self.constants['bollinger_low_col']][0]} \n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"self.buy_entry_price = {self.buy_entry_price}\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"ml price_prediction for next {self.prediction_n_days}  days= {self.price_prediction}\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"Self.mode = {self.mode}")
-            text_file.write(" | | | | | | | | |")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"Self.action_to_take = {self.action_to_take}")
-            text_file.write("------------\n")
+            text_file.write(self.constants["email_separator"])
 
         logger.info("------------")
 

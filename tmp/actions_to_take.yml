@@ -3,4 +3,4 @@ btc:
 eth:
   action_to_take: none
 sol:
-  action_to_take: none_to_buy
+  action_to_take: buy_to_continue_buy

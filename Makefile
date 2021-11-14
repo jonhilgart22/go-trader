@@ -36,7 +36,7 @@ run_python:
 # update_lambda:
 # 	aws lambda update-function-code --function-name go-trader-function  	--image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
 
-upload_configs:
+upload_configs: download_configs
 	aws s3 cp tmp/actions_to_take.yml s3://go-trader/tmp/actions_to_take.yml --sse aws:kms
 	aws s3 cp tmp/constants.yml s3://go-trader/tmp/constants.yml --sse aws:kms
 	aws s3 cp tmp/ml_config.yml s3://go-trader/tmp/ml_config.yml --sse aws:kms
@@ -46,9 +46,11 @@ upload_configs:
 
 download_configs:
 	aws s3 cp s3://go-trader/tmp/actions_to_take.yml  tmp/actions_to_take.yml --sse aws:kms
-	aws s3 cp s3://go-trader/tmp/constants.yml   tmp/constants.yml  --sse aws:kms
 	aws s3 cp s3://go-trader/tmp/ml_config.yml tmp/ml_config.yml  --sse aws:kms
 	aws s3 cp s3://go-trader/tmp/trading_state_config.yml   tmp/trading_state_config.yml --sse aws:kms
+
+# Constants never changes, no need to download it
+#aws s3 cp s3://go-trader/tmp/constants.yml   tmp/constants.yml  --sse aws:kms
 
 update_lambda:
 	aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
@@ -73,14 +75,15 @@ download_data:
 compile_go:
 	docker run --rm -v "$PWD":/go/src/handler lambci/lambda:build-go1.x sh -c 'go build app/src/main.go'
 
+## mount the tmp folders
 run_golang_btc:
-	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x  main '{"coinToPredict": "btc"}'
+	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$(pwd)"/tmp:/tmp -v "$PWD":/var/task lambci/lambda:go1.x  main '{"coinToPredict": "btc"}'
 
 run_golang_eth:
-	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "eth"}'
+	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$(pwd)"/tmp:/tmp  -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "eth"}'
 
 run_golang_sol:
-	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "sol"}'
+	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$(pwd)"/tmp:/tmp  -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "sol"}'
 
 clean_up_efs:
 	terraform destroy -target=aws_efs_file_system.efs_for_lambda
