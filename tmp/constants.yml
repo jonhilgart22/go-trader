@@ -71,4 +71,4 @@ python_script_path: app/mlcode/main.py
 # email
 log_filename: logs.txt
 default_purchase_size: 0.0001
-email_separator: "|||"
+email_separator: "<br>"

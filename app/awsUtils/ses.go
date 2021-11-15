@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -40,17 +39,9 @@ func SendEmail(inputSubject string, logsFilename string, sizeToBuy decimal.Decim
 	} else {
 		body = readTextFile(logsFilename)
 	}
-	// This is the separator found in def _write_and_print_log_statements()
-	splitBody := strings.Split(body, emailSeparator)
-	var bodyText string
-	// make the email more readable
-	for _, line := range splitBody {
-		bodyText += line + "<br>"
-	}
-	log.Println(bodyText, "bodyText")
 
 	if sizeToBuy.GreaterThan(defaultSizeToBuy) {
-		bodyText = bodyText + "<br>" + "The total size to purchase is  " + sizeToBuy.String() + " GB"
+		body = body + "<br>" + "The total size to purchase is  " + sizeToBuy.String() + " GB"
 	}
 
 	awsSession, err := session.NewSession(&aws.Config{
@@ -69,7 +60,7 @@ func SendEmail(inputSubject string, logsFilename string, sizeToBuy decimal.Decim
 		Message: &ses.Message{
 			Body: &ses.Body{
 				Html: &ses.Content{
-					Data: aws.String(string(bodyText))},
+					Data: aws.String(string(body))},
 			},
 			Subject: &ses.Content{
 				Data: aws.String(inputSubject),
