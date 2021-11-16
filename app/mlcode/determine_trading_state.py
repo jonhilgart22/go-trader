@@ -96,14 +96,14 @@ class DetermineTradingState:
 
         # check if we've previously crossed the mean trailing price
         if self.mode == "buy" and row[self.constants["close_col"]][0] > row[self.constants["rolling_mean_col"]][0]:
-            self.buy_has_crossed_mean = True
+            self.buy_has_crossed_mean = 1
 
         # TODO: uncomment once FTX allows shorts
         # if (
         #     self.mode == "short"
         #     and row[self.constants["close_col"]][0] < row[self.constants["rolling_mean_col"]][0]
         # ):
-        #     self.short_has_crossed_mean = True
+        #     self.short_has_crossed_mean = 1
 
         # stop loss, get out of buy position
         logger.info(f"self.stop_loss_price = {self.stop_loss_price}")
@@ -115,7 +115,7 @@ class DetermineTradingState:
 
             self.mode = "no_position"
             self.action_to_take = "buy_to_none"
-            self.buy_has_crossed_mean = False
+            self.buy_has_crossed_mean = 0
             self.buy_entry_price = 0
             self.stop_loss_price = 0
 
@@ -130,7 +130,7 @@ class DetermineTradingState:
         #     # record keeping
         #     self.mode = "no_position"
         #     self.action_to_take = "short_to_none"
-        #     self.short_has_crossed_mean = False
+        #     self.short_has_crossed_mean = 0
         #     self.short_entry_price = 0
         #     self.stop_loss_price = 0
 
@@ -139,7 +139,7 @@ class DetermineTradingState:
         elif self.mode == "buy" and (
             (
                 row[self.constants["close_col"]][0] < row[self.constants["rolling_mean_col"]][0]
-                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"]
+                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"] == 1
             )
             or (row[self.constants["close_col"]][0] > row[self.constants["bollinger_high_col"]][0])
             or (row[self.constants["close_col"]][0] < row[self.constants["bollinger_low_col"]][0])
@@ -155,7 +155,7 @@ class DetermineTradingState:
         #         row[self.constants["close_col"][0] > row[self.constants["rolling_mean_col"]][0]
         #         and self.trading_state_constants[self.coin_to_predict][
         #             "short_has_crossed_mean"
-        #         ]
+        #         ] == 1
         #     )
         #     or (row[self.constants["close_col"][0] < row[self.constants["bollinger_low_col"]][0])
         #     or (row[self.constants["close_col"][0] > row[self.constants["bollinger_high_col"]][0])
@@ -277,7 +277,7 @@ class DetermineTradingState:
 
             self.mode = "no_position"
             self.action_to_take = "short_to_none"
-            self.short_has_crossed_mean = False
+            self.short_has_crossed_mean = 0
             self.short_entry_price = 0
             self.stop_loss_price = 0
         else:
@@ -304,7 +304,7 @@ class DetermineTradingState:
 
             self.mode = "no_position"
             self.action_to_take = "buy_to_none"
-            self.buy_has_crossed_mean = False
+            self.buy_has_crossed_mean = 0
             self.buy_entry_price = 0
             self.stop_loss_price = 0
         else:
@@ -397,6 +397,11 @@ class DetermineTradingState:
             text_file.write(self.constants["email_separator"])
             text_file.write(f"Self.action_to_take = {self.action_to_take}")
             text_file.write(self.constants["email_separator"])
+            text_file.write(f"Self.action_to_take = {self.action_to_take}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(self.stop_loss_price)
+            text_file.write(self.constants["email_separator"])
+            text_file.write(self.position_entry_date)
 
         logger.info("------------")
 
