@@ -185,7 +185,7 @@ class DetermineTradingState:
             self._write_and_print_log_statements("Taking no action today. Updating none_to_buy to buy_to_continue_buy", row)
 
         else:
-            self._write_and_print_log_statements("Taking no action today", row)
+            self._write_and_print_log_statements("Taking no action today. Hit the else statement", row)
 
     def _determine_win_or_loss_amount(self, row: pd.Series):
         """
@@ -397,11 +397,9 @@ class DetermineTradingState:
             text_file.write(self.constants["email_separator"])
             text_file.write(f"Self.action_to_take = {self.action_to_take}")
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"Self.action_to_take = {self.action_to_take}")
+            text_file.write(f"stop_loss_price = {self.stop_loss_price}")
             text_file.write(self.constants["email_separator"])
-            text_file.write(self.stop_loss_price)
-            text_file.write(self.constants["email_separator"])
-            text_file.write(self.position_entry_date)
+            text_file.write(f"position_entry_date = {self.position_entry_date}")
 
         logger.info("------------")
 
