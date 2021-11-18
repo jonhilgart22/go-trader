@@ -230,7 +230,7 @@ class DetermineTradingState:
         else:
             raise ValueError("Something went wrong calculating win/lose amount")
 
-        days_in_trade = row.index - self.position_entry_date
+        days_in_trade = pd.to_datetime(row.index) - pd.to_datetime(self.position_entry_date)
         logger.info(f"days in trades = {days_in_trade.days}")
         self.n_total_days_in_trades += days_in_trade.days[0]
 
@@ -297,7 +297,7 @@ class DetermineTradingState:
             or (self.price_prediction < self.buy_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
-            self._write_and_print_log_statements("buy_to_none", row)
+            self._write_and_print_log_statements("buy_to_none ", row)
 
             self._determine_win_or_loss_amount(row)
             # record keeping
@@ -362,6 +362,7 @@ class DetermineTradingState:
 
         logger.info(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}")
         logger.info(f"bollinger high = {row[self.constants['bollinger_high_col']][0]}")
+        logger.info(f"bollinger low = {row[self.constants['bollinger_low_col']][0]}")
 
         logger.info(f"self.buy_entry_price = {self.buy_entry_price}")
         # logger.info(f"self.short_entry_price = {self.short_entry_price}")
@@ -373,25 +374,25 @@ class DetermineTradingState:
             filename = self.constants["log_filename"]
         logger.info(f"Writing logs to file {filename}")
         with open(filename, "w") as text_file:
-            text_file.write("------------\n")
+            text_file.write("------------")
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"Logging for coin = {self.coin_to_predict}\n")
+            text_file.write(f"Logging for coin = {self.coin_to_predict}")
             text_file.write(self.constants["email_separator"])
-            text_file.write(message + "\n")
+            text_file.write(message + "")
             text_file.write(self.constants["email_separator"])
             text_file.write(f"current date = {row.index}\n")
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"close = {row[self.constants['close_col']][0]}\n")
+            text_file.write(f"close = {row[self.constants['close_col']][0]}")
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}\n")
+            text_file.write(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}")
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} \n")
+            text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} ")
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"bollinger low = {row[self.constants['bollinger_low_col']][0]} \n")
+            text_file.write(f"bollinger low = {row[self.constants['bollinger_low_col']][0]} ")
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"self.buy_entry_price = {self.buy_entry_price}\n")
+            text_file.write(f"self.buy_entry_price = {self.buy_entry_price}")
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"ml price_prediction for next {self.prediction_n_days}  days= {self.price_prediction}\n")
+            text_file.write(f"ml price_prediction for next {self.prediction_n_days}  days= {self.price_prediction}")
             text_file.write(self.constants["email_separator"])
             text_file.write(f"Self.mode = {self.mode}")
             text_file.write(self.constants["email_separator"])

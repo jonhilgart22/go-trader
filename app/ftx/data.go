@@ -15,22 +15,23 @@ func ptrInt(i int) *int {
 
 func SellOrder(ftxClient *goftx.Client, marketToOrder string) {
 	accountBalance, err := ftxClient.Wallet.GetBalances()
+	log.Println(marketToOrder, "marketToOrder")
 
 	if err != nil {
 		panic(err)
 	}
-	var btcCoinFree decimal.Decimal
+	var coinFree decimal.Decimal
 	// figure out how much BTC we have
 	for _, balance := range accountBalance {
-		if balance.Coin == "BTC" {
-			btcCoinFree = balance.Free
+		if balance.Coin == marketToOrder {
+			coinFree = balance.Total
 		}
 	}
-	log.Printf("Free BTC coin %v", btcCoinFree)
+	log.Printf("Remaining coin %v for market %v", coinFree, marketToOrder)
 	sellOrder, err := ftxClient.PlaceOrder(&models.PlaceOrderPayload{
 		Market: marketToOrder,
 		Side:   "sell",
-		Size:   btcCoinFree,
+		Size:   coinFree,
 		Type:   "market"})
 	if err != nil {
 		panic(err)
