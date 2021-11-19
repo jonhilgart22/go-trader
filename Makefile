@@ -35,19 +35,15 @@ run_python:
 
 # update_lambda:
 # 	aws lambda update-function-code --function-name go-trader-function  	--image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
+# download_configs
+upload_configs:  download_configs
+	aws s3 cp tmp/   s3://go-trader/tmp/  --sse aws:kms --recursive
 
-upload_configs: download_configs
-	aws s3 cp tmp/actions_to_take.yml s3://go-trader/tmp/actions_to_take.yml --sse aws:kms
-	aws s3 cp tmp/constants.yml s3://go-trader/tmp/constants.yml --sse aws:kms
-	aws s3 cp tmp/ml_config.yml s3://go-trader/tmp/ml_config.yml --sse aws:kms
-	aws s3 cp tmp/trading_state_config.yml s3://go-trader/tmp/trading_state_config.yml --sse aws:kms
-	aws s3 cp tmp/won_and_lost_amount_config.yml s3://go-trader/tmp/won_and_lost_amount_config.yml --sse aws:kms
-	aws s3 cp env_vars.sh s3://go-trader/env_vars.sh --sse aws:kms
+
 
 download_configs:
-	aws s3 cp s3://go-trader/tmp/actions_to_take.yml  tmp/actions_to_take.yml --sse aws:kms
-	aws s3 cp s3://go-trader/tmp/ml_config.yml tmp/ml_config.yml  --sse aws:kms
-	aws s3 cp s3://go-trader/tmp/trading_state_config.yml   tmp/trading_state_config.yml --sse aws:kms
+	aws s3 cp s3://go-trader/tmp/  tmp/ --sse aws:kms --recursive
+
 
 # Constants never changes, no need to download it
 #aws s3 cp s3://go-trader/tmp/constants.yml   tmp/constants.yml  --sse aws:kms

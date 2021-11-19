@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -176,17 +177,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 
 	// upload any config changes that we need to maintain state
-	if runningLocally {
-		// //actions_to_take.yml
-		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
-		// //constants.yml
-		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"], runningOnAws, awsSession)
-		// //ml_config.yml
-		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
-		// //trading_state_config.yml
-		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
-		// //won_and_lost_amount.yml
-		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
+	if !runningLocally {
 
 		iterateAndUploadTmpFiles("tmp/", constantsMap, runningOnAws, awsSession)
 	} else {
@@ -211,13 +202,18 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session) {
 
-	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			log.Fatalf(err.Error())
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, f := range files {
+		fmt.Println("filename - ", f.Name())
+		if strings.Contains(f.Name(), "yml") {
+			awsUtils.UploadToS3(constantsMap["s3_bucket"], f.Name(), runningOnAws, awsSession)
 		}
-		fmt.Printf("File Name: %s\n", info.Name())
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], info.Name(), runningOnAws, awsSession)
-	})
+	}
+
 }
 
 func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool, s3Client *session.Session) (decimal.Decimal, int) {
