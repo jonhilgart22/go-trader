@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -32,7 +33,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	// manually setting runningLocally to False will have everything work in the container
 	var runningLocally bool = awsUtils.RunningLocally()
 	log.Printf("Running locally = %v", runningLocally)
-	var coinToPredict string = req.CoinToPredict
+	var coinToPredict string = strings.ToLower(req.CoinToPredict)
 	log.Printf("Coin to predict = %v", coinToPredict)
 	// set env vars
 	awsUtils.SetSsmToEnvVars()
@@ -45,7 +46,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	constantsMap := utils.ReadYamlFile("tmp/constants.yml", runningOnAws)
 
 	// Download the rest of the config files
-	downloadConfigFiles(constantsMap, runningOnAws, awsSession)
+	downloadConfigFiles(constantsMap, runningOnAws, awsSession, coinToPredict)
 
 	// pull new data from FTX with day candles
 	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
@@ -175,17 +176,19 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 
 	// upload any config changes that we need to maintain state
-	if !runningLocally {
-		//actions_to_take.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
-		//constants.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"], runningOnAws, awsSession)
-		//ml_config.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
-		//trading_state_config.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
-		//won_and_lost_amount.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
+	if runningLocally {
+		// //actions_to_take.yml
+		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
+		// //constants.yml
+		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"], runningOnAws, awsSession)
+		// //ml_config.yml
+		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
+		// //trading_state_config.yml
+		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
+		// //won_and_lost_amount.yml
+		// awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
+
+		iterateAndUploadTmpFiles("tmp/", constantsMap, runningOnAws, awsSession)
 	} else {
 		log.Println("Running locally, not upload config files")
 	}
@@ -204,6 +207,17 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	// all done!
 	return "Finished!", nil
 
+}
+
+func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session) {
+
+	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+		fmt.Printf("File Name: %s\n", info.Name())
+		awsUtils.UploadToS3(constantsMap["s3_bucket"], info.Name(), runningOnAws, awsSession)
+	})
 }
 
 func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool, s3Client *session.Session) (decimal.Decimal, int) {
@@ -258,12 +272,24 @@ func RunPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
 	}
 }
 
-func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsSession *session.Session) {
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
+func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, coinToPredict string) {
+	// only download the configs for the coin we are predicting
+	splitStringsActionsToTake := strings.Split(constantsMap["actions_to_take_filename"], "/")
+	actionsToTakeFilename := splitStringsActionsToTake[0] + "/" + coinToPredict + "_" + splitStringsActionsToTake[1]
+	log.Println("actionsToTakeFilename = ", actionsToTakeFilename)
+
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], actionsToTakeFilename, runningOnAws, awsSession)
+
 	//ml_config.yml
 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
 	//trading_state_config.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
+	splitStringsTradingState := strings.Split(constantsMap["trading_state_config_filename"], "/")
+	tradingStateConfigFilename := splitStringsTradingState[0] + "/" + coinToPredict + "_" + splitStringsTradingState[1]
+
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], tradingStateConfigFilename, runningOnAws, awsSession)
 	//won_and_lost_amount.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
+	splitStringsWonLost := strings.Split(constantsMap["trading_state_config_filename"], "/")
+	WonLostConfigFilename := splitStringsWonLost[0] + "/" + coinToPredict + "_" + splitStringsWonLost[1]
+
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], WonLostConfigFilename, runningOnAws, awsSession)
 }

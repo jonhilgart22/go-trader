@@ -46,17 +46,17 @@ class DetermineTradingState:
         self.running_on_aws = running_on_aws
 
         # trading state args
-        for k, v in self.trading_state_constants[self.coin_to_predict].items():
+        for k, v in self.trading_state_constants.items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
         # Record keeping for how this program is doing
-        for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
+        for k, v in self.won_and_lose_amount_dict.items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
         # actions to take
-        for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
+        for k, v in self.actions_to_take_constants.items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
@@ -139,7 +139,7 @@ class DetermineTradingState:
         elif self.mode == "buy" and (
             (
                 row[self.constants["close_col"]][0] < row[self.constants["rolling_mean_col"]][0]
-                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"] == 1
+                and self.trading_state_constants["buy_has_crossed_mean"] == 1
             )
             or (row[self.constants["close_col"]][0] > row[self.constants["bollinger_high_col"]][0])
             or (row[self.constants["close_col"]][0] < row[self.constants["bollinger_low_col"]][0])
@@ -153,7 +153,7 @@ class DetermineTradingState:
         # elif self.mode == "short" and (
         #     (
         #         row[self.constants["close_col"][0] > row[self.constants["rolling_mean_col"]][0]
-        #         and self.trading_state_constants[self.coin_to_predict][
+        #         and self.trading_state_constants[
         #             "short_has_crossed_mean"
         #         ] == 1
         #     )
@@ -185,6 +185,8 @@ class DetermineTradingState:
             self._write_and_print_log_statements("Taking no action today. Updating none_to_buy to buy_to_continue_buy", row)
 
         else:
+            if self.action_to_take == "buy_to_none":
+                self.action_to_take = "none_to_none"
             self._write_and_print_log_statements("Taking no action today. Hit the else statement", row)
 
     def _determine_win_or_loss_amount(self, row: pd.Series):
@@ -406,21 +408,21 @@ class DetermineTradingState:
 
     def update_state(self):
         """Convenience method to update  our state params. Try to convert everything to floats for serializable"""
-        for k, v in self.trading_state_constants[self.coin_to_predict].items():
+        for k, v in self.trading_state_constants.items():
             try:
                 item = float(getattr(self, k, v))
             except Exception:
                 item = getattr(self, k, v)
-            self.trading_state_constants[self.coin_to_predict][k] = item
-        for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
+            self.trading_state_constants[k] = item
+        for k, v in self.won_and_lose_amount_dict.items():
             try:
                 item = float(getattr(self, k, v))
             except Exception:
                 item = getattr(self, k, v)
-            self.won_and_lose_amount_dict[self.coin_to_predict][k] = item
-        for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
+            self.won_and_lose_amount_dict[k] = item
+        for k, v in self.actions_to_take_constants.items():
             try:
                 item = float(getattr(self, k, v))
             except Exception:
                 item = getattr(self, k, v)
-            self.actions_to_take_constants[self.coin_to_predict][k] = item
+            self.actions_to_take_constants[k] = item

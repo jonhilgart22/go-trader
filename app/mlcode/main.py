@@ -23,10 +23,25 @@ def main(coin_to_predict: str):
 
     constants = read_in_yaml("tmp/constants.yml", is_running_on_aws)
     sys.stdout.flush()
-    trading_constants = read_in_yaml(constants["trading_state_config_filename"], is_running_on_aws)
+
+    split_trading_state = constants["trading_state_config_filename"].split("/")
+    trading_state_filename = split_trading_state[0] + "/" + coin_to_predict + "_" + split_trading_state[1]
+    logger.info(f"trading_state_filename = {trading_state_filename}")
+    trading_constants = read_in_yaml(trading_state_filename, is_running_on_aws)
+
     sys.stdout.flush()
-    won_and_lost_amount_constants = read_in_yaml(constants["won_and_lost_amount_filename"], is_running_on_aws)
-    actions_to_take_constants = read_in_yaml(constants["actions_to_take_filename"], is_running_on_aws)
+    split_won_loss = constants["won_loss_config_filename"].split("/")
+    won_lost_amount_filename = split_won_loss[0] + "/" + coin_to_predict + "_" + split_won_loss[1]
+    logger.info(f"won_lost_amount_filename = {won_lost_amount_filename}")
+    won_and_lost_amount_constants = read_in_yaml(won_lost_amount_filename, is_running_on_aws)
+
+    split_actions_to_take = constants["actions_to_take_config_filename"].split("/")
+    actions_to_take_filename = split_actions_to_take[0] + "/" + coin_to_predict + "_" + split_actions_to_take[1]
+    logger.info(f"actions_to_take_filename = {actions_to_take_filename}")
+    won_and_lost_amount_constants = read_in_yaml(actions_to_take_filename, is_running_on_aws)
+
+    actions_to_take_constants = read_in_yaml(actions_to_take_filename, is_running_on_aws)
+
     # data should already be downloaded from the golang app
     bitcoin_df = read_in_data(constants["bitcoin_csv_filename"], is_running_on_aws)
     etherum_df = read_in_data(constants["etherum_csv_filename"], is_running_on_aws)

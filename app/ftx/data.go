@@ -2,6 +2,7 @@ package ftx
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/grishinsana/goftx"
@@ -23,7 +24,10 @@ func SellOrder(ftxClient *goftx.Client, marketToOrder string) {
 	var coinFree decimal.Decimal
 	// figure out how much BTC we have
 	for _, balance := range accountBalance {
-		if balance.Coin == marketToOrder {
+		log.Println(balance.Coin, "balance.Coin")
+		splitMarketStrings := strings.Split(marketToOrder, "/")
+		// index 0 is the base currency, index 1 is the quote currency
+		if balance.Coin == splitMarketStrings[0] {
 			coinFree = balance.Total
 		}
 	}

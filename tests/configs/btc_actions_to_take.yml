@@ -1,7 +1,2 @@
 # valid values are none_to_none, buy_to_none, short_to_none, none_to_buy, none_to_short, buy_to_continue_buy, short_to_continue_short
-btc:
-  action_to_take: none
-eth:
-  action_to_take: none
-sol:
-  action_to_take: none
+action_to_take: none

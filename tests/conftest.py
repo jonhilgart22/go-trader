@@ -7,8 +7,18 @@ from app.mlcode.utils import read_in_yaml
 
 
 @pytest.fixture
-def won_and_lost_amount_constants():
-    return read_in_yaml("tests/configs/won_and_lost_amount_config.yml", False)
+def eth_won_and_lost_amount_constants():
+    return read_in_yaml("tests/configs/eth_won_and_lost_amount_config.yml", False)
+
+
+@pytest.fixture
+def btc_won_and_lost_amount_constants():
+    return read_in_yaml("tests/configs/btc_won_and_lost_amount_config.yml", False)
+
+
+@pytest.fixture
+def sol_won_and_lost_amount_constants():
+    return read_in_yaml("tests/configs/sol_won_and_lost_amount_config.yml", False)
 
 
 @pytest.fixture
@@ -22,28 +32,53 @@ def ml_config():
 
 
 @pytest.fixture
-def trading_state_config():
-    return read_in_yaml("tests/configs/trading_state_config.yml", False)
+def eth_trading_state_config():
+    return read_in_yaml("tests/configs/eth_trading_state_config.yml", False)
 
 
 @pytest.fixture
-def trading_state_config_buy():
-    return read_in_yaml("tests/configs/trading_state_config_buy.yml", False)
+def btc_trading_state_config():
+    return read_in_yaml("tests/configs/btc_trading_state_config.yml", False)
 
 
 @pytest.fixture
-def trading_state_config_short():
-    return read_in_yaml("tests/configs/trading_state_config_short.yml", False)
+def sol_trading_state_config():
+    return read_in_yaml("tests/configs/sol_trading_state_config.yml", False)
 
 
 @pytest.fixture
-def trading_state_config_short_stop_loss():
-    return read_in_yaml("tests/configs/trading_state_config_short_stop_loss.yml", False)
+def eth_trading_state_config_buy():
+    return read_in_yaml("tests/configs/eth_trading_state_config_buy.yml", False)
 
 
 @pytest.fixture
-def actions_to_take_constants():
-    return read_in_yaml("tests/configs/actions_to_take.yml", False)
+def btc_trading_state_config_short():
+    return read_in_yaml("tests/configs/btc_trading_state_config_short.yml", False)
+
+
+@pytest.fixture
+def btc_trading_state_config_buy():
+    return read_in_yaml("tests/configs/btc_trading_state_config_buy.yml", False)
+
+
+@pytest.fixture
+def btc_trading_state_config_short_stop_loss():
+    return read_in_yaml("tests/configs/btc_trading_state_config_short_stop_loss.yml", False)
+
+
+@pytest.fixture
+def btc_actions_to_take_constants():
+    return read_in_yaml("tests/configs/btc_actions_to_take.yml", False)
+
+
+@pytest.fixture
+def eth_actions_to_take_constants():
+    return read_in_yaml("tests/configs/eth_actions_to_take.yml", False)
+
+
+@pytest.fixture
+def sol_actions_to_take_constants():
+    return read_in_yaml("tests/configs/sol_actions_to_take.yml", False)
 
 
 @pytest.fixture
