@@ -30,12 +30,12 @@ def main(coin_to_predict: str):
     trading_constants = read_in_yaml(trading_state_filename, is_running_on_aws)
 
     sys.stdout.flush()
-    split_won_loss = constants["won_loss_config_filename"].split("/")
+    split_won_loss = constants["won_and_lost_amount_filename"].split("/")
     won_lost_amount_filename = split_won_loss[0] + "/" + coin_to_predict + "_" + split_won_loss[1]
     logger.info(f"won_lost_amount_filename = {won_lost_amount_filename}")
     won_and_lost_amount_constants = read_in_yaml(won_lost_amount_filename, is_running_on_aws)
 
-    split_actions_to_take = constants["actions_to_take_config_filename"].split("/")
+    split_actions_to_take = constants["actions_to_take_filename"].split("/")
     actions_to_take_filename = split_actions_to_take[0] + "/" + coin_to_predict + "_" + split_actions_to_take[1]
     logger.info(f"actions_to_take_filename = {actions_to_take_filename}")
     won_and_lost_amount_constants = read_in_yaml(actions_to_take_filename, is_running_on_aws)

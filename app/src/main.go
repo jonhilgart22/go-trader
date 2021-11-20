@@ -284,7 +284,7 @@ func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsS
 
 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], tradingStateConfigFilename, runningOnAws, awsSession)
 	//won_and_lost_amount.yml
-	splitStringsWonLost := strings.Split(constantsMap["trading_state_config_filename"], "/")
+	splitStringsWonLost := strings.Split(constantsMap["won_and_lost_amount_filename"], "/")
 	WonLostConfigFilename := splitStringsWonLost[0] + "/" + coinToPredict + "_" + splitStringsWonLost[1]
 
 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], WonLostConfigFilename, runningOnAws, awsSession)
