@@ -178,12 +178,8 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 
 	// upload any config changes that we need to maintain state
-	if !runningLocally {
 
-		iterateAndUploadTmpFiles("tmp/", constantsMap, runningOnAws, awsSession)
-	} else {
-		log.Println("Running locally, not upload config files")
-	}
+	iterateAndUploadTmpFiles("/tmp/", constantsMap, runningOnAws, awsSession, runningLocally)
 
 	// send email
 	defaultPurchaseSize, err := decimal.NewFromString(constantsMap["default_purchase_size"])
@@ -201,7 +197,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 }
 
-func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session) {
+func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, runningLocally bool) {
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -209,9 +205,15 @@ func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runni
 	}
 
 	for _, f := range files {
-		fmt.Println("filename - ", f.Name())
+
 		if strings.Contains(f.Name(), "yml") {
-			awsUtils.UploadToS3(constantsMap["s3_bucket"], f.Name(), runningOnAws, awsSession)
+			// awsUtils.UploadToS3(constantsMap["s3_bucket"], f.Name(), runningOnAws, awsSession)
+			if runningLocally {
+				log.Println("Not uploading to S3, running locally")
+			} else {
+				fmt.Println("uploadFilename - ", f.Name())
+				awsUtils.UploadToS3(constantsMap["s3_bucket"], f.Name(), runningOnAws, awsSession)
+			}
 		}
 	}
 
