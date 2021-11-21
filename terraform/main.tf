@@ -34,6 +34,8 @@ resource "aws_lambda_function" "lambda_model_function" {
   memory_size = 10240
   timeout     = 900 # 15 minutes
 
+  reserved_concurrent_executions = -1
+
   environment {
     variables = {
       BUCKET_NAME = var.bucket_name

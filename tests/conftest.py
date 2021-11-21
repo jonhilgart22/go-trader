@@ -7,18 +7,18 @@ from app.mlcode.utils import read_in_yaml
 
 
 @pytest.fixture
-def eth_won_and_lost_amount_constants():
-    return read_in_yaml("tests/configs/eth_won_and_lost_amount_config.yml", False)
+def eth_won_and_lost_constants():
+    return read_in_yaml("tests/configs/eth_won_and_lost_config.yml", False)
 
 
 @pytest.fixture
-def btc_won_and_lost_amount_constants():
-    return read_in_yaml("tests/configs/btc_won_and_lost_amount_config.yml", False)
+def btc_won_and_lost_constants():
+    return read_in_yaml("tests/configs/btc_won_and_lost_config.yml", False)
 
 
 @pytest.fixture
-def sol_won_and_lost_amount_constants():
-    return read_in_yaml("tests/configs/sol_won_and_lost_amount_config.yml", False)
+def sol_won_and_lost_constants():
+    return read_in_yaml("tests/configs/sol_won_and_lost_config.yml", False)
 
 
 @pytest.fixture

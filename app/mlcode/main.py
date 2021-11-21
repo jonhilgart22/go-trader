@@ -38,8 +38,6 @@ def main(coin_to_predict: str):
     split_actions_to_take = constants["actions_to_take_filename"].split("/")
     actions_to_take_filename = split_actions_to_take[0] + "/" + coin_to_predict + "_" + split_actions_to_take[1]
     logger.info(f"actions_to_take_filename = {actions_to_take_filename}")
-    won_and_lost_amount_constants = read_in_yaml(actions_to_take_filename, is_running_on_aws)
-
     actions_to_take_constants = read_in_yaml(actions_to_take_filename, is_running_on_aws)
 
     # data should already be downloaded from the golang app

@@ -44,7 +44,8 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	awsUtils.DownloadFromS3("go-trader", "tmp/constants.yml", runningOnAws, awsSession)
 
 	// Read in the constants from yaml
-	constantsMap := utils.ReadYamlFile("tmp/constants.yml", runningOnAws)
+	// 0 so that we don't alter the filename
+	constantsMap := utils.ReadYamlFile("tmp/constants.yml", runningOnAws, "0")
 
 	// Download the rest of the config files
 	downloadConfigFiles(constantsMap, runningOnAws, awsSession, coinToPredict)
@@ -102,11 +103,11 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	// Read in the constants  that have been updated from our python ML program. Determine what to do based
 	log.Println("Determining actions to take")
 	// only updated the tmp./ folder
-	actionsToTakeConstants := utils.ReadNestedYamlFile(constantsMap["actions_to_take_filename"], runningOnAws) // read in nested yaml?
-	log.Println(actionsToTakeConstants[coinToPredict]["action_to_take"])
-	actionToTake := actionsToTakeConstants[coinToPredict]["action_to_take"]
-
-	// account information
+	actionsToTakeConstants := utils.ReadYamlFile(constantsMap["actions_to_take_filename"], runningOnAws, coinToPredict)
+	// read in nested yaml?
+	log.Println(actionsToTakeConstants["action_to_take"])
+	actionToTake := actionsToTakeConstants["action_to_take"]
+	log.Println(actionToTake, "actionToTake")
 
 	log.Println("Logging into FTX to get account info")
 	subAccount, _ := ftxClient.SubAccounts.GetSubaccountBalances("eth_trading")

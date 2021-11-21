@@ -13,7 +13,7 @@ def test_no_btc_action(
     constants,
     ml_config,
     btc_trading_state_config,
-    btc_won_and_lost_amount_constants,
+    btc_won_and_lost_constants,
     btc_actions_to_take_constants,
 ):
     """verify everyting works as intended"""
@@ -34,7 +34,7 @@ def test_no_btc_action(
         constants,
         btc_trading_state_config,
         btc_predictor.df,
-        btc_won_and_lost_amount_constants,
+        btc_won_and_lost_constants,
         btc_actions_to_take_constants,
         False,
     )
@@ -50,7 +50,7 @@ def test_no_sol_action(
     constants,
     ml_config,
     sol_trading_state_config,
-    sol_won_and_lost_amount_constants,
+    sol_won_and_lost_constants,
     sol_actions_to_take_constants,
 ):
     """verify everyting works as intended"""
@@ -71,7 +71,7 @@ def test_no_sol_action(
         constants,
         sol_trading_state_config,
         btc_predictor.df,
-        sol_won_and_lost_amount_constants,
+        sol_won_and_lost_constants,
         sol_actions_to_take_constants,
         False,
     )
@@ -87,7 +87,7 @@ def test_no_eth_action(
     constants,
     ml_config,
     eth_trading_state_config,
-    eth_won_and_lost_amount_constants,
+    eth_won_and_lost_constants,
     eth_actions_to_take_constants,
 ):
     """verify everyting works as intended"""
@@ -108,7 +108,7 @@ def test_no_eth_action(
         constants,
         eth_trading_state_config,
         btc_predictor.df,
-        eth_won_and_lost_amount_constants,
+        eth_won_and_lost_constants,
         eth_actions_to_take_constants,
         False,
     )
@@ -122,7 +122,7 @@ def test_buy_btc_action(
     example_btc_df_bollinger_exit_position,
     constants,
     btc_trading_state_config,
-    btc_won_and_lost_amount_constants,
+    btc_won_and_lost_constants,
     btc_actions_to_take_constants,
     ml_config,
     example_btc_df,
@@ -148,7 +148,7 @@ def test_buy_btc_action(
         constants,
         btc_trading_state_config,
         example_btc_df_bollinger_exit_position,
-        btc_won_and_lost_amount_constants,
+        btc_won_and_lost_constants,
         btc_actions_to_take_constants,
         False,
     )
@@ -167,7 +167,7 @@ def test_buy_btc_action(
 #     example_btc_df_bollinger_short,
 #     constants,
 #     trading_state_config,
-#     won_and_lost_amount_constants,
+#     won_and_lost_constants,
 #     actions_to_take_constants,
 # ):
 #     price_prediction = 90
@@ -180,7 +180,7 @@ def test_buy_btc_action(
 #         constants,
 #         trading_state_config,
 #         example_btc_df_bollinger_short,
-#         won_and_lost_amount_constants,
+#         won_and_lost_constants,
 #         actions_to_take_constants,
 #     )
 #     trading_state_class.calculate_positions()
@@ -212,7 +212,7 @@ def test_buy_to_none_via_prediction_btc(
     example_btc_df_bollinger_exit_position,
     constants,
     btc_trading_state_config_buy,
-    btc_won_and_lost_amount_constants,
+    btc_won_and_lost_constants,
     btc_actions_to_take_constants,
     ml_config,
     example_eth_df,
@@ -238,7 +238,7 @@ def test_buy_to_none_via_prediction_btc(
         constants,
         btc_trading_state_config_buy,
         example_btc_df_bollinger_exit_position,
-        btc_won_and_lost_amount_constants,
+        btc_won_and_lost_constants,
         btc_actions_to_take_constants,
         False,
     )
@@ -264,7 +264,7 @@ def test_buy_to_none_via_prediction_btc(
 #     example_btc_df_bollinger_exit_position,
 #     constants,
 #     trading_state_config_short,
-#     won_and_lost_amount_constants,
+#     won_and_lost_constants,
 #     actions_to_take_constants,
 # ):
 #     price_prediction = 99999
@@ -277,7 +277,7 @@ def test_buy_to_none_via_prediction_btc(
 #         constants,
 #         trading_state_config_short,
 #         example_btc_df_bollinger_exit_position,
-#         won_and_lost_amount_constants,
+#         won_and_lost_constants,
 #         actions_to_take_constants,
 #     )
 
@@ -341,7 +341,7 @@ def test_buy_to_none_via_prediction_btc(
 #     example_btc_df_bollinger_exit_position,
 #     constants,
 #     trading_state_config_short_stop_loss,
-#     won_and_lost_amount_constants,
+#     won_and_lost_constants,
 #     actions_to_take_constants,
 # ):
 #     price_prediction = 99999
@@ -354,7 +354,7 @@ def test_buy_to_none_via_prediction_btc(
 #         constants,
 #         trading_state_config_short_stop_loss,
 #         example_btc_df_bollinger_exit_position,
-#         won_and_lost_amount_constants,
+#         won_and_lost_constants,
 #         actions_to_take_constants,
 #     )
 

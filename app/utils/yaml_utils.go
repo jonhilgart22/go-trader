@@ -11,7 +11,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ReadNestedYamlFile(fileLocation string, runningOnAws bool) map[string]map[string]string {
+func ReadNestedYamlFile(fileLocation string, runningOnAws bool, coinToPredict string) map[string]map[string]string {
+
+	// every file have the coin name as the first level
+	splitFilename := strings.Split(fileLocation, "/")
+	fileLocation = splitFilename[0] + "/" + coinToPredict + "_" + splitFilename[1]
+	log.Println("fileLocation = ", fileLocation)
+
 	if runningOnAws {
 		// download with tmp/, keep the same path in S3.
 		s := strings.Split(fileLocation, "/")
@@ -40,7 +46,14 @@ func ReadNestedYamlFile(fileLocation string, runningOnAws bool) map[string]map[s
 	return doubleLevelData
 }
 
-func ReadYamlFile(fileLocation string, runningOnAws bool) map[string]string {
+func ReadYamlFile(fileLocation string, runningOnAws bool, coinToPredict string) map[string]string {
+	if len(coinToPredict) == 3 {
+		// every file have the coin name as the first level
+		splitFilename := strings.Split(fileLocation, "/")
+		fileLocation = splitFilename[0] + "/" + coinToPredict + "_" + splitFilename[1]
+		log.Println("fileLocation = ", fileLocation)
+	}
+
 	if runningOnAws {
 		// download with tmp/, keep the same path in S3.
 		s := strings.Split(fileLocation, "/")

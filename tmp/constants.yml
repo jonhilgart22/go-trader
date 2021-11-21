@@ -43,7 +43,7 @@ actions_to_take_filename: tmp/actions_to_take.yml
 constants_filename: tmp/constants.yml
 ml_config_filename: tmp/ml_config.yml
 trading_state_config_filename: tmp/trading_state_config.yml
-won_and_lost_amount_filename: tmp/won_and_lost_amount_config.yml
+won_and_lost_amount_filename: tmp/won_and_lost_config.yml
 
 
 ## DF cols
