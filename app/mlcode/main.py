@@ -1,7 +1,7 @@
 try:  # need modules for pytest to work
     from app.mlcode.determine_trading_state import DetermineTradingState
     from app.mlcode.predict_price_movements import BollingerBandsPredictor
-    from app.mlcode.utils import read_in_data, read_in_yaml, running_on_aws, update_yaml_config, setup_logging
+    from app.mlcode.utils import read_in_data, read_in_yaml, running_on_aws, setup_logging, update_yaml_config
 except ModuleNotFoundError:  # Go is unable to run python modules -m
     from predict_price_movements import BollingerBandsPredictor
     from utils import read_in_yaml, read_in_data, update_yaml_config, running_on_aws, setup_logging
@@ -11,8 +11,19 @@ import sys
 
 import click
 
-
 logger = setup_logging()
+
+
+def add_coin_to_filename(coin: str, filename: str):
+    """
+    Adds the coin to the filename
+    :param coin:
+    """
+    filename_split = filename.split("/")
+    final_filename = filename_split[0] + "/" + coin + "_" + filename_split[1]
+    logger.info(f"final_filename = {final_filename}")
+
+    return final_filename
 
 
 @click.command()
@@ -24,20 +35,15 @@ def main(coin_to_predict: str):
     constants = read_in_yaml("tmp/constants.yml", is_running_on_aws)
     sys.stdout.flush()
 
-    split_trading_state = constants["trading_state_config_filename"].split("/")
-    trading_state_filename = split_trading_state[0] + "/" + coin_to_predict + "_" + split_trading_state[1]
-    logger.info(f"trading_state_filename = {trading_state_filename}")
+    trading_state_filename = add_coin_to_filename(coin_to_predict, constants["trading_state_config_filename"])
     trading_constants = read_in_yaml(trading_state_filename, is_running_on_aws)
 
     sys.stdout.flush()
-    split_won_loss = constants["won_and_lost_amount_filename"].split("/")
-    won_lost_amount_filename = split_won_loss[0] + "/" + coin_to_predict + "_" + split_won_loss[1]
-    logger.info(f"won_lost_amount_filename = {won_lost_amount_filename}")
+
+    won_lost_amount_filename = add_coin_to_filename(coin_to_predict, constants["won_and_lost_amount_filename"])
     won_and_lost_amount_constants = read_in_yaml(won_lost_amount_filename, is_running_on_aws)
 
-    split_actions_to_take = constants["actions_to_take_filename"].split("/")
-    actions_to_take_filename = split_actions_to_take[0] + "/" + coin_to_predict + "_" + split_actions_to_take[1]
-    logger.info(f"actions_to_take_filename = {actions_to_take_filename}")
+    actions_to_take_filename = add_coin_to_filename(coin_to_predict, constants["actions_to_take_filename"])
     actions_to_take_constants = read_in_yaml(actions_to_take_filename, is_running_on_aws)
 
     # data should already be downloaded from the golang app
@@ -86,17 +92,12 @@ def main(coin_to_predict: str):
     logger.info("---- Finished determinig trading strategy --- ")
     trading_state_class.update_state()
     # this works
-    update_yaml_config(
-        constants["trading_state_config_filename"], trading_state_class.trading_state_constants, is_running_on_aws
-    )
+
+    update_yaml_config(trading_state_filename, trading_state_class.trading_state_constants, is_running_on_aws)
     logger.info("---- Updated trading state config --- ")
-    update_yaml_config(
-        constants["won_and_lost_amount_filename"], trading_state_class.won_and_lose_amount_dict, is_running_on_aws
-    )
+    update_yaml_config(won_lost_amount_filename, trading_state_class.won_and_lose_amount_dict, is_running_on_aws)
     logger.info("---- Updated win/lost state config --- ")
-    update_yaml_config(
-        constants["actions_to_take_filename"], trading_state_class.actions_to_take_constants, is_running_on_aws
-    )
+    update_yaml_config(actions_to_take_filename, trading_state_class.actions_to_take_constants, is_running_on_aws)
     logger.info("---- Updated actions to take state config --- ")
 
 

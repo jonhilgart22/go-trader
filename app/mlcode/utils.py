@@ -7,7 +7,6 @@ from typing import Any, Dict
 import pandas as pd  # type: ignore
 import yaml
 
-
 __all__ = ["setup_logging", "update_yaml_config", "read_in_data", "running_on_aws", "read_in_yaml"]
 
 

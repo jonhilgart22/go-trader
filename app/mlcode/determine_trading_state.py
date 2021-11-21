@@ -182,7 +182,9 @@ class DetermineTradingState:
 
         elif self.action_to_take == "none_to_buy":  # not in a position, continue holidng
             self.action_to_take = "buy_to_continue_buy"
-            self._write_and_print_log_statements("Taking no action today. Updating none_to_buy to buy_to_continue_buy", row)
+            self._write_and_print_log_statements(
+                "Taking no action today. Updating none_to_buy to buy_to_continue_buy", row
+            )
 
         else:
             if self.action_to_take == "buy_to_none":
