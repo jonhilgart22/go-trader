@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -32,26 +34,21 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	// manually setting runningLocally to False will have everything work in the container
 	var runningLocally bool = awsUtils.RunningLocally()
 	log.Printf("Running locally = %v", runningLocally)
-	var coinToPredict string = req.CoinToPredict
+	var coinToPredict string = strings.ToLower(req.CoinToPredict)
 	log.Printf("Coin to predict = %v", coinToPredict)
 	// set env vars
 	awsUtils.SetSsmToEnvVars()
 
 	// Download all the config files
 	awsSession := awsUtils.CreateNewAwsSession()
-	awsUtils.DownloadFromS3("go-trader", "app/constants.yml", runningOnAws, awsSession)
+	awsUtils.DownloadFromS3("go-trader", "tmp/constants.yml", runningOnAws, awsSession)
 
 	// Read in the constants from yaml
-	constantsMap := utils.ReadYamlFile("app/constants.yml")
+	// 0 so that we don't alter the filename
+	constantsMap := utils.ReadYamlFile("tmp/constants.yml", runningOnAws, "0")
 
 	// Download the rest of the config files
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
-	//ml_config.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
-	//trading_state_config.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
-	//won_and_lost_amount.yml
-	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
+	downloadConfigFiles(constantsMap, runningOnAws, awsSession, coinToPredict)
 
 	// pull new data from FTX with day candles
 	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
@@ -105,11 +102,12 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 	// Read in the constants  that have been updated from our python ML program. Determine what to do based
 	log.Println("Determining actions to take")
-	actionsToTakeConstants := utils.ReadNestedYamlFile(constantsMap["actions_to_take_filename"]) // read in nested yaml?
-	log.Println(actionsToTakeConstants[coinToPredict]["action_to_take"])
-	actionToTake := actionsToTakeConstants[coinToPredict]["action_to_take"]
-
-	// account information
+	// only updated the tmp./ folder
+	actionsToTakeConstants := utils.ReadYamlFile(constantsMap["actions_to_take_filename"], runningOnAws, coinToPredict)
+	// read in nested yaml?
+	log.Println(actionsToTakeConstants["action_to_take"])
+	actionToTake := actionsToTakeConstants["action_to_take"]
+	log.Println(actionToTake, "actionToTake")
 
 	log.Println("Logging into FTX to get account info")
 	subAccount, _ := ftxClient.SubAccounts.GetSubaccountBalances("eth_trading")
@@ -126,6 +124,12 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Println(info.Positions, "Positions")
 
 	// TODO: once FTX allows short leveraged tokens in the US, add this to the short action
+	log.Println("default_purchase_size", constantsMap["default_purchase_size"])
+	sizeToBuy, err := decimal.NewFromString(constantsMap["default_purchase_size"])
+	if err != nil {
+		panic(err)
+	}
+
 	if !runningLocally {
 		switch actionToTake {
 		case "none":
@@ -143,16 +147,22 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 			log.Println("------")
 
-			size := info.TotalAccountValue.Div(newestClosePriceEth)
+			if coinToPredict == "btc" {
+				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceBtc)
+			} else if coinToPredict == "eth" {
+				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceEth)
+			} else if coinToPredict == "sol" {
+				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceSol)
+			}
 
-			log.Printf("Taking a position worth of size ~%d", size)
-			log.Printf("Taking a position worth %d", newestClosePriceEth.Mul(size))
+			log.Println("Taking a position worth of sizeToBuy ~", sizeToBuy)
+			log.Println("Taking a position worth ", newestClosePriceEth.Mul(sizeToBuy))
 
 			if err != nil {
 				panic(err)
 			}
 
-			ftx.PurchaseOrder(ftxClient, size, marketToOrder)
+			ftx.PurchaseOrder(ftxClient, sizeToBuy, marketToOrder)
 
 		case "none_to_short":
 			log.Printf("Action for coin %v to take = none_to_short", coinToPredict)
@@ -168,29 +178,45 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 
 	// upload any config changes that we need to maintain state
-	if !runningLocally {
-		//actions_to_take.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["actions_to_take_filename"], runningOnAws, awsSession)
-		//constants.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["constants_filename"], runningOnAws, awsSession)
-		//ml_config.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
-		//trading_state_config.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["trading_state_config_filename"], runningOnAws, awsSession)
-		//won_and_lost_amount.yml
-		awsUtils.UploadToS3(constantsMap["s3_bucket"], constantsMap["won_and_lost_amount_filename"], runningOnAws, awsSession)
-	} else {
-		log.Println("Running locally, not upload config files")
-	}
+
+	iterateAndUploadTmpFiles("/tmp/", constantsMap, runningOnAws, awsSession, runningLocally)
 
 	// send email
+	defaultPurchaseSize, err := decimal.NewFromString(constantsMap["default_purchase_size"])
+	if err != nil {
+		panic(err)
+	}
+
 	if !runningLocally {
-		awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict), constantsMap["log_filename"], runningOnAws)
+		awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict), constantsMap["log_filename"], sizeToBuy, runningOnAws, constantsMap["email_separator"], defaultPurchaseSize)
 	} else {
 		log.Println("No emails, running locally")
 	}
 	// all done!
 	return "Finished!", nil
+
+}
+
+func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, runningLocally bool) {
+
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, f := range files {
+
+		if strings.Contains(f.Name(), "yml") {
+			if runningLocally {
+				log.Println("Not uploading to S3, running locally")
+			} else {
+				// all the config files are in the same folder under tmp. Because we are iterating all files in the "/tmp/" directory, the "tmp" is removed from the filename. So we need to add it back.
+				finalFilename := "tmp/" + f.Name()
+				fmt.Println("uploadFilename - ", finalFilename)
+				awsUtils.UploadToS3(constantsMap["s3_bucket"], finalFilename, runningOnAws, awsSession)
+			}
+		}
+	}
 
 }
 
@@ -244,4 +270,26 @@ func RunPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
 	if waitErr != nil {
 		panic(waitErr)
 	}
+}
+
+func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, coinToPredict string) {
+	// only download the configs for the coin we are predicting
+	splitStringsActionsToTake := strings.Split(constantsMap["actions_to_take_filename"], "/")
+	actionsToTakeFilename := splitStringsActionsToTake[0] + "/" + coinToPredict + "_" + splitStringsActionsToTake[1]
+	log.Println("actionsToTakeFilename = ", actionsToTakeFilename)
+
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], actionsToTakeFilename, runningOnAws, awsSession)
+
+	//ml_config.yml
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], constantsMap["ml_config_filename"], runningOnAws, awsSession)
+	//trading_state_config.yml
+	splitStringsTradingState := strings.Split(constantsMap["trading_state_config_filename"], "/")
+	tradingStateConfigFilename := splitStringsTradingState[0] + "/" + coinToPredict + "_" + splitStringsTradingState[1]
+
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], tradingStateConfigFilename, runningOnAws, awsSession)
+	//won_and_lost_amount.yml
+	splitStringsWonLost := strings.Split(constantsMap["won_and_lost_amount_filename"], "/")
+	WonLostConfigFilename := splitStringsWonLost[0] + "/" + coinToPredict + "_" + splitStringsWonLost[1]
+
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], WonLostConfigFilename, runningOnAws, awsSession)
 }

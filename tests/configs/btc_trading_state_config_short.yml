@@ -1,0 +1,8 @@
+buy_entry_price: 0
+short_entry_price: 1000
+mode: "short"
+stop_loss_pct: .05
+stop_loss_price: 1050
+buy_has_crossed_mean: False
+short_has_crossed_mean: True
+position_entry_date: 2020-10-01 00:00:00

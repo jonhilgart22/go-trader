@@ -39,11 +39,11 @@ s3_bucket: go-trader
 s3_data_location: data
 s3_configs_locations:
 # TODO: will need to make a data directory locally?
-actions_to_take_filename: app/actions_to_take.yml
-constants_filename: app/constants.yml
-ml_config_filename: app/ml_config.yml
-trading_state_config_filename: app/trading_state_config.yml
-won_and_lost_amount_filename: app/won_and_lost_amount_config.yml
+actions_to_take_filename: tmp/actions_to_take.yml
+constants_filename: tmp/constants.yml
+ml_config_filename: tmp/ml_config.yml
+trading_state_config_filename: tmp/trading_state_config.yml
+won_and_lost_amount_filename: tmp/won_and_lost_amount_config.yml
 
 
 ## DF cols
@@ -68,4 +68,7 @@ ml_model_dir_prefix: models/checkpoints
 
 python_script_path: app/mlcode/main.py
 
+# email
 log_filename: logs.txt
+default_purchase_size: 0.0001
+email_separator: "|||"

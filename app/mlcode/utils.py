@@ -2,27 +2,27 @@
 import logging
 import os
 from datetime import datetime
-from logging import config
 from typing import Any, Dict
 
 import pandas as pd  # type: ignore
 import yaml
 
-log_config = {
-    "version": 1,
-    "root": {"handlers": ["console"], "level": "INFO"},
-    "handlers": {"console": {"formatter": "std_out", "class": "logging.StreamHandler", "level": "INFO"}},
-    "formatters": {
-        "std_out": {
-            "format": "[%(asctime)s] : %(levelname)s : %(module)s : %(funcName)s : %(lineno)d  %(message)s",
-            "datefmt": "%m-%d-%Y %I:%M:%S",
-        }
-    },
-}
+__all__ = ["setup_logging", "update_yaml_config", "read_in_data", "running_on_aws", "read_in_yaml"]
 
-config.dictConfig(log_config)
 
-logger = logging.getLogger(__name__)
+def setup_logging():
+
+    root = logging.getLogger()
+    if root.handlers:
+        for handler in root.handlers:
+            root.removeHandler(handler)
+
+    logging.basicConfig(format="%(asctime)s: : %(funcName)s  %(message)s", level=logging.INFO)
+
+    return logging.getLogger(__name__)
+
+
+logger = setup_logging()
 
 
 def update_yaml_config(file_name: str, data: Dict[str, Any], running_on_aws: bool):
@@ -30,6 +30,7 @@ def update_yaml_config(file_name: str, data: Dict[str, Any], running_on_aws: boo
         s = file_name.split("/")
         file_name = "/tmp/" + s[-1]
     with open(file_name, "w") as yaml_file:
+        logger.info(f"Updating {file_name} with {data}")
         yaml_file.write(yaml.dump(data, default_flow_style=False))
 
 
