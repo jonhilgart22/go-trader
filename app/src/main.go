@@ -207,12 +207,13 @@ func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runni
 	for _, f := range files {
 
 		if strings.Contains(f.Name(), "yml") {
-			// awsUtils.UploadToS3(constantsMap["s3_bucket"], f.Name(), runningOnAws, awsSession)
 			if runningLocally {
 				log.Println("Not uploading to S3, running locally")
 			} else {
-				fmt.Println("uploadFilename - ", f.Name())
-				awsUtils.UploadToS3(constantsMap["s3_bucket"], f.Name(), runningOnAws, awsSession)
+				// all the config files are in the same folder under tmp. Because we are iterating all files in the "/tmp/" directory, the "tmp" is removed from the filename. So we need to add it back.
+				finalFilename := "tmp/" + f.Name()
+				fmt.Println("uploadFilename - ", finalFilename)
+				awsUtils.UploadToS3(constantsMap["s3_bucket"], finalFilename, runningOnAws, awsSession)
 			}
 		}
 	}
