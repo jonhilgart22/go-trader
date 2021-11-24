@@ -2,6 +2,7 @@ package ftx
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/grishinsana/goftx"
@@ -15,22 +16,26 @@ func ptrInt(i int) *int {
 
 func SellOrder(ftxClient *goftx.Client, marketToOrder string) {
 	accountBalance, err := ftxClient.Wallet.GetBalances()
+	log.Println(marketToOrder, "marketToOrder")
 
 	if err != nil {
 		panic(err)
 	}
-	var btcCoinFree decimal.Decimal
+	var coinFree decimal.Decimal
 	// figure out how much BTC we have
 	for _, balance := range accountBalance {
-		if balance.Coin == "BTC" {
-			btcCoinFree = balance.Free
+		log.Println(balance.Coin, "balance.Coin")
+		splitMarketStrings := strings.Split(marketToOrder, "/")
+		// index 0 is the base currency, index 1 is the quote currency
+		if balance.Coin == splitMarketStrings[0] {
+			coinFree = balance.Total
 		}
 	}
-	log.Printf("Free BTC coin %v", btcCoinFree)
+	log.Printf("Remaining coin %v for market %v", coinFree, marketToOrder)
 	sellOrder, err := ftxClient.PlaceOrder(&models.PlaceOrderPayload{
 		Market: marketToOrder,
 		Side:   "sell",
-		Size:   btcCoinFree,
+		Size:   coinFree,
 		Type:   "market"})
 	if err != nil {
 		panic(err)

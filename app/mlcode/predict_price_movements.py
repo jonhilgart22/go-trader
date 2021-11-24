@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-import logging
 import os
 import sys
-import warnings
 from threading import Thread
 from typing import Any, Dict, List, Tuple
 
@@ -15,11 +13,15 @@ from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from finta import TA
 
-warnings.filterwarnings("ignore")
+try:  # need modules for pytest to work
+    from app.mlcode.utils import setup_logging
+except ModuleNotFoundError:  # Go is unable to run python modules -m
+    from utils import setup_logging
+
 
 __all__ = ["BollingerBandsPredictor"]
 
-logger = logging.getLogger(__name__)
+logger = setup_logging()
 
 
 class BollingerBandsPredictor:
@@ -44,7 +46,7 @@ class BollingerBandsPredictor:
         self.additional_dfs = additional_dfs
         self.period = period
         self.verbose = verbose
-
+        # TODO: remember to add new columns here
         self.ml_train_cols = [
             self.constants["open_col"],
             self.constants["high_col"],
@@ -57,7 +59,7 @@ class BollingerBandsPredictor:
             self.constants["stoch_col"],
             self.constants["rsi_col"],
         ]
-        self.pred_col = "close"
+        self.pred_col = self.constants["close_col"]
 
         if type(self.ml_constants["prediction_params"]["lookback_window"]) != list:
             raise ValueError("Need to enter a list for loockback_window")
@@ -105,6 +107,7 @@ class BollingerBandsPredictor:
                 force_reset=True,
                 log_tensorboard=False,
                 work_dir=work_dir,
+                save_checkpoints=False,
             )
             if load_model:
                 self.nbeats_model.load_from_checkpoint(
@@ -132,6 +135,7 @@ class BollingerBandsPredictor:
                 force_reset=True,
                 log_tensorboard=False,
                 work_dir=work_dir,
+                save_checkpoints=False,
             )
             # This works
             if load_model:
@@ -172,8 +176,8 @@ class BollingerBandsPredictor:
 
     def _build_technical_indicators(self):
 
-        rolling_mean = self.df["close"].rolling(self.window).mean()
-        rolling_std = self.df["close"].rolling(self.window).std()
+        rolling_mean = self.df[self.pred_col].rolling(self.window).mean()
+        rolling_std = self.df[self.pred_col].rolling(self.window).std()
 
         self.df[self.constants["rolling_mean_col"]] = rolling_mean
         self.df[self.constants["bollinger_high_col"]] = rolling_mean + (rolling_std * self.no_of_std)
@@ -187,8 +191,8 @@ class BollingerBandsPredictor:
         new_additional_dfs = []
         if len(self.additional_dfs) > 0:
             for df in self.additional_dfs:
-                rolling_mean = df["close"].rolling(self.window).mean()
-                rolling_std = df["close"].rolling(self.window).std()
+                rolling_mean = df[self.pred_col].rolling(self.window).mean()
+                rolling_std = df[self.pred_col].rolling(self.window).std()
 
                 df[self.constants["rolling_mean_col"]] = rolling_mean
                 df[self.constants["bollinger_high_col"]] = rolling_mean + (rolling_std * self.no_of_std)

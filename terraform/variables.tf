@@ -44,7 +44,7 @@ variable "lambda_function_name" {
 variable "image_name" {
   type        = string
   description = "image name"
-  default     = "go-traderem"
+  default     = "go-trader"
 }
 variable "image_version" {
   type        = string

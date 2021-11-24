@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/shopspring/decimal"
 )
 
 func readTextFile(fileName string) string {
@@ -31,12 +32,16 @@ func readTextFile(fileName string) string {
 	return string(b)
 
 }
-func SendEmail(inputSubject string, logsFilename string, onAws bool) {
+func SendEmail(inputSubject string, logsFilename string, sizeToBuy decimal.Decimal, onAws bool, emailSeparator string, defaultSizeToBuy decimal.Decimal) {
 	var body string
 	if onAws {
 		body = readTextFile("/tmp/" + logsFilename)
 	} else {
 		body = readTextFile(logsFilename)
+	}
+
+	if sizeToBuy.GreaterThan(defaultSizeToBuy) {
+		body = body + "<br>" + "The total size to purchase is  " + sizeToBuy.String() + " GB"
 	}
 
 	awsSession, err := session.NewSession(&aws.Config{

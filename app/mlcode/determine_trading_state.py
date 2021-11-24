@@ -1,10 +1,13 @@
-import logging
 from datetime import datetime, timedelta
 from typing import Dict, Union
 
+try:  # need modules for pytest to work
+    from app.mlcode.utils import setup_logging
+except ModuleNotFoundError:  # Go is unable to run python modules -m
+    from utils import setup_logging
 import pandas as pd
 
-logger = logging.getLogger(__name__)
+logger = setup_logging()
 
 
 class DetermineTradingState:
@@ -43,17 +46,17 @@ class DetermineTradingState:
         self.running_on_aws = running_on_aws
 
         # trading state args
-        for k, v in self.trading_state_constants[self.coin_to_predict].items():
+        for k, v in self.trading_state_constants.items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
         # Record keeping for how this program is doing
-        for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
+        for k, v in self.won_and_lose_amount_dict.items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
         # actions to take
-        for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
+        for k, v in self.actions_to_take_constants.items():
             setattr(self, k, v)
             logger.info(f"Setting the class var self.{k} = {v}")
 
@@ -77,48 +80,49 @@ class DetermineTradingState:
             raise (f"Incorrect dates passed. Yesterday = {yesterday} Two days ago = {two_days_ago}")
 
         # update stop loss
-        if self.mode == "buy" and (1 - self.stop_loss_pct) * row["close"][0] > self.stop_loss_price:
-            self.stop_loss_price = (1 - self.stop_loss_pct) * row["close"]
-            self._print_log_statements(f"Updating stop loss to {self.stop_loss_price}", row)
+        if self.mode == "buy" and (1 - self.stop_loss_pct) * row[self.constants["close_col"]][0] > self.stop_loss_price:
+            self.stop_loss_price = (1 - self.stop_loss_pct) * row[self.constants["close_col"]][0]
+            self._write_and_print_log_statements(f"Updating stop loss to {self.stop_loss_price}", row)
 
         # TODO: uncomment once FTX allows short leveraged tokens
         # if (
         #     self.mode == "short"
-        #     and (1 + self.stop_loss_pct) * row["close"][0] < self.stop_loss_price
+        #     and (1 + self.stop_loss_pct) * row[self.constants["close_col"]][0] < self.stop_loss_price
         # ):
-        #     self.stop_loss_price = (1 + self.stop_loss_pct) * row["close"][0]
-        #     self._print_log_statements(
+        #     self.stop_loss_price = (1 + self.stop_loss_pct) * row[self.constants["close_col"]][0]
+        #     self._write_and_print_log_statements(
         #         f"Updating stop loss to {self.stop_loss_price}", row
         #     )
 
         # check if we've previously crossed the mean trailing price
-        if self.mode == "buy" and row["close"][0] > row[self.constants["rolling_mean_col"]][0]:
-            self.buy_has_crossed_mean = True
+        if self.mode == "buy" and row[self.constants["close_col"]][0] > row[self.constants["rolling_mean_col"]][0]:
+            self.buy_has_crossed_mean = 1
 
         # TODO: uncomment once FTX allows shorts
         # if (
         #     self.mode == "short"
-        #     and row["close"][0] < row[self.constants["rolling_mean_col"]][0]
+        #     and row[self.constants["close_col"]][0] < row[self.constants["rolling_mean_col"]][0]
         # ):
-        #     self.short_has_crossed_mean = True
+        #     self.short_has_crossed_mean = 1
 
         # stop loss, get out of buy position
-        if self.mode == "buy" and self.stop_loss_price > row["close"][0]:
-            self._print_log_statements("stop loss activated for getting out of our buy", row)
+        logger.info(f"self.stop_loss_price = {self.stop_loss_price}")
+        if self.mode == "buy" and (self.stop_loss_price > row[self.constants["close_col"]].values[0]):
+            self._write_and_print_log_statements("stop loss activated for getting out of our buy", row)
 
             self._determine_win_or_loss_amount(row)
             # record keeping
 
             self.mode = "no_position"
             self.action_to_take = "buy_to_none"
-            self.buy_has_crossed_mean = False
+            self.buy_has_crossed_mean = 0
             self.buy_entry_price = 0
             self.stop_loss_price = 0
 
         # TODO: uncomment once FTX allows shorts
         # # stop loss, get out of short position
-        # elif self.mode == "short" and self.stop_loss_price < row["close"][0]:
-        #     self._print_log_statements(
+        # elif self.mode == "short" and self.stop_loss_price < row[self.constants["close_col"][0]:
+        #     self._write_and_print_log_statements(
         #         f"stop loss activated for getting out of our short", row
         #     )
 
@@ -126,7 +130,7 @@ class DetermineTradingState:
         #     # record keeping
         #     self.mode = "no_position"
         #     self.action_to_take = "short_to_none"
-        #     self.short_has_crossed_mean = False
+        #     self.short_has_crossed_mean = 0
         #     self.short_entry_price = 0
         #     self.stop_loss_price = 0
 
@@ -134,11 +138,11 @@ class DetermineTradingState:
         # or, if we are above the top band (mean reversion)
         elif self.mode == "buy" and (
             (
-                row["close"][0] < row[self.constants["rolling_mean_col"]][0]
-                and self.trading_state_constants[self.coin_to_predict]["buy_has_crossed_mean"]
+                row[self.constants["close_col"]][0] < row[self.constants["rolling_mean_col"]][0]
+                and self.trading_state_constants["buy_has_crossed_mean"] == 1
             )
-            or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
-            or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
+            or (row[self.constants["close_col"]][0] > row[self.constants["bollinger_high_col"]][0])
+            or (row[self.constants["close_col"]][0] < row[self.constants["bollinger_low_col"]][0])
             or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
             self._check_buy_to_none(row)
@@ -148,13 +152,13 @@ class DetermineTradingState:
         # or, if we are below the bottom band (mean reversion)
         # elif self.mode == "short" and (
         #     (
-        #         row["close"][0] > row[self.constants["rolling_mean_col"]][0]
-        #         and self.trading_state_constants[self.coin_to_predict][
+        #         row[self.constants["close_col"][0] > row[self.constants["rolling_mean_col"]][0]
+        #         and self.trading_state_constants[
         #             "short_has_crossed_mean"
-        #         ]
+        #         ] == 1
         #     )
-        #     or (row["close"][0] < row[self.constants["bollinger_low_col"]][0])
-        #     or (row["close"][0] > row[self.constants["bollinger_high_col"]][0])
+        #     or (row[self.constants["close_col"][0] < row[self.constants["bollinger_low_col"]][0])
+        #     or (row[self.constants["close_col"][0] > row[self.constants["bollinger_high_col"]][0])
         #     or row[self.constants["rolling_mean_col"]][0] > self.short_entry_price
         # ):
         #     self._check_short_to_none(row)
@@ -162,8 +166,8 @@ class DetermineTradingState:
         # buy check with ML model
         elif (
             self.mode == "no_position"
-            and row["close"][0] < row[self.constants["bollinger_low_col"]][0]
-            and prev_row["close"][0] > prev_row[self.constants["bollinger_low_col"]][0]
+            and row[self.constants["close_col"]][0] < row[self.constants["bollinger_low_col"]][0]
+            and prev_row[self.constants["close_col"]][0] > prev_row[self.constants["bollinger_low_col"]][0]
         ):
             self._check_if_we_should_buy(row)
 
@@ -171,13 +175,21 @@ class DetermineTradingState:
         # TODO: FTX doesn't support short tokens... yet. Undue when we are ready to short
         # elif (
         #     self.mode == "no_position"
-        #     and row["close"][0] > row[self.constants["bollinger_high_col"]][0]
-        #     and prev_row["close"][0] < prev_row[self.constants["bollinger_high_col"]][0]
+        #     and row[self.constants["close_col"][0] > row[self.constants["bollinger_high_col"]][0]
+        #     and prev_row[self.constants["close_col"][0] < prev_row[self.constants["bollinger_high_col"]][0]
         # ):
         #     self._check_if_we_should_short(row)
 
+        elif self.action_to_take == "none_to_buy":  # not in a position, continue holidng
+            self.action_to_take = "buy_to_continue_buy"
+            self._write_and_print_log_statements(
+                "Taking no action today. Updating none_to_buy to buy_to_continue_buy", row
+            )
+
         else:
-            self._print_log_statements("Taking no action today", row)
+            if self.action_to_take == "buy_to_none":
+                self.action_to_take = "none_to_none"
+            self._write_and_print_log_statements("Taking no action today. Hit the else statement", row)
 
     def _determine_win_or_loss_amount(self, row: pd.Series):
         """
@@ -186,17 +198,17 @@ class DetermineTradingState:
         # short s
 
         # stop loss for short
-        if self.mode == "short" and self.short_entry_price < row["close"][0]:
-            lost_amount = row["close"][0] - self.short_entry_price
+        if self.mode == "short" and self.short_entry_price < row[self.constants["close_col"]][0]:
+            lost_amount = row[self.constants["close_col"]][0] - self.short_entry_price
             logger.info(f"Lost {lost_amount} on this trade")
 
             self.n_short_lost += 1
             self.dollar_amount_short_lost += lost_amount
 
         # made money
-        elif self.mode == "short" and self.short_entry_price > row["close"][0]:
+        elif self.mode == "short" and self.short_entry_price > row[self.constants["close_col"]][0]:
 
-            win_amount = self.short_entry_price - row["close"][0]
+            win_amount = self.short_entry_price - row[self.constants["close_col"]][0]
             logger.info(f"Won {win_amount} on this trade")
             self.n_short_won += 1
             self.dollar_amount_short_won += win_amount
@@ -204,25 +216,25 @@ class DetermineTradingState:
         # buys
 
         # lost money
-        elif self.mode == "buy" and self.buy_entry_price > row["close"][0]:
+        elif self.mode == "buy" and self.buy_entry_price > row[self.constants["close_col"]][0]:
 
-            lost_amount = self.buy_entry_price - row["close"][0]
+            lost_amount = self.buy_entry_price - row[self.constants["close_col"]][0]
             logger.info(f"Lost {lost_amount} on this trade")
 
             self.n_buy_lost += 1
             self.dollar_amount_buy_lost += lost_amount
 
         # made money
-        elif self.mode == "buy" and self.buy_entry_price < row["close"]:
+        elif self.mode == "buy" and self.buy_entry_price < row[self.constants["close_col"]]:
 
-            won_amount = row["close"][0] - self.buy_entry_price
+            won_amount = row[self.constants["close_col"]][0] - self.buy_entry_price
             logger.info(f"Won {won_amount} on this trade")
             self.n_buy_won += 1
             self.dollar_amount_buy_won += won_amount
         else:
             raise ValueError("Something went wrong calculating win/lose amount")
 
-        days_in_trade = row.index - self.position_entry_date
+        days_in_trade = pd.to_datetime(row.index) - pd.to_datetime(self.position_entry_date)
         logger.info(f"days in trades = {days_in_trade.days}")
         self.n_total_days_in_trades += days_in_trade.days[0]
 
@@ -254,7 +266,7 @@ class DetermineTradingState:
         """
         While in a short position, check if we should exit
         """
-        self._print_log_statements("checking if we should get out of our short position", row)
+        logger.info("checking if we should get out of our short position")
 
         # check ML predicted trend as well
 
@@ -263,24 +275,24 @@ class DetermineTradingState:
             or (self.price_prediction > self.short_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] > self.short_entry_price)
         ):
-            logger.info("short_to_none")
+            self._write_and_print_log_statements("short position to none", row)
 
             self._determine_win_or_loss_amount(row)
 
             self.mode = "no_position"
             self.action_to_take = "short_to_none"
-            self.short_has_crossed_mean = False
+            self.short_has_crossed_mean = 0
             self.short_entry_price = 0
             self.stop_loss_price = 0
         else:
-            logger.info("not exiting out short position")
+            self._write_and_print_log_statements("not exiting short position", row)
             self.action_to_take = "short_to_contine_short"
 
     def _check_buy_to_none(self, row: pd.Series):
         """
         While in a buy/long position, check if we should exit
         """
-        self._print_log_statements("checking if we should exit our buy position", row)
+        logger.info("checking if we should exit our buy position")
 
         # check ML predicted trend as well
 
@@ -289,58 +301,61 @@ class DetermineTradingState:
             or (self.price_prediction < self.buy_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
-            logger.info("buy_to_none")
+            self._write_and_print_log_statements("buy_to_none ", row)
 
             self._determine_win_or_loss_amount(row)
             # record keeping
 
             self.mode = "no_position"
             self.action_to_take = "buy_to_none"
-            self.buy_has_crossed_mean = False
+            self.buy_has_crossed_mean = 0
             self.buy_entry_price = 0
             self.stop_loss_price = 0
         else:
-            logger.info("Not exiting buy position")
+            self._write_and_print_log_statements("Not exiting buy position", row)
             self.action_to_take = "buy_to_continue_buy"
 
     def _check_if_we_should_buy(self, row: pd.Series):
         """
         Determine if we should enter a buy position
         """
-        self._print_log_statements("Checking if we should enter a buy position", row)
+        logger.info("Checking if we should buy")
         # check ML predicted trend as well
 
         if self.price_prediction > row[self.constants["rolling_mean_col"]][0]:
-            logger.info("ml pred higher than mean taking position")
+            self._write_and_print_log_statements("ml pred higher than mean taking position", row)
 
             self.mode = "buy"
             self.action_to_take = "none_to_buy"
-            self.buy_entry_price = row["close"][0]
-            self.stop_loss_price = row["close"][0] * (1 - self.stop_loss_pct)
+            self.buy_entry_price = row[self.constants["close_col"]][0]
+            self.stop_loss_price = row[self.constants["close_col"]][0] * (1 - self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
-            logger.info("self.price_prediction is not higher than the Rolling Mean. Not going to buy")
+            self._write_and_print_log_statements(
+                "self.price_prediction is not higher than the Rolling Mean. Not going to buy", row
+            )
+
             self.action_to_take = "none_to_none"
 
     def _check_if_we_should_short(self, row: pd.Series):
         """
         Check if we should enter a short position
         """
-        self._print_log_statements("Checking if we should enter a short position", row)
+        logger.info("Checking if we should enter a short position")
 
         if self.price_prediction < row[self.constants["rolling_mean_col"]][0]:
-            logger.info("pred  lower than mean taking position to short")
+            self._write_and_print_log_statements("pred  lower than mean taking position to short", row)
 
             self.mode = "short"
             self.action_to_take = "none_to_short"
-            self.short_entry_price = row["close"][0]
-            self.stop_loss_price = row["close"][0] * (1 + self.stop_loss_pct)
+            self.short_entry_price = row[self.constants["close_col"]][0]
+            self.stop_loss_price = row[self.constants["close_col"]][0] * (1 + self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
-            logger.info("not taking a position to short")
+            self._write_and_print_log_statements("not taking a position to short", row)
             self.action_to_take = "none_to_none"
 
-    def _print_log_statements(self, message: str, row: pd.Series):
+    def _write_and_print_log_statements(self, message: str, row: pd.Series):
 
         logger.info("------------")
         logger.info(f"Logging for coin = {self.coin_to_predict}")
@@ -351,6 +366,7 @@ class DetermineTradingState:
 
         logger.info(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}")
         logger.info(f"bollinger high = {row[self.constants['bollinger_high_col']][0]}")
+        logger.info(f"bollinger low = {row[self.constants['bollinger_low_col']][0]}")
 
         logger.info(f"self.buy_entry_price = {self.buy_entry_price}")
         # logger.info(f"self.short_entry_price = {self.short_entry_price}")
@@ -360,36 +376,55 @@ class DetermineTradingState:
             filename = "/tmp/" + self.constants["log_filename"]
         else:
             filename = self.constants["log_filename"]
+        logger.info(f"Writing logs to file {filename}")
         with open(filename, "w") as text_file:
-            text_file.write("------------\n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write(f"Logging for coin = {self.coin_to_predict}\n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write(message + "\n")
-            text_file.write(" | | | | | | | | |")
+            text_file.write("------------")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"Logging for coin = {self.coin_to_predict}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(message + "")
+            text_file.write(self.constants["email_separator"])
             text_file.write(f"current date = {row.index}\n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write(f"close = {row[self.constants['close_col']][0]}\n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}\n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} \n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write(f"bollinger low = {row[self.constants['bollinger_low_col']][0]} \n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write(f"self.buy_entry_price = {self.buy_entry_price}\n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write(f"ml price_prediction for next {self.prediction_n_days}  days= {self.price_prediction}\n")
-            text_file.write(" | | | | | | | | |")
-            text_file.write("------------\n")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"close = {row[self.constants['close_col']][0]}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} ")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"bollinger low = {row[self.constants['bollinger_low_col']][0]} ")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"self.buy_entry_price = {self.buy_entry_price}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"ml price_prediction for next {self.prediction_n_days}  days= {self.price_prediction}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"Self.mode = {self.mode}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"Self.action_to_take = {self.action_to_take}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"stop_loss_price = {self.stop_loss_price}")
+            text_file.write(self.constants["email_separator"])
+            text_file.write(f"position_entry_date = {self.position_entry_date}")
 
         logger.info("------------")
 
     def update_state(self):
-        """Convenience method to update  our state params"""
-        for k, v in self.trading_state_constants[self.coin_to_predict].items():
-            self.trading_state_constants[self.coin_to_predict][k] = getattr(self, k, v)
-        for k, v in self.won_and_lose_amount_dict[self.coin_to_predict].items():
-            self.won_and_lose_amount_dict[self.coin_to_predict][k] = getattr(self, k, v)
-        for k, v in self.actions_to_take_constants[self.coin_to_predict].items():
-            self.actions_to_take_constants[self.coin_to_predict][k] = getattr(self, k, v)
+        """Convenience method to update  our state params. Try to convert everything to floats for serializable"""
+        for k, v in self.trading_state_constants.items():
+            try:
+                item = float(getattr(self, k, v))
+            except Exception:
+                item = getattr(self, k, v)
+            self.trading_state_constants[k] = item
+        for k, v in self.won_and_lose_amount_dict.items():
+            try:
+                item = float(getattr(self, k, v))
+            except Exception:
+                item = getattr(self, k, v)
+            self.won_and_lose_amount_dict[k] = item
+        for k, v in self.actions_to_take_constants.items():
+            try:
+                item = float(getattr(self, k, v))
+            except Exception:
+                item = getattr(self, k, v)
+            self.actions_to_take_constants[k] = item

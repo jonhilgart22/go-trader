@@ -12,9 +12,9 @@ def test_no_btc_action(
     example_eth_df,
     constants,
     ml_config,
-    trading_state_config,
-    won_and_lost_amount_constants,
-    actions_to_take_constants,
+    btc_trading_state_config,
+    btc_won_and_lost_constants,
+    btc_actions_to_take_constants,
 ):
     """verify everyting works as intended"""
     # for faster tests, uncomment
@@ -32,16 +32,16 @@ def test_no_btc_action(
         "btc",
         price_prediction,
         constants,
-        trading_state_config,
+        btc_trading_state_config,
         btc_predictor.df,
-        won_and_lost_amount_constants,
-        actions_to_take_constants,
+        btc_won_and_lost_constants,
+        btc_actions_to_take_constants,
         False,
     )
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
 
-    assert trading_state_config == trading_state_class.trading_state_constants
+    assert btc_trading_state_config == trading_state_class.trading_state_constants
 
 
 def test_no_sol_action(
@@ -49,9 +49,9 @@ def test_no_sol_action(
     example_eth_df,
     constants,
     ml_config,
-    trading_state_config,
-    won_and_lost_amount_constants,
-    actions_to_take_constants,
+    sol_trading_state_config,
+    sol_won_and_lost_constants,
+    sol_actions_to_take_constants,
 ):
     """verify everyting works as intended"""
     # for faster tests, uncomment
@@ -69,16 +69,16 @@ def test_no_sol_action(
         coin_to_predict,
         price_prediction,
         constants,
-        trading_state_config,
+        sol_trading_state_config,
         btc_predictor.df,
-        won_and_lost_amount_constants,
-        actions_to_take_constants,
+        sol_won_and_lost_constants,
+        sol_actions_to_take_constants,
         False,
     )
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
 
-    assert trading_state_config == trading_state_class.trading_state_constants
+    assert sol_trading_state_config == trading_state_class.trading_state_constants
 
 
 def test_no_eth_action(
@@ -86,9 +86,9 @@ def test_no_eth_action(
     example_eth_df,
     constants,
     ml_config,
-    trading_state_config,
-    won_and_lost_amount_constants,
-    actions_to_take_constants,
+    eth_trading_state_config,
+    eth_won_and_lost_constants,
+    eth_actions_to_take_constants,
 ):
     """verify everyting works as intended"""
 
@@ -106,24 +106,24 @@ def test_no_eth_action(
         coin_to_predict,
         price_prediction,
         constants,
-        trading_state_config,
+        eth_trading_state_config,
         btc_predictor.df,
-        won_and_lost_amount_constants,
-        actions_to_take_constants,
+        eth_won_and_lost_constants,
+        eth_actions_to_take_constants,
         False,
     )
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
 
-    assert trading_state_config == trading_state_class.trading_state_constants
+    assert eth_trading_state_config == trading_state_class.trading_state_constants
 
 
 def test_buy_btc_action(
     example_btc_df_bollinger_exit_position,
     constants,
-    trading_state_config,
-    won_and_lost_amount_constants,
-    actions_to_take_constants,
+    btc_trading_state_config,
+    btc_won_and_lost_constants,
+    btc_actions_to_take_constants,
     ml_config,
     example_btc_df,
     example_eth_df,
@@ -146,27 +146,28 @@ def test_buy_btc_action(
         coin_to_predict,
         price_prediction,
         constants,
-        trading_state_config,
+        btc_trading_state_config,
         example_btc_df_bollinger_exit_position,
-        won_and_lost_amount_constants,
-        actions_to_take_constants,
+        btc_won_and_lost_constants,
+        btc_actions_to_take_constants,
         False,
     )
 
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
-    assert trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "buy"
-    assert trading_state_class.trading_state_constants[coin_to_predict]["short_entry_price"] == 0
-    assert trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"] == 982
-    assert trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"] == 883.8000000000001
-    assert trading_state_class.actions_to_take_constants[coin_to_predict]["action_to_take"] == "none_to_buy"
+
+    assert trading_state_class.trading_state_constants["mode"] == "buy"
+    assert trading_state_class.trading_state_constants["short_entry_price"] == 0
+    assert trading_state_class.trading_state_constants["buy_entry_price"] == 982
+    assert trading_state_class.trading_state_constants["stop_loss_price"] == 883.8000000000001
+    assert trading_state_class.actions_to_take_constants["action_to_take"] == "none_to_buy"
 
 
 # def test_short_btc_action(
 #     example_btc_df_bollinger_short,
 #     constants,
 #     trading_state_config,
-#     won_and_lost_amount_constants,
+#     won_and_lost_constants,
 #     actions_to_take_constants,
 # ):
 #     price_prediction = 90
@@ -179,7 +180,7 @@ def test_buy_btc_action(
 #         constants,
 #         trading_state_config,
 #         example_btc_df_bollinger_short,
-#         won_and_lost_amount_constants,
+#         won_and_lost_constants,
 #         actions_to_take_constants,
 #     )
 #     trading_state_class.calculate_positions()
@@ -210,9 +211,9 @@ def test_buy_btc_action(
 def test_buy_to_none_via_prediction_btc(
     example_btc_df_bollinger_exit_position,
     constants,
-    trading_state_config_buy,
-    won_and_lost_amount_constants,
-    actions_to_take_constants,
+    btc_trading_state_config_buy,
+    btc_won_and_lost_constants,
+    btc_actions_to_take_constants,
     ml_config,
     example_eth_df,
 ):
@@ -235,27 +236,27 @@ def test_buy_to_none_via_prediction_btc(
         coin_to_predict,
         price_prediction,
         constants,
-        trading_state_config_buy,
+        btc_trading_state_config_buy,
         example_btc_df_bollinger_exit_position,
-        won_and_lost_amount_constants,
-        actions_to_take_constants,
+        btc_won_and_lost_constants,
+        btc_actions_to_take_constants,
         False,
     )
 
     trading_state_class.calculate_positions()
     trading_state_class.update_state()
-    assert trading_state_class.actions_to_take_constants[coin_to_predict]["action_to_take"] == "buy_to_none"
+    assert trading_state_class.actions_to_take_constants["action_to_take"] == "buy_to_none"
     # assert trading state is correct
-    assert trading_state_class.trading_state_constants[coin_to_predict]["mode"] == "no_position"
-    assert trading_state_class.trading_state_constants[coin_to_predict]["short_entry_price"] == 0
-    assert trading_state_class.trading_state_constants[coin_to_predict]["buy_has_crossed_mean"] == False
-    assert trading_state_class.trading_state_constants[coin_to_predict]["short_has_crossed_mean"] == False
-    assert trading_state_class.trading_state_constants[coin_to_predict]["buy_entry_price"] == 0
-    assert trading_state_class.trading_state_constants[coin_to_predict]["stop_loss_price"] == 0
-    assert trading_state_class.trading_state_constants[coin_to_predict]["position_entry_date"] == None
+    assert trading_state_class.trading_state_constants["mode"] == "no_position"
+    assert trading_state_class.trading_state_constants["short_entry_price"] == 0
+    assert trading_state_class.trading_state_constants["buy_has_crossed_mean"] == False
+    assert trading_state_class.trading_state_constants["short_has_crossed_mean"] == False
+    assert trading_state_class.trading_state_constants["buy_entry_price"] == 0
+    assert trading_state_class.trading_state_constants["stop_loss_price"] == 0
+    assert trading_state_class.trading_state_constants["position_entry_date"] == None
     ## assert win/lose is correct
-    assert trading_state_class.won_and_lose_amount_dict[coin_to_predict]["n_buy_lost"] == 1
-    assert trading_state_class.won_and_lose_amount_dict[coin_to_predict]["dollar_amount_buy_lost"] == 18
+    assert trading_state_class.won_and_lose_amount_dict["n_buy_lost"] == 1
+    assert trading_state_class.won_and_lose_amount_dict["dollar_amount_buy_lost"] == 18
 
 
 # TODO: uncomment once FTX.US supports short tokens
@@ -263,7 +264,7 @@ def test_buy_to_none_via_prediction_btc(
 #     example_btc_df_bollinger_exit_position,
 #     constants,
 #     trading_state_config_short,
-#     won_and_lost_amount_constants,
+#     won_and_lost_constants,
 #     actions_to_take_constants,
 # ):
 #     price_prediction = 99999
@@ -276,7 +277,7 @@ def test_buy_to_none_via_prediction_btc(
 #         constants,
 #         trading_state_config_short,
 #         example_btc_df_bollinger_exit_position,
-#         won_and_lost_amount_constants,
+#         won_and_lost_constants,
 #         actions_to_take_constants,
 #     )
 
@@ -340,7 +341,7 @@ def test_buy_to_none_via_prediction_btc(
 #     example_btc_df_bollinger_exit_position,
 #     constants,
 #     trading_state_config_short_stop_loss,
-#     won_and_lost_amount_constants,
+#     won_and_lost_constants,
 #     actions_to_take_constants,
 # ):
 #     price_prediction = 99999
@@ -353,7 +354,7 @@ def test_buy_to_none_via_prediction_btc(
 #         constants,
 #         trading_state_config_short_stop_loss,
 #         example_btc_df_bollinger_exit_position,
-#         won_and_lost_amount_constants,
+#         won_and_lost_constants,
 #         actions_to_take_constants,
 #     )
 
