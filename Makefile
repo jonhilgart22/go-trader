@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth go_coverage
+PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth coverage_go
 
 PYTHON_VERSION=3.8.2
 
@@ -85,5 +85,5 @@ clean_up_efs:
 	terraform destroy -target=aws_efs_file_system.efs_for_lambda
 	terraform apply -target=aws_efs_file_system.efs_for_lambda
 
-go_coverage:
+coverage_go:
  	go test ./... -coverprofile cover.out

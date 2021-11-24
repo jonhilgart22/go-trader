@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	"github.com/shopspring/decimal"
+	"github.com/spf13/afero"
 )
 
 func setupHIstoricalPrice() []*models.HistoricalPrice {
@@ -171,4 +173,61 @@ func TestDownloadUpdateReuploadData(t *testing.T) {
 	}
 }
 
-func Test(t *testing.T) {
+func TestIterateAndUploadTmpFiles(t *testing.T) {
+	// create a fake directory with two .yml files in it
+	var AppFs = afero.NewOsFs()
+	var bucketName = "test-bucket"
+	constantsMap := map[string]string{"s3_bucket": bucketName}
+
+	AppFs.MkdirAll("/tmp/", os.ModePerm)
+
+	//create file inside tmp directory
+	AppFs.Create("/tmp/test_file_1.yml")
+	AppFs.Create("/tmp/test_file_1.csv")
+	AppFs.Create("/tmp/test_file_1.png")
+
+	// create fake s3
+	// fake s3
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	ts := httptest.NewServer(faker.Server())
+	defer ts.Close()
+
+	// configure S3 client
+	s3Config := &aws.Config{
+		Credentials:      credentials.NewStaticCredentials("YOUR-ACCESSKEYID", "YOUR-SECRETACCESSKEY", ""),
+		Endpoint:         aws.String(ts.URL),
+		Region:           aws.String("us-east-1"),
+		DisableSSL:       aws.Bool(true),
+		S3ForcePathStyle: aws.Bool(true),
+	}
+	newSession := session.New(s3Config)
+
+	s3Client := s3.New(newSession)
+	s3Params := &s3.CreateBucketInput{
+		Bucket: aws.String(bucketName),
+	}
+	s3ListBucket := &s3.ListObjectsInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	// Create a new bucket using the CreateBucket call.
+	_, err := s3Client.CreateBucket(s3Params)
+	if err != nil {
+		// Message from an error.
+		t.Log(err.Error())
+		return
+	}
+
+	IterateAndUploadTmpFiles("/tmp/", constantsMap, true, newSession)
+
+	// list the files that were uploaded
+	respNew, _ := s3Client.ListObjects(s3ListBucket)
+	for _, key := range respNew.Contents {
+		t.Log(*key.Key, "new key")
+		// make sure the tmp/ is added back and that we only upload the yml
+		if *key.Key != "tmp/test_file_1.yml" {
+			t.Fail()
+		}
+	}
+}
