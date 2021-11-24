@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -134,7 +132,7 @@ func TestDownloadUpdateReuploadData(t *testing.T) {
 	_, err := s3Client.CreateBucket(cparams)
 	if err != nil {
 		// Message from an error.
-		fmt.Println(err.Error())
+		t.Log(err.Error())
 		return
 	}
 
@@ -153,19 +151,30 @@ func TestDownloadUpdateReuploadData(t *testing.T) {
 
 	resp, _ := s3Client.ListObjects(params)
 	for _, key := range resp.Contents {
-		fmt.Println(*key.Key)
+		t.Log(*key.Key)
 	}
 
 	newestClosePrice, numRecordsWritten := DownloadUpdateReuploadData(fileName, historicalPrices, constantsMap, false, newSession)
 
-	log.Println("newestClosePrice: ", newestClosePrice)
-	log.Println("numRecordsWritten", numRecordsWritten)
+	respNew, _ := s3Client.ListObjects(params)
+	for _, key := range respNew.Contents {
+		t.Log(*key.Key, "new key")
+		if *key.Key != fileName {
+			t.Fail()
+		}
+	}
+
+	t.Log("newestClosePrice: ", newestClosePrice)
+	t.Log("numRecordsWritten", numRecordsWritten)
 
 	tolerance := decimal.NewFromFloat(.00001)
 	if newestClosePrice.Sub(decimal.NewFromFloat(226.4)).GreaterThan(tolerance) {
 		t.Fail()
 	}
+
 	if numRecordsWritten != 3 {
 		t.Fail()
 	}
 }
+
+func Test(t *testing.T) {

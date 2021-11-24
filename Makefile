@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth
+PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth go_coverage
 
 PYTHON_VERSION=3.8.2
 
@@ -84,4 +84,11 @@ run_golang_eth:
 	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "eth"}'
 
 run_golang_sol:
-	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "sol"}'
+	docker run --rm -e  ON_LOCAL=true -v "$HOME"/.aws:/home/sbx_user1051/.aws:ro -v "$(pwd)"/tmp:/tmp  -v "$PWD":/var/task lambci/lambda:go1.x   main '{"coinToPredict": "sol"}'
+
+clean_up_efs:
+	terraform destroy -target=aws_efs_file_system.efs_for_lambda
+	terraform apply -target=aws_efs_file_system.efs_for_lambda
+
+go_coverage:
+ 	go test ./... -coverprofile cover.out
