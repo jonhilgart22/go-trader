@@ -80,7 +80,7 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path--to-lcov: coverage.xml
+          path-to-lcov: coverage.xml
       - name: lint
         run: poetry run black . --check
       - name: flake8
