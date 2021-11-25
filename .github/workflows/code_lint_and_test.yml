@@ -75,7 +75,7 @@ jobs:
           poetry run python -m pytest
       - name: Coverage
         run: |
-          poetry run coverage run -m pytest && coverage xml
+          poetry run coverage run -m pytest && poetry run coverage xml
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
