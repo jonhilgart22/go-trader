@@ -25,6 +25,7 @@ types-PyYAML = "^5.4.12"
 jupyterlab = "^3.2.4"
 ipython = "^7.29.0"
 ipykernel = "^6.5.1"
+coverage = "^6.1.2"
 
 [tool.pytest.ini_options]
 env = ["ON_LOCAL=true"]

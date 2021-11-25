@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth coverage_go
+PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth coverage_go coverage_python
 
 PYTHON_VERSION=3.8.2
 
@@ -87,3 +87,6 @@ clean_up_efs:
 
 coverage_go:
  	go test ./... -coverprofile cover.out
+
+coverage_python:
+	poetry run coverage run -m pytest  && poetry run coverage report -m

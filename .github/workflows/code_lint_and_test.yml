@@ -73,6 +73,14 @@ jobs:
         run: |
           source .venv/bin/activate
           poetry run python -m pytest
+      - name: Coverage
+        run: |
+          poetry run coverage run -m pytest && coverage xml
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path--to-lcov: coverage.xml
       - name: lint
         run: poetry run black . --check
       - name: flake8
