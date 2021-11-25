@@ -16,3 +16,5 @@ checkpoints
 untrained_models
 app/src/test_csv_data.csv
 cover.out
+.coverage
+coverage.xml
