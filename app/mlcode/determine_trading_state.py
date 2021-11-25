@@ -79,35 +79,41 @@ class DetermineTradingState:
         except ValueError:
             raise (f"Incorrect dates passed. Yesterday = {yesterday} Two days ago = {two_days_ago}")
 
+        # current stats
+        self.todays_close_price = row[self.constants["close_col"]][0]
+        self.todays_rolling_mean = row[self.constants["rolling_mean_col"]][0]
+        self.todays_bollinger_high = row[self.constants["bollinger_high_col"]][0]
+        self.todays_bollinger_low = row[self.constants["bollinger_low_col"]][0]
+
         # update stop loss
-        if self.mode == "buy" and (1 - self.stop_loss_pct) * row[self.constants["close_col"]][0] > self.stop_loss_price:
-            self.stop_loss_price = (1 - self.stop_loss_pct) * row[self.constants["close_col"]][0]
+        if self.mode == "buy" and (1 - self.stop_loss_pct) * self.todays_close_price > self.stop_loss_price:
+            self.stop_loss_price = (1 - self.stop_loss_pct) * self.todays_close_price
             self._write_and_print_log_statements(f"Updating stop loss to {self.stop_loss_price}", row)
 
         # TODO: uncomment once FTX allows short leveraged tokens
         # if (
         #     self.mode == "short"
-        #     and (1 + self.stop_loss_pct) * row[self.constants["close_col"]][0] < self.stop_loss_price
+        #     and (1 + self.stop_loss_pct) * self.todays_close_price < self.stop_loss_price
         # ):
-        #     self.stop_loss_price = (1 + self.stop_loss_pct) * row[self.constants["close_col"]][0]
+        #     self.stop_loss_price = (1 + self.stop_loss_pct) * self.todays_close_price
         #     self._write_and_print_log_statements(
         #         f"Updating stop loss to {self.stop_loss_price}", row
         #     )
 
         # check if we've previously crossed the mean trailing price
-        if self.mode == "buy" and row[self.constants["close_col"]][0] > row[self.constants["rolling_mean_col"]][0]:
+        if self.mode == "buy" and self.todays_close_price > self.todays_rolling_mean:
             self.buy_has_crossed_mean = 1
 
         # TODO: uncomment once FTX allows shorts
         # if (
         #     self.mode == "short"
-        #     and row[self.constants["close_col"]][0] < row[self.constants["rolling_mean_col"]][0]
+        #     and self.todays_close_price < self.todays_rolling_mean
         # ):
         #     self.short_has_crossed_mean = 1
 
         # stop loss, get out of buy position
         logger.info(f"self.stop_loss_price = {self.stop_loss_price}")
-        if self.mode == "buy" and (self.stop_loss_price > row[self.constants["close_col"]].values[0]):
+        if self.mode == "buy" and (self.stop_loss_price > self.todays_close_price):
             self._write_and_print_log_statements("stop loss activated for getting out of our buy", row)
 
             self._determine_win_or_loss_amount(row)
@@ -138,12 +144,12 @@ class DetermineTradingState:
         # or, if we are above the top band (mean reversion)
         elif self.mode == "buy" and (
             (
-                row[self.constants["close_col"]][0] < row[self.constants["rolling_mean_col"]][0]
+                self.todays_close_price < self.todays_rolling_mean
                 and self.trading_state_constants["buy_has_crossed_mean"] == 1
             )
-            or (row[self.constants["close_col"]][0] > row[self.constants["bollinger_high_col"]][0])
-            or (row[self.constants["close_col"]][0] < row[self.constants["bollinger_low_col"]][0])
-            or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
+            or (self.todays_close_price > self.todays_bollinger_high)
+            or (self.todays_close_price < self.todays_bollinger_low)
+            or (self.todays_rolling_mean < self.buy_entry_price)
         ):
             self._check_buy_to_none(row)
 
@@ -152,21 +158,21 @@ class DetermineTradingState:
         # or, if we are below the bottom band (mean reversion)
         # elif self.mode == "short" and (
         #     (
-        #         row[self.constants["close_col"][0] > row[self.constants["rolling_mean_col"]][0]
+        #         row[self.constants["close_col"][0] > self.todays_rolling_mean
         #         and self.trading_state_constants[
         #             "short_has_crossed_mean"
         #         ] == 1
         #     )
-        #     or (row[self.constants["close_col"][0] < row[self.constants["bollinger_low_col"]][0])
-        #     or (row[self.constants["close_col"][0] > row[self.constants["bollinger_high_col"]][0])
-        #     or row[self.constants["rolling_mean_col"]][0] > self.short_entry_price
+        #     or (row[self.constants["close_col"][0] < self.todays_bollinger_low)
+        #     or (row[self.constants["close_col"][0] > self.todays_bollinger_high)
+        #     or self.todays_rolling_mean > self.short_entry_price
         # ):
         #     self._check_short_to_none(row)
 
         # buy check with ML model
         elif (
             self.mode == "no_position"
-            and row[self.constants["close_col"]][0] < row[self.constants["bollinger_low_col"]][0]
+            and self.todays_close_price < self.todays_bollinger_low
             and prev_row[self.constants["close_col"]][0] > prev_row[self.constants["bollinger_low_col"]][0]
         ):
             self._check_if_we_should_buy(row)
@@ -175,8 +181,8 @@ class DetermineTradingState:
         # TODO: FTX doesn't support short tokens... yet. Undue when we are ready to short
         # elif (
         #     self.mode == "no_position"
-        #     and row[self.constants["close_col"][0] > row[self.constants["bollinger_high_col"]][0]
-        #     and prev_row[self.constants["close_col"][0] < prev_row[self.constants["bollinger_high_col"]][0]
+        #     and row[self.constants["close_col"][0] > self.todays_bollinger_high
+        #     and prev_row[self.constants["close_col"][0] < prev_row[self.constants["bollinger_low_col"]][0]
         # ):
         #     self._check_if_we_should_short(row)
 
@@ -198,17 +204,17 @@ class DetermineTradingState:
         # short s
 
         # stop loss for short
-        if self.mode == "short" and self.short_entry_price < row[self.constants["close_col"]][0]:
-            lost_amount = row[self.constants["close_col"]][0] - self.short_entry_price
+        if self.mode == "short" and self.short_entry_price < self.todays_close_price:
+            lost_amount = self.todays_close_price - self.short_entry_price
             logger.info(f"Lost {lost_amount} on this trade")
 
             self.n_short_lost += 1
             self.dollar_amount_short_lost += lost_amount
 
         # made money
-        elif self.mode == "short" and self.short_entry_price > row[self.constants["close_col"]][0]:
+        elif self.mode == "short" and self.short_entry_price > self.todays_close_price:
 
-            win_amount = self.short_entry_price - row[self.constants["close_col"]][0]
+            win_amount = self.short_entry_price - self.todays_close_price
             logger.info(f"Won {win_amount} on this trade")
             self.n_short_won += 1
             self.dollar_amount_short_won += win_amount
@@ -216,18 +222,18 @@ class DetermineTradingState:
         # buys
 
         # lost money
-        elif self.mode == "buy" and self.buy_entry_price > row[self.constants["close_col"]][0]:
+        elif self.mode == "buy" and self.buy_entry_price > self.todays_close_price:
 
-            lost_amount = self.buy_entry_price - row[self.constants["close_col"]][0]
+            lost_amount = self.buy_entry_price - self.todays_close_price
             logger.info(f"Lost {lost_amount} on this trade")
 
             self.n_buy_lost += 1
             self.dollar_amount_buy_lost += lost_amount
 
         # made money
-        elif self.mode == "buy" and self.buy_entry_price < row[self.constants["close_col"]]:
+        elif self.mode == "buy" and self.buy_entry_price < self.todays_close_price:
 
-            won_amount = row[self.constants["close_col"]][0] - self.buy_entry_price
+            won_amount = self.todays_close_price - self.buy_entry_price
             logger.info(f"Won {won_amount} on this trade")
             self.n_buy_won += 1
             self.dollar_amount_buy_won += won_amount
@@ -250,7 +256,7 @@ class DetermineTradingState:
 
         if self.dollar_amount_buy_won > 0 or self.dollar_amount_buy_lost > 0:
             logger.info(
-                f"Win rate buy so far = {self.dollar_amount_buy_won / (self.dollar_amount_buy_won + self.dollar_amount_buy_lost)}"
+                f"Win rate buy so far = {float(self.dollar_amount_buy_won) / float(float(self.dollar_amount_buy_won) + float(self.dollar_amount_buy_lost))}"
             )
         if self.dollar_amount_short_won > 0 or self.dollar_amount_short_lost > 0:
             logger.info(
@@ -271,9 +277,9 @@ class DetermineTradingState:
         # check ML predicted trend as well
 
         if (
-            (self.price_prediction > row[self.constants["rolling_mean_col"]][0])
+            (self.price_prediction > self.todays_rolling_mean)
             or (self.price_prediction > self.short_entry_price)
-            or (row[self.constants["rolling_mean_col"]][0] > self.short_entry_price)
+            or (self.todays_rolling_mean > self.short_entry_price)
         ):
             self._write_and_print_log_statements("short position to none", row)
 
@@ -297,9 +303,9 @@ class DetermineTradingState:
         # check ML predicted trend as well
 
         if (
-            (self.price_prediction < row[self.constants["rolling_mean_col"]][0])
+            (self.price_prediction < self.todays_rolling_mean)
             or (self.price_prediction < self.buy_entry_price)
-            or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
+            or (self.todays_rolling_mean < self.buy_entry_price)
         ):
             self._write_and_print_log_statements("buy_to_none ", row)
 
@@ -322,13 +328,13 @@ class DetermineTradingState:
         logger.info("Checking if we should buy")
         # check ML predicted trend as well
 
-        if self.price_prediction > row[self.constants["rolling_mean_col"]][0]:
+        if self.price_prediction > self.todays_rolling_mean:
             self._write_and_print_log_statements("ml pred higher than mean taking position", row)
 
             self.mode = "buy"
             self.action_to_take = "none_to_buy"
-            self.buy_entry_price = row[self.constants["close_col"]][0]
-            self.stop_loss_price = row[self.constants["close_col"]][0] * (1 - self.stop_loss_pct)
+            self.buy_entry_price = self.todays_close_price
+            self.stop_loss_price = self.todays_close_price * (1 - self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
             self._write_and_print_log_statements(
@@ -343,13 +349,13 @@ class DetermineTradingState:
         """
         logger.info("Checking if we should enter a short position")
 
-        if self.price_prediction < row[self.constants["rolling_mean_col"]][0]:
+        if self.price_prediction < self.todays_rolling_mean:
             self._write_and_print_log_statements("pred  lower than mean taking position to short", row)
 
             self.mode = "short"
             self.action_to_take = "none_to_short"
-            self.short_entry_price = row[self.constants["close_col"]][0]
-            self.stop_loss_price = row[self.constants["close_col"]][0] * (1 + self.stop_loss_pct)
+            self.short_entry_price = self.todays_close_price
+            self.stop_loss_price = self.todays_close_price * (1 + self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
         else:
             self._write_and_print_log_statements("not taking a position to short", row)
