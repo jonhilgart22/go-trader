@@ -281,8 +281,7 @@ class DetermineTradingState:
             or (self.price_prediction > self.short_entry_price)
             or (self.todays_rolling_mean > self.short_entry_price)
         ):
-            self._write_and_print_log_statements("short position to none", row)
-
+            # note, the order here matters
             self._determine_win_or_loss_amount(row)
 
             self.mode = "no_position"
@@ -290,6 +289,8 @@ class DetermineTradingState:
             self.short_has_crossed_mean = 0
             self.short_entry_price = 0
             self.stop_loss_price = 0
+
+            self._write_and_print_log_statements("short position to none", row)
         else:
             self._write_and_print_log_statements("not exiting short position", row)
             self.action_to_take = "short_to_contine_short"
@@ -307,8 +308,7 @@ class DetermineTradingState:
             or (self.price_prediction < self.buy_entry_price)
             or (self.todays_rolling_mean < self.buy_entry_price)
         ):
-            self._write_and_print_log_statements("buy_to_none ", row)
-
+            # note the order here matters
             self._determine_win_or_loss_amount(row)
             # record keeping
 
@@ -317,6 +317,8 @@ class DetermineTradingState:
             self.buy_has_crossed_mean = 0
             self.buy_entry_price = 0
             self.stop_loss_price = 0
+
+            self._write_and_print_log_statements("buy_to_none ", row)
         else:
             self._write_and_print_log_statements("Not exiting buy position", row)
             self.action_to_take = "buy_to_continue_buy"
@@ -329,13 +331,14 @@ class DetermineTradingState:
         # check ML predicted trend as well
 
         if self.price_prediction > self.todays_rolling_mean:
-            self._write_and_print_log_statements("ml pred higher than mean taking position", row)
-
+            # note the order here matters. Want to write logs reflecting the current state
             self.mode = "buy"
             self.action_to_take = "none_to_buy"
             self.buy_entry_price = self.todays_close_price
             self.stop_loss_price = self.todays_close_price * (1 - self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
+
+            self._write_and_print_log_statements("ml pred higher than mean taking position", row)
         else:
             self._write_and_print_log_statements(
                 "self.price_prediction is not higher than the Rolling Mean. Not going to buy", row
@@ -350,13 +353,16 @@ class DetermineTradingState:
         logger.info("Checking if we should enter a short position")
 
         if self.price_prediction < self.todays_rolling_mean:
-            self._write_and_print_log_statements("pred  lower than mean taking position to short", row)
+
+            # note the order here matters. Want to write logs reflecting the current state
 
             self.mode = "short"
             self.action_to_take = "none_to_short"
             self.short_entry_price = self.todays_close_price
             self.stop_loss_price = self.todays_close_price * (1 + self.stop_loss_pct)
             self.position_entry_date = str(row.index[0])
+
+            self._write_and_print_log_statements("pred  lower than mean taking position to short", row)
         else:
             self._write_and_print_log_statements("not taking a position to short", row)
             self.action_to_take = "none_to_none"
