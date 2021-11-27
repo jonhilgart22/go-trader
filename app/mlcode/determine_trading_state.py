@@ -103,17 +103,20 @@ class DetermineTradingState:
         #     self.short_has_crossed_mean = True
 
         # stop loss, get out of buy position
-        if self.mode == "buy" and self.stop_loss_price > row["close"][0]:
-            self._print_log_statements("stop loss activated for getting out of our buy", row)
+        logger.info(f"self.stop_loss_price = {self.stop_loss_price}")
+        if self.mode == "buy" and (self.stop_loss_price > self.todays_close_price):
 
             self._determine_win_or_loss_amount(row)
-            # record keeping
 
             self.mode = "no_position"
             self.action_to_take = "buy_to_none"
             self.buy_has_crossed_mean = False
             self.buy_entry_price = 0
             self.stop_loss_price = 0
+
+            self._write_and_print_log_statements("stop loss activated for getting out of our buy", row)
+
+            # record keeping
 
         # TODO: uncomment once FTX allows shorts
         # # stop loss, get out of short position
@@ -263,6 +266,7 @@ class DetermineTradingState:
             or (self.price_prediction > self.short_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] > self.short_entry_price)
         ):
+
             logger.info("short_to_none")
 
             self._determine_win_or_loss_amount(row)
@@ -272,6 +276,9 @@ class DetermineTradingState:
             self.short_has_crossed_mean = False
             self.short_entry_price = 0
             self.stop_loss_price = 0
+
+            self._write_and_print_log_statements("short position to none", row)
+
         else:
             logger.info("not exiting out short position")
             self.action_to_take = "short_to_contine_short"
@@ -289,6 +296,7 @@ class DetermineTradingState:
             or (self.price_prediction < self.buy_entry_price)
             or (row[self.constants["rolling_mean_col"]][0] < self.buy_entry_price)
         ):
+
             logger.info("buy_to_none")
 
             self._determine_win_or_loss_amount(row)
@@ -299,6 +307,8 @@ class DetermineTradingState:
             self.buy_has_crossed_mean = False
             self.buy_entry_price = 0
             self.stop_loss_price = 0
+
+            self._write_and_print_log_statements("buy_to_none ", row)
         else:
             logger.info("Not exiting buy position")
             self.action_to_take = "buy_to_continue_buy"
