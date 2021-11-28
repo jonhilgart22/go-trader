@@ -86,7 +86,7 @@ clean_up_efs:
 	terraform apply -target=aws_efs_file_system.efs_for_lambda
 
 coverage_go:
- 	go test ./... -coverprofile cover.out
+	go test ./... -coverprofile cover.out
 
 coverage_python:
 	poetry run coverage run -m pytest  && poetry run coverage report -m

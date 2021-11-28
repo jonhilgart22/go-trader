@@ -56,22 +56,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 		panic(e)
 	}
 
-	var ftxClient *goftx.Client
-	var marketToOrder string
-	if coinToPredict == "btc" {
-		ftxClient = ftx.NewClient(os.Getenv("BTC_FTX_KEY"), os.Getenv("BTC_FTX_SECRET"), os.Getenv("BTC_SUBACCOUNT_NAME"))
-
-		marketToOrder = "BTC/USD"
-
-	} else if coinToPredict == "eth" {
-		ftxClient = ftx.NewClient(os.Getenv("ETH_FTX_KEY"), os.Getenv("ETH_FTX_SECRET"), os.Getenv("ETH_SUBACCOUNT_NAME"))
-
-		marketToOrder = "ETH/USD"
-	} else if coinToPredict == "sol" {
-		ftxClient = ftx.NewClient(os.Getenv("SOL_FTX_KEY"), os.Getenv("SOL_FTX_SECRET"), os.Getenv("SOL_SUBACCOUNT_NAME"))
-
-		marketToOrder = "SOL/USD"
-	}
+	ftxClient, marketToOrder := CreateFtxClientAndMarket(coinToPredict)
 
 	currentBitcoinRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["btc_product_code"], granularity)
 	currentEthereumRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["eth_product_code"], granularity)
@@ -292,4 +277,19 @@ func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsS
 	WonLostConfigFilename := splitStringsWonLost[0] + "/" + coinToPredict + "_" + splitStringsWonLost[1]
 
 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], WonLostConfigFilename, runningOnAws, awsSession)
+}
+
+func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {
+
+	coinToPredictUpper := strings.ToUpper(coinToPredict)
+	ftxKey := coinToPredictUpper + "_FTX_KEY"
+	ftxSecret := coinToPredictUpper + "_FTX_SECRET"
+	subAcccountName := coinToPredictUpper + "_FTX_SUBACCOUNT_NAME"
+
+	ftxClient := ftx.NewClient(os.Getenv(ftxKey), os.Getenv(ftxSecret), os.Getenv(subAcccountName))
+
+	marketToOrder := coinToPredictUpper + "/USD"
+
+	return ftxClient, marketToOrder
+
 }
