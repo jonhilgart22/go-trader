@@ -90,17 +90,14 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	// only updated the tmp./ folder
 	actionsToTakeConstants := utils.ReadYamlFile(constantsMap["actions_to_take_filename"], runningOnAws, coinToPredict)
 	// read in nested yaml?
-	log.Println(actionsToTakeConstants["action_to_take"])
 	actionToTake := actionsToTakeConstants["action_to_take"]
 	log.Println(actionToTake, "actionToTake")
 
 	log.Println("Logging into FTX to get account info")
-	subAccount, _ := ftxClient.SubAccounts.GetSubaccountBalances("eth_trading")
-
-	log.Println("Sub Account", subAccount)
 
 	info, err := ftxClient.Account.GetAccountInformation()
 	if err != nil {
+		log.Println("Issue with authenticating to FTX")
 		panic(err)
 	}
 	log.Println(info, "info")
@@ -283,12 +280,16 @@ func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {
 
 	coinToPredictUpper := strings.ToUpper(coinToPredict)
 	ftxKey := coinToPredictUpper + "_FTX_KEY"
+	log.Println("ftxKey = ", ftxKey)
 	ftxSecret := coinToPredictUpper + "_FTX_SECRET"
+	log.Println("ftxSecret = ", ftxSecret)
 	subAcccountName := coinToPredictUpper + "_FTX_SUBACCOUNT_NAME"
+	log.Println("subAcccountName = ", subAcccountName)
 
 	ftxClient := ftx.NewClient(os.Getenv(ftxKey), os.Getenv(ftxSecret), os.Getenv(subAcccountName))
 
 	marketToOrder := coinToPredictUpper + "/USD"
+	log.Println("marketToOrder = ", marketToOrder)
 
 	return ftxClient, marketToOrder
 
