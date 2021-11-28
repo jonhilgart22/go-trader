@@ -36,6 +36,10 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Printf("Running locally = %v", runningLocally)
 	var coinToPredict string = strings.ToLower(req.CoinToPredict)
 	log.Printf("Coin to predict = %v", coinToPredict)
+
+	if !stringInSlice(coinToPredict, []string{"btc", "eth", "sol"}) {
+		log.Fatal("incorrect coinToPredict", coinToPredict)
+	}
 	// set env vars
 	awsUtils.SetSsmToEnvVars()
 
@@ -160,8 +164,11 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 
 	// upload any config changes that we need to maintain state
-
-	IterateAndUploadTmpFiles("/tmp/", constantsMap, runningOnAws, awsSession)
+	if !runningLocally {
+		IterateAndUploadTmpFiles("/tmp/", constantsMap, runningOnAws, awsSession)
+	} else {
+		log.Println("running locally, no tmp uploads")
+	}
 
 	// send email
 	defaultPurchaseSize, err := decimal.NewFromString(constantsMap["default_purchase_size"])
@@ -283,7 +290,7 @@ func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {
 	log.Println("ftxKey = ", ftxKey)
 	ftxSecret := coinToPredictUpper + "_FTX_SECRET"
 	log.Println("ftxSecret = ", ftxSecret)
-	subAcccountName := coinToPredictUpper + "_FTX_SUBACCOUNT_NAME"
+	subAcccountName := coinToPredictUpper + "_SUBACCOUNT_NAME"
 	log.Println("subAcccountName = ", subAcccountName)
 
 	ftxClient := ftx.NewClient(os.Getenv(ftxKey), os.Getenv(ftxSecret), os.Getenv(subAcccountName))
@@ -293,4 +300,13 @@ func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {
 
 	return ftxClient, marketToOrder
 
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }

@@ -1,9 +1,9 @@
 dollar_amount_buy_lost: 0.0
-dollar_amount_buy_won: 0.0
+dollar_amount_buy_won: 45.59999999999991
 dollar_amount_short_lost: 0.0
 dollar_amount_short_won: 0.0
 n_buy_lost: 0.0
-n_buy_won: 0.0
+n_buy_won: 1.0
 n_short_lost: 0.0
 n_short_won: 0.0
-n_total_days_in_trades: 0.0
+n_total_days_in_trades: 8.0
