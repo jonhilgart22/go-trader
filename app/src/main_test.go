@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/grishinsana/goftx/models"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
+	"github.com/jonhilgart22/go-trader/app/utils"
 	"github.com/shopspring/decimal"
 	"github.com/spf13/afero"
 )
@@ -175,11 +177,11 @@ func TestDownloadUpdateReuploadData(t *testing.T) {
 
 func TestIterateAndUploadTmpFiles(t *testing.T) {
 	// create a fake directory with two .yml files in it
-	var AppFs = afero.NewOsFs()
-	var bucketName = "test-bucket"
+	var AppFs = afero.NewMemMapFs()
+	var bucketName = "test-bucket-uploads"
 	constantsMap := map[string]string{"s3_bucket": bucketName}
 
-	AppFs.MkdirAll("/tmp/", os.ModePerm)
+	AppFs.MkdirAll("/tmp/", os.ModeTemporary)
 
 	//create file inside tmp directory
 	AppFs.Create("/tmp/test_file_1.yml")
@@ -222,12 +224,158 @@ func TestIterateAndUploadTmpFiles(t *testing.T) {
 	IterateAndUploadTmpFiles("/tmp/", constantsMap, true, newSession)
 
 	// list the files that were uploaded
+	// need to count because testing shares the tmp directory
+	countOfMatchingFiles := 0
 	respNew, _ := s3Client.ListObjects(s3ListBucket)
 	for _, key := range respNew.Contents {
 		t.Log(*key.Key, "new key")
 		// make sure the tmp/ is added back and that we only upload the yml
-		if *key.Key != "tmp/test_file_1.yml" {
-			t.Fail()
+		if *key.Key == "tmp/test_file_1.yml" {
+			countOfMatchingFiles += 1
 		}
+	}
+
+	if countOfMatchingFiles != 1 {
+		t.Log(countOfMatchingFiles, "countOfMatchingFiles")
+		t.Fail()
+	}
+}
+
+func TestDownloadConfigFiles(t *testing.T) {
+	// create a fake s3 bucket and upload a file
+	var bucketName = "test-bucket-two"
+	var coinToPredict = "btc"
+	var actionsToTakeFilename = "tmp/test_actions_to_take.yml"
+	var mlConfigFilenane = "tmp/ml_config.yml"
+	var tradingStateConfigFIlename = "tmp/test_trading_state_config.yml"
+	var wonAndLostAmountFilename = "tmp/test_won_and_lost_amount.yml"
+	// filesnames with the tmp removed. This is what we will see as we iterate through the downloaded directory
+	var tmpBtcActionsToTakeFilename = "btc_test_actions_to_take.yml"
+	var tmpBtcTradingStateConfigFIlename = "btc_test_trading_state_config.yml"
+	var tmpBtcWonAndLostAmountFilename = "btc_test_won_and_lost_amount.yml"
+	// filenames with btc added
+	var btcActionsToTakeFilename = "tmp/" + tmpBtcActionsToTakeFilename
+	var btcTradingStateConfigFIlename = "tmp/" + tmpBtcTradingStateConfigFIlename
+	var btcWonAndLostAmountFilename = "tmp/" + tmpBtcWonAndLostAmountFilename
+
+	// fake directory
+	var AppFs = afero.NewOsFs()
+
+	AppFs.MkdirAll("/tmp/", os.ModePerm)
+
+	constantsMap := map[string]string{"s3_bucket": bucketName, "actions_to_take_filename": actionsToTakeFilename, "ml_config_filename": mlConfigFilenane, "trading_state_config_filename": tradingStateConfigFIlename, "won_and_lost_amount_filename": wonAndLostAmountFilename}
+
+	// fake s3 uploads
+	// fake s3
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	ts := httptest.NewServer(faker.Server())
+	defer ts.Close()
+
+	// configure S3 client
+	s3Config := &aws.Config{
+		Credentials:      credentials.NewStaticCredentials("YOUR-ACCESSKEYID", "YOUR-SECRETACCESSKEY", ""),
+		Endpoint:         aws.String(ts.URL),
+		Region:           aws.String("us-east-1"),
+		DisableSSL:       aws.Bool(true),
+		S3ForcePathStyle: aws.Bool(true),
+	}
+	newSession, err := session.NewSession(s3Config)
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
+
+	s3Client := s3.New(newSession)
+	cparams := &s3.CreateBucketInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	// Create a new bucket using the CreateBucket call.
+	_, s3err := s3Client.CreateBucket(cparams)
+	if s3err != nil {
+		// Message from an error.
+		t.Log(err.Error())
+		return
+	}
+
+	// Upload a fake csv file to the bucket
+	// 			date,open,high,low,close,volume
+
+	_, putErr := s3Client.PutObject(&s3.PutObjectInput{
+		Body: strings.NewReader(`action_to_take: buy_to_continue_buy
+			`),
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(btcActionsToTakeFilename),
+	})
+	if putErr != nil {
+		t.Log(putErr.Error())
+		return
+	}
+
+	_, putErr = s3Client.PutObject(&s3.PutObjectInput{
+		Body: strings.NewReader(`action_to_take: buy_to_continue_buy
+			`),
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(mlConfigFilenane),
+	})
+	if putErr != nil {
+		t.Log(putErr.Error())
+		return
+	}
+
+	_, putErr = s3Client.PutObject(&s3.PutObjectInput{
+		Body: strings.NewReader(`action_to_take: buy_to_continue_buy
+			`),
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(btcTradingStateConfigFIlename),
+	})
+	if putErr != nil {
+		t.Log(putErr.Error())
+		return
+	}
+
+	_, putErr = s3Client.PutObject(&s3.PutObjectInput{
+		Body: strings.NewReader(`action_to_take: buy_to_continue_buy
+			`),
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(btcWonAndLostAmountFilename),
+	})
+	if putErr != nil {
+		t.Log(putErr.Error())
+		return
+	}
+
+	params := &s3.ListObjectsInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	resp, _ := s3Client.ListObjects(params)
+	for _, key := range resp.Contents {
+		t.Log("S3 file = ", *key.Key)
+	}
+
+	// download the files
+	DownloadConfigFiles(constantsMap, true, newSession, coinToPredict)
+
+	// verify the files were downloaded to the test directory
+	files, err := afero.ReadDir(AppFs, "/tmp/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// need to count because testing shares the tmp directory with other tests
+	countOfMatchingFiles := 0
+
+	sliceOfUploadedFilenames := []string{tmpBtcActionsToTakeFilename, tmpBtcTradingStateConfigFIlename, tmpBtcWonAndLostAmountFilename}
+	for _, f := range files {
+		t.Log("downloaded filename = ", f.Name())
+		if utils.StringInSlice(f.Name(), sliceOfUploadedFilenames) {
+			countOfMatchingFiles += 1
+		}
+	}
+	if countOfMatchingFiles != 3 {
+		t.Log("countOfMatchingFiles = ", countOfMatchingFiles)
+		t.Fail()
 	}
 }

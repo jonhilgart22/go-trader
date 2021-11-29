@@ -16,6 +16,15 @@ import (
 	"github.com/jonhilgart22/go-trader/app/structs"
 )
 
+func StringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 func ParseDate(inputDate string) time.Time {
 
 	// Declaring layout constant

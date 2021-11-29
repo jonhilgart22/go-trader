@@ -37,7 +37,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	var coinToPredict string = strings.ToLower(req.CoinToPredict)
 	log.Printf("Coin to predict = %v", coinToPredict)
 
-	if !stringInSlice(coinToPredict, []string{"btc", "eth", "sol"}) {
+	if !utils.StringInSlice(coinToPredict, []string{"btc", "eth", "sol"}) {
 		log.Fatal("incorrect coinToPredict", coinToPredict)
 	}
 	// set env vars
@@ -52,7 +52,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	constantsMap := utils.ReadYamlFile("tmp/constants.yml", runningOnAws, "0")
 
 	// Download the rest of the config files
-	downloadConfigFiles(constantsMap, runningOnAws, awsSession, coinToPredict)
+	DownloadConfigFiles(constantsMap, runningOnAws, awsSession, coinToPredict)
 
 	// pull new data from FTX with day candles
 	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
@@ -261,7 +261,7 @@ func RunPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
 	}
 }
 
-func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, coinToPredict string) {
+func DownloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, coinToPredict string) {
 	// only download the configs for the coin we are predicting
 	splitStringsActionsToTake := strings.Split(constantsMap["actions_to_take_filename"], "/")
 	actionsToTakeFilename := splitStringsActionsToTake[0] + "/" + coinToPredict + "_" + splitStringsActionsToTake[1]
@@ -300,13 +300,4 @@ func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {
 
 	return ftxClient, marketToOrder
 
-}
-
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }

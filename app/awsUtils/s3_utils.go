@@ -46,6 +46,7 @@ func DownloadFromS3(bucket string, item string, onAws bool, s3Client *session.Se
 	if onAws {
 		// download with tmp/, keep the same path in S3.
 		s := strings.Split(item, "/")
+		// need the /tmp/ prefix for lambda
 		item = "/tmp/" + s[len(s)-1]
 	}
 	// NOTE: you need to store your AWS credentials in ~/.aws/credentials or in env vars
