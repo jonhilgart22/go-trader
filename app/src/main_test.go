@@ -177,7 +177,7 @@ func TestDownloadUpdateReuploadData(t *testing.T) {
 
 func TestIterateAndUploadTmpFiles(t *testing.T) {
 	// create a fake directory with two .yml files in it
-	var AppFs = afero.NewMemMapFs()
+	var AppFs = afero.NewOsFs()
 	var bucketName = "test-bucket-uploads"
 	constantsMap := map[string]string{"s3_bucket": bucketName}
 
