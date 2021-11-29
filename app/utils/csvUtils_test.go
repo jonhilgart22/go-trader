@@ -14,7 +14,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-
 func TestFindNewestData(t *testing.T) {
 	fmt.Println("TestFindNewestData")
 	historicalData := []structs.HistoricCandles{}
