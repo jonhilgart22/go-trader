@@ -15,4 +15,7 @@ logs.txt
 checkpoints
 untrained_models
 app/src/test_csv_data.csv
-tmp
+cover.out
+.coverage
+coverage.xml
+tmp/*

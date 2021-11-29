@@ -1,6 +1,10 @@
 
 # Go Trader
 
+[![Code Grade](https://api.codiga.io/project/30096/score/svg)](https://www.codiga.io)
+[![Code Grade](https://api.codiga.io/project/30096/status/svg)](https://www.codiga.io)
+
+
 - Golang lambda app that trigger buy signals alongside a Python ML model
 
 ![bollinger](media/bollinger.png)

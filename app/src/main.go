@@ -36,6 +36,10 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Printf("Running locally = %v", runningLocally)
 	var coinToPredict string = strings.ToLower(req.CoinToPredict)
 	log.Printf("Coin to predict = %v", coinToPredict)
+
+	if !utils.StringInSlice(coinToPredict, []string{"btc", "eth", "sol"}) {
+		log.Fatal("incorrect coinToPredict", coinToPredict)
+	}
 	// set env vars
 	awsUtils.SetSsmToEnvVars()
 
@@ -48,7 +52,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	constantsMap := utils.ReadYamlFile("tmp/constants.yml", runningOnAws, "0")
 
 	// Download the rest of the config files
-	downloadConfigFiles(constantsMap, runningOnAws, awsSession, coinToPredict)
+	DownloadConfigFiles(constantsMap, runningOnAws, awsSession, coinToPredict)
 
 	// pull new data from FTX with day candles
 	granularity, e := strconv.Atoi(constantsMap["candle_granularity"])
@@ -56,22 +60,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 		panic(e)
 	}
 
-	var ftxClient *goftx.Client
-	var marketToOrder string
-	if coinToPredict == "btc" {
-		ftxClient = ftx.NewClient(os.Getenv("BTC_FTX_KEY"), os.Getenv("BTC_FTX_SECRET"), os.Getenv("BTC_SUBACCOUNT_NAME"))
-
-		marketToOrder = "BTC/USD"
-
-	} else if coinToPredict == "eth" {
-		ftxClient = ftx.NewClient(os.Getenv("ETH_FTX_KEY"), os.Getenv("ETH_FTX_SECRET"), os.Getenv("ETH_SUBACCOUNT_NAME"))
-
-		marketToOrder = "ETH/USD"
-	} else if coinToPredict == "sol" {
-		ftxClient = ftx.NewClient(os.Getenv("SOL_FTX_KEY"), os.Getenv("SOL_FTX_SECRET"), os.Getenv("SOL_SUBACCOUNT_NAME"))
-
-		marketToOrder = "SOL/USD"
-	}
+	ftxClient, marketToOrder := CreateFtxClientAndMarket(coinToPredict)
 
 	currentBitcoinRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["btc_product_code"], granularity)
 	currentEthereumRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["eth_product_code"], granularity)
@@ -105,17 +94,14 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	// only updated the tmp./ folder
 	actionsToTakeConstants := utils.ReadYamlFile(constantsMap["actions_to_take_filename"], runningOnAws, coinToPredict)
 	// read in nested yaml?
-	log.Println(actionsToTakeConstants["action_to_take"])
 	actionToTake := actionsToTakeConstants["action_to_take"]
 	log.Println(actionToTake, "actionToTake")
 
 	log.Println("Logging into FTX to get account info")
-	subAccount, _ := ftxClient.SubAccounts.GetSubaccountBalances("eth_trading")
-
-	log.Println("Sub Account", subAccount)
 
 	info, err := ftxClient.Account.GetAccountInformation()
 	if err != nil {
+		log.Println("Issue with authenticating to FTX")
 		panic(err)
 	}
 	log.Println(info, "info")
@@ -178,8 +164,11 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 
 	// upload any config changes that we need to maintain state
-
-	iterateAndUploadTmpFiles("/tmp/", constantsMap, runningOnAws, awsSession, runningLocally)
+	if !runningLocally {
+		IterateAndUploadTmpFiles("/tmp/", constantsMap, runningOnAws, awsSession)
+	} else {
+		log.Println("running locally, no tmp uploads")
+	}
 
 	// send email
 	defaultPurchaseSize, err := decimal.NewFromString(constantsMap["default_purchase_size"])
@@ -197,7 +186,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 }
 
-func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, runningLocally bool) {
+func IterateAndUploadTmpFiles(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session) {
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -207,7 +196,7 @@ func iterateAndUploadTmpFiles(path string, constantsMap map[string]string, runni
 	for _, f := range files {
 
 		if strings.Contains(f.Name(), "yml") {
-			if runningLocally {
+			if !runningOnAws {
 				log.Println("Not uploading to S3, running locally")
 			} else {
 				// all the config files are in the same folder under tmp. Because we are iterating all files in the "/tmp/" directory, the "tmp" is removed from the filename. So we need to add it back.
@@ -272,7 +261,7 @@ func RunPythonMlProgram(constantsMap map[string]string, coinToPredict string) {
 	}
 }
 
-func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, coinToPredict string) {
+func DownloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsSession *session.Session, coinToPredict string) {
 	// only download the configs for the coin we are predicting
 	splitStringsActionsToTake := strings.Split(constantsMap["actions_to_take_filename"], "/")
 	actionsToTakeFilename := splitStringsActionsToTake[0] + "/" + coinToPredict + "_" + splitStringsActionsToTake[1]
@@ -292,4 +281,23 @@ func downloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsS
 	WonLostConfigFilename := splitStringsWonLost[0] + "/" + coinToPredict + "_" + splitStringsWonLost[1]
 
 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], WonLostConfigFilename, runningOnAws, awsSession)
+}
+
+func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {
+
+	coinToPredictUpper := strings.ToUpper(coinToPredict)
+	ftxKey := coinToPredictUpper + "_FTX_KEY"
+	log.Println("ftxKey = ", ftxKey)
+	ftxSecret := coinToPredictUpper + "_FTX_SECRET"
+	log.Println("ftxSecret = ", ftxSecret)
+	subAcccountName := coinToPredictUpper + "_SUBACCOUNT_NAME"
+	log.Println("subAcccountName = ", subAcccountName)
+
+	ftxClient := ftx.NewClient(os.Getenv(ftxKey), os.Getenv(ftxSecret), os.Getenv(subAcccountName))
+
+	marketToOrder := coinToPredictUpper + "/USD"
+	log.Println("marketToOrder = ", marketToOrder)
+
+	return ftxClient, marketToOrder
+
 }
