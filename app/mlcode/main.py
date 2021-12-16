@@ -50,6 +50,7 @@ def main(coin_to_predict: str):
     bitcoin_df = read_in_data(constants["bitcoin_csv_filename"], is_running_on_aws)
     etherum_df = read_in_data(constants["etherum_csv_filename"], is_running_on_aws)
     sol_df = read_in_data(constants["sol_csv_filename"], is_running_on_aws)
+    matic_df = read_in_data(constants["matic_csv_filename"], is_running_on_aws)
     # spy_df = read_in_data(constants["spu_csv_filename"], is_running_on_aws, missing_dates=True)
     ml_constants = read_in_yaml(constants["ml_config_filename"], is_running_on_aws)
     predictor = None
@@ -66,6 +67,10 @@ def main(coin_to_predict: str):
     elif coin_to_predict == "sol":
         predictor = BollingerBandsPredictor(
             coin_to_predict, constants, ml_constants, sol_df, additional_dfs=[bitcoin_df, etherum_df]
+        )
+    elif coin_to_predict == "matic":
+        predictor = BollingerBandsPredictor(
+            coin_to_predict, constants, ml_constants, matic_df, additional_dfs=[bitcoin_df, etherum_df]
         )
     else:
         raise ValueError(f"Incorrect coin to predict {coin_to_predict}. Needs to be eth or btc.")

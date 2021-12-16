@@ -30,6 +30,15 @@ nbeats_modelname_sol: nbeats_sol
 nbeats_filename_sol: test_sol_nbeats.pth.tar
 sol_csv_filename: data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv
 
+## MATIC
+matic_product_code: MATIC/USD
+tcn_modelname_matic: tcn_matic
+tcn_filename_matic: test_matic_tcn.pth.tar
+nbeats_modelname_matic: nbeats_matic
+nbeats_filename_matic: test_matic_nbeats.pth.tar
+matic_csv_filename: data/historic_crypto_prices - matic_dec_2020_dec_2021.csv
+
+
 ## Don'y need to load saved models right now, train from scratch
 
 candle_granularity: 86400

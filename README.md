@@ -11,6 +11,20 @@
 
 Above, we can see a sample run on historic Bitcoin prices.
 
+- [Go Trader](#go-trader)
+  - [Data](#data)
+    - [Adding a new col of data](#adding-a-new-col-of-data)
+  - [Architecture](#architecture)
+  - [Data](#data-1)
+  - [Models](#models)
+  - [Deployment](#deployment)
+    - [Infrastructure](#infrastructure)
+    - [CI/CD](#cicd)
+    - [Deploy](#deploy)
+      - [Adding a new coin](#adding-a-new-coin)
+  - [Testing](#testing)
+  - [Performance](#performance)
+
 ## Data
 
 1. `wget http://api.bitcoincharts.com/v1/csv/localbtcUSD.csv.gz`
@@ -18,6 +32,7 @@ Above, we can see a sample run on historic Bitcoin prices.
 2. Manually scrape data from [https://coinmarketcap.com/](https://coinmarketcap.com/)
 - This data is more recent, up to 09-04-2021, and is used in `notebooks/bollinger_bands_and_coinbase_data.ipynb`
 3. Download SPY data from [here](https://www.nasdaq.com/market-activity/funds-and-etfs/spy/historical)
+4. [Coin market cap ](https://coinmarketcap.com/)
 
 ### Adding a new col of data
 
@@ -69,14 +84,19 @@ Via Github Actions
 
 #### Adding a new coin
 
-1. Run simulations in the testing jupyter notebook to see how the default config would work. For new coins, we should use `eth` and `btc` as the additional_dfs argument.
-2. Setup a new FTX account, generate an api key for this account, create aws SSM params for these params, in the `ssm_store.go`, set these values as env vars
-3. Add these env vars using `scripts/set_ssm.sh`
-4. Update the `main.go` file to create a new FTX client for this coin
-5. Update the `main.py` files for this new coin as well as the `determine_trading_state.py` and `predict_price_movements.py`
-6. Update the `*.yml` files to include a new entry for this coin
-7. Create a new Eventbridge trigger in the `main.tf` file
-8. Upload the configs `make upload_configs`, build the lambda image, update the lambda with the new image!
+1. Add new data to the [google sheet here](https://docs.google.com/spreadsheets/d/1fBvirRK7m17jYj0t1yO6Jagq_aFjQvJ5EApnHOZQz20/edit#gid=114347281). I like using (Coin Market Cap)[https://coinmarketcap.com/] for historical data.
+2. Run simulations in the testing jupyter notebook to see how the default config would work. For new coins, we should use `eth` and `btc` as the additional_dfs argument.
+3. Setup a new FTX account, generate an api key for this account, create aws SSM params for these params, in the `ssm_store.go`, set these values as env vars. Also add these to the env_vars.sh file
+4. Add these env vars using `scripts/set_ssm.sh`. `./scripts/set_ssm.sh FTX_KEY <your-api-key>`
+5. Update the `main.go` file to create a new FTX client for this coin
+6. Update the `main.py` files for this new coin as well as `predict_price_movements.py` . Grep around for `btc` to see what code to update
+7. Download the current configs `make download_configs` . We're going to be re-uploading the state and want the latest snapshot of reality
+7. Create new `*.yml` files under `tmp/` (here). This includes the three coin specific files (actions_to_take, trading_state_config, won_and_lost), and updating the `constants.yml` file.
+8. Create a new Eventbridge trigger in the `main.tf` file
+9.  Upload the configs `make upload_configs`
+10. Upload the dataset `make upload_data`
+11.  build the lambda image
+12. update the lambda with the new image!
 NB: be sure to update the various checks that look for the correct input coins
 
 ## Testing
@@ -92,4 +112,3 @@ NB: be sure to update the various checks that look for the correct input coins
 ## Performance
 
 - View the different model performance results [here](https://docs.google.com/spreadsheets/d/1xEaxfYBcXNcGN71LAj_Yw-EDEifm_MficTvFqpLUR3s/edit?usp=sharing)
--

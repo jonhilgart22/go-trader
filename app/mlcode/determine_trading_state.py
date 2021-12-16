@@ -25,7 +25,7 @@ class DetermineTradingState:
         """Determine the current state we should be in for trading. Buy Short, entering, or exiting positions.
 
         Args:
-            coin_to_predict: str either btc or eth
+            coin_to_predict: str - the coin we're predicting
             price_prediction ([type]): price prediction for the future price of the given coin
             constants (Dict[str, str]): The constants read in from yaml
             trading_state_constants (Dict[str, str]): the current state we are in for trading (buy short no_position)
@@ -84,6 +84,8 @@ class DetermineTradingState:
         self.todays_rolling_mean = row[self.constants["rolling_mean_col"]][0]
         self.todays_bollinger_high = row[self.constants["bollinger_high_col"]][0]
         self.todays_bollinger_low = row[self.constants["bollinger_low_col"]][0]
+        self.previous_days_close = prev_row[self.constants["close_col"]][0]
+        self.previous_days_bollinger_low = prev_row[self.constants["bollinger_low_col"]][0]
 
         # update stop loss
         if self.mode == "buy" and (1 - self.stop_loss_pct) * self.todays_close_price > self.stop_loss_price:
@@ -173,7 +175,7 @@ class DetermineTradingState:
         elif (
             self.mode == "no_position"
             and self.todays_close_price < self.todays_bollinger_low
-            and prev_row[self.constants["close_col"]][0] > prev_row[self.constants["bollinger_low_col"]][0]
+            and self.previous_days_close > self.previous_days_bollinger_low
         ):
             self._check_if_we_should_buy(row)
 
@@ -195,7 +197,9 @@ class DetermineTradingState:
         else:
             if self.action_to_take == "buy_to_none":
                 self.action_to_take = "none_to_none"
-            self._write_and_print_log_statements("Taking no action today. Hit the else statement", row)
+                self._write_and_print_log_statements("Taking no action today. Hit the else statement and updated buy_to_none to none_to_none", row)
+            else:
+                self._write_and_print_log_statements("Taking no action today. Hit the else statement", row)
 
     def _determine_win_or_loss_amount(self, row: pd.Series):
         """
@@ -318,7 +322,7 @@ class DetermineTradingState:
             self.buy_entry_price = 0
             self.stop_loss_price = 0
 
-            self._write_and_print_log_statements("buy_to_none ", row)
+            self._write_and_print_log_statements("Exiting buy position . Mode = buy_to_none ", row)
         else:
             self._write_and_print_log_statements("Not exiting buy position", row)
             self.action_to_take = "buy_to_continue_buy"
@@ -379,6 +383,7 @@ class DetermineTradingState:
         logger.info(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}")
         logger.info(f"bollinger high = {row[self.constants['bollinger_high_col']][0]}")
         logger.info(f"bollinger low = {row[self.constants['bollinger_low_col']][0]}")
+        logger.info(f"Self.action_to_take = {self.action_to_take}")
 
         logger.info(f"self.buy_entry_price = {self.buy_entry_price}")
         # logger.info(f"self.short_entry_price = {self.short_entry_price}")
@@ -393,30 +398,61 @@ class DetermineTradingState:
             text_file.write("------------")
             text_file.write(self.constants["email_separator"])
             text_file.write(f"Logging for coin = {self.coin_to_predict}")
+
             text_file.write(self.constants["email_separator"])
             text_file.write(message + "")
+
             text_file.write(self.constants["email_separator"])
             text_file.write(f"current date = {row.index}\n")
+
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"close = {row[self.constants['close_col']][0]}")
+            text_file.write(f"close = {self.todays_close_price}")
+
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"rolling_mean_col= {row[self.constants['rolling_mean_col']][0]}")
+            text_file.write(f"rolling_mean_col= {self.todays_rolling_mean}")
+
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"bollinger high = {row[self.constants['bollinger_high_col']][0]} ")
+            text_file.write(f"bollinger high = {self.todays_bollinger_high} ")
+
             text_file.write(self.constants["email_separator"])
-            text_file.write(f"bollinger low = {row[self.constants['bollinger_low_col']][0]} ")
+            text_file.write(f"bollinger low = {self.todays_bollinger_low} ")
+
             text_file.write(self.constants["email_separator"])
             text_file.write(f"self.buy_entry_price = {self.buy_entry_price}")
+
             text_file.write(self.constants["email_separator"])
             text_file.write(f"ml price_prediction for next {self.prediction_n_days}  days= {self.price_prediction}")
+
             text_file.write(self.constants["email_separator"])
             text_file.write(f"Self.mode = {self.mode}")
+
             text_file.write(self.constants["email_separator"])
             text_file.write(f"Self.action_to_take = {self.action_to_take}")
+
             text_file.write(self.constants["email_separator"])
             text_file.write(f"stop_loss_price = {self.stop_loss_price}")
+
             text_file.write(self.constants["email_separator"])
             text_file.write(f"position_entry_date = {self.position_entry_date}")
+            text_file.write(self.constants["email_separator"])
+
+            if self.mode == "no_position":
+                text_file.write("---- BUY CHECKS ----")
+
+                text_file.write(self.constants["email_separator"])
+                text_file.write("Verify the self.mode is no_position")
+
+                text_file.write(self.constants["email_separator"])
+                text_file.write(f"Check if todays close is lower than todays bolligner low = {self.todays_close_price < self.todays_bollinger_low}")
+
+                text_file.write(self.constants["email_separator"])
+                text_file.write(f"Check if the previous days close was greater than the previous days bollinger low = {self.previous_days_close > self.previous_days_bollinger_low}")
+
+                text_file.write(self.constants["email_separator"])
+                text_file.write(f"self.previous_days_close = {self.previous_days_close }")
+
+                text_file.write(self.constants["email_separator"])
+                text_file.write(f"self.previous_days_bollinger_low = {self.previous_days_bollinger_low }")
 
         logger.info("------------")
 

@@ -83,6 +83,11 @@ class BollingerBandsPredictor:
             tcn_filename = self.constants["tcn_filename_sol"]
             nbeats_model_name = self.constants["nbeats_modelname_sol"]
             nbeats_filename = self.constants["nbeats_filename_sol"]
+        elif self.coin_to_predict.lower() == "matic":
+            tcn_model_name = self.constants["tcn_modelname_matic"]
+            tcn_filename = self.constants["tcn_filename_matic"]
+            nbeats_model_name = self.constants["nbeats_modelname_matic"]
+            nbeats_filename = self.constants["nbeats_filename_matic"]
 
         else:
             raise ValueError(f"Incorrect model token to predict given {self. coin_to_predict}")
