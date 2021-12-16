@@ -197,7 +197,9 @@ class DetermineTradingState:
         else:
             if self.action_to_take == "buy_to_none":
                 self.action_to_take = "none_to_none"
-                self._write_and_print_log_statements("Taking no action today. Hit the else statement and updated buy_to_none to none_to_none", row)
+                self._write_and_print_log_statements(
+                    "Taking no action today. Hit the else statement and updated buy_to_none to none_to_none", row
+                )
             else:
                 self._write_and_print_log_statements("Taking no action today. Hit the else statement", row)
 
@@ -443,10 +445,14 @@ class DetermineTradingState:
                 text_file.write("Verify the self.mode is no_position")
 
                 text_file.write(self.constants["email_separator"])
-                text_file.write(f"Check if todays close is lower than todays bolligner low = {self.todays_close_price < self.todays_bollinger_low}")
+                text_file.write(
+                    f"Check if todays close is lower than todays bolligner low = {self.todays_close_price < self.todays_bollinger_low}"
+                )
 
                 text_file.write(self.constants["email_separator"])
-                text_file.write(f"Check if the previous days close was greater than the previous days bollinger low = {self.previous_days_close > self.previous_days_bollinger_low}")
+                text_file.write(
+                    f"Check if the previous days close was greater than the previous days bollinger low = {self.previous_days_close > self.previous_days_bollinger_low}"
+                )
 
                 text_file.write(self.constants["email_separator"])
                 text_file.write(f"self.previous_days_close = {self.previous_days_close }")

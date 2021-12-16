@@ -84,7 +84,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Println(newestClosePriceSol, "newestClosePriceSol", awsSession)
 
 	newestClosePriceMatic, numRecordsWrittenMatic := DownloadUpdateReuploadData(constantsMap["matic_csv_filename"], currentMaticRecords, constantsMap, runningOnAws, awsSession)
-	log.Println("Records written = ", numRecordsWrittenMati)
+	log.Println("Records written = ", numRecordsWrittenMatic)
 	log.Println(newestClosePriceMatic, "newestClosePriceMatic", awsSession)
 
 	// Call the Python Program here. This is kinda jank
