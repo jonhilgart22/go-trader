@@ -38,7 +38,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Printf("Coin to predict = %v", coinToPredict)
 
 	if !utils.StringInSlice(coinToPredict, []string{"btc", "eth", "sol", "matic"}) {
-		log.Fatal("incorrect coinToPredict", coinToPredict)
+		log.Fatal("incorrect coinToPredict = ", coinToPredict)
 	}
 	// set env vars
 	awsUtils.SetSsmToEnvVars()

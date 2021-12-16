@@ -128,6 +128,7 @@ func ReadCsvFile(filePath string, onAws bool) []structs.HistoricCandles {
 
 	f, err := os.Open(filePath)
 	if err != nil {
+		log.Println("Error opening file")
 		panic(err)
 	}
 	reader := csv.NewReader(bufio.NewReader(f))

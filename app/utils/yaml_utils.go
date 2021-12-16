@@ -47,7 +47,7 @@ func ReadNestedYamlFile(fileLocation string, runningOnAws bool, coinToPredict st
 }
 
 func ReadYamlFile(fileLocation string, runningOnAws bool, coinToPredict string) map[string]string {
-	if len(coinToPredict) == 3 {
+	if len(coinToPredict) == 3 || len(coinToPredict) == 4 {
 		// every file have the coin name as the first level
 		splitFilename := strings.Split(fileLocation, "/")
 		fileLocation = splitFilename[0] + "/" + coinToPredict + "_" + splitFilename[1]

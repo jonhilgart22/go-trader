@@ -41,7 +41,7 @@ func SendEmail(inputSubject string, logsFilename string, sizeToBuy decimal.Decim
 	}
 
 	if sizeToBuy.GreaterThan(defaultSizeToBuy) {
-		body = body + "<br>" + "The total size to purchase is  " + sizeToBuy.String() + " GB"
+		body = body + "<br>" + "The total size to purchase is  " + sizeToBuy.String() + " coins"
 	}
 
 	awsSession, err := session.NewSession(&aws.Config{
