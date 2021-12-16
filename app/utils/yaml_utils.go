@@ -47,11 +47,15 @@ func ReadNestedYamlFile(fileLocation string, runningOnAws bool, coinToPredict st
 }
 
 func ReadYamlFile(fileLocation string, runningOnAws bool, coinToPredict string) map[string]string {
-	if len(coinToPredict) == 3 || len(coinToPredict) == 4 {
+	//matic = 5, sol/etc/btc = 3
+	if (len(coinToPredict) >= 3) && (len(coinToPredict) <= 5) {
 		// every file have the coin name as the first level
 		splitFilename := strings.Split(fileLocation, "/")
 		fileLocation = splitFilename[0] + "/" + coinToPredict + "_" + splitFilename[1]
-		log.Println("fileLocation = ", fileLocation)
+		log.Println("reading in fileLocation = ", fileLocation)
+	} else {
+		log.Println("read yaml file not adding the coin to predict to the filename. coinToPredict = ", coinToPredict)
+		log.Println(" reading in fileLocation = ", fileLocation)
 	}
 
 	if runningOnAws {
