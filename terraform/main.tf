@@ -409,3 +409,30 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_sol" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.every_day_sol.arn
 }
+
+
+# MATIC
+
+
+# SOL
+
+resource "aws_cloudwatch_event_rule" "every_day_matic" {
+  name                = "every-day-matic"
+  description         = "Fires every day for matic"
+  schedule_expression = "cron(7 0 * * ? *)" # run at 12:7am utc
+}
+
+resource "aws_cloudwatch_event_target" "check_matic_every_day" {
+  rule      = aws_cloudwatch_event_rule.every_day_matic.name
+  target_id = "check_matic_predictions"
+  arn       = aws_lambda_function.lambda_model_function.arn
+  input     = "{\"coinToPredict\": \"matic\"}"
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_matic" {
+  statement_id  = "AllowExecutionFromCloudWatchMatic"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_model_function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.every_day_matic.arn
+}

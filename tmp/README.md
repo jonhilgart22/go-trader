@@ -2,4 +2,4 @@ We store the config files here to match the read/write locations on lambda. Othe
 
 
 Note
-- All new filename for coins need to start with `coin_` . For example, `ada_` or `sol_`
+- All new filenames for coins need to start with `coin_` . For example, `ada_` or `sol_`

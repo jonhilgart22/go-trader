@@ -37,8 +37,8 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	var coinToPredict string = strings.ToLower(req.CoinToPredict)
 	log.Printf("Coin to predict = %v", coinToPredict)
 
-	if !utils.StringInSlice(coinToPredict, []string{"btc", "eth", "sol"}) {
-		log.Fatal("incorrect coinToPredict", coinToPredict)
+	if !utils.StringInSlice(coinToPredict, []string{"btc", "eth", "sol", "matic"}) {
+		log.Fatal("incorrect coinToPredict = ", coinToPredict)
 	}
 	// set env vars
 	awsUtils.SetSsmToEnvVars()
@@ -65,6 +65,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	currentBitcoinRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["btc_product_code"], granularity)
 	currentEthereumRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["eth_product_code"], granularity)
 	currentSolRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["sol_product_code"], granularity)
+	currentMaticRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["matic_product_code"], granularity)
 	// currentSpyRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["spy_product_code"], granularity)
 
 	// Add new data to CSV from FTX to s3. This will be used by our Python program
@@ -81,6 +82,10 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	newestClosePriceSol, numRecordsWrittenSol := DownloadUpdateReuploadData(constantsMap["sol_csv_filename"], currentSolRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenSol)
 	log.Println(newestClosePriceSol, "newestClosePriceSol", awsSession)
+
+	newestClosePriceMatic, numRecordsWrittenMatic := DownloadUpdateReuploadData(constantsMap["matic_csv_filename"], currentMaticRecords, constantsMap, runningOnAws, awsSession)
+	log.Println("Records written = ", numRecordsWrittenMatic)
+	log.Println(newestClosePriceMatic, "newestClosePriceMatic", awsSession)
 
 	// Call the Python Program here. This is kinda jank
 	if runningLocally {
@@ -139,6 +144,8 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceEth)
 			} else if coinToPredict == "sol" {
 				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceSol)
+			} else if coinToPredict == "matic" {
+				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceMatic)
 			}
 
 			log.Println("Taking a position worth of sizeToBuy ~", sizeToBuy)
@@ -292,6 +299,8 @@ func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {
 	log.Println("ftxSecret = ", ftxSecret)
 	subAcccountName := coinToPredictUpper + "_SUBACCOUNT_NAME"
 	log.Println("subAcccountName = ", subAcccountName)
+	log.Println("ftxKey = ", ftxKey)
+	log.Println("ftxSecret = ", ftxSecret)
 
 	ftxClient := ftx.NewClient(os.Getenv(ftxKey), os.Getenv(ftxSecret), os.Getenv(subAcccountName))
 

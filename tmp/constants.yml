@@ -4,7 +4,7 @@
 btc_product_code: BTC/USD
 tcn_modelname_btc: tcn_btc
 nbeats_modelname_btc: nbeats_btc
-bitcoin_csv_filename: data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
+bitcoin_csv_filename: tmp/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
 tcn_filename_btc: checkpoint_4499.pth.tar
 nbeats_filename_btc: checkpoint_257.pth.tar
 
@@ -12,7 +12,7 @@ nbeats_filename_btc: checkpoint_257.pth.tar
 eth_product_code: ETH/USD
 tcn_modelname_eth: tcn_eth
 nbeats_modelname_eth: nbeats_eth
-etherum_csv_filename: data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
+etherum_csv_filename: tmp/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
 tcn_filename_eth: checkpoint_5649.pth.tar
 nbeats_filename_eth: checkpoint_257.pth.tar
 
@@ -28,7 +28,16 @@ tcn_modelname_sol: tcn_sol
 tcn_filename_sol: test_sol_tcn.pth.tar
 nbeats_modelname_sol: nbeats_sol
 nbeats_filename_sol: test_sol_nbeats.pth.tar
-sol_csv_filename: data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv
+sol_csv_filename: tmp/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv
+
+## MATIC
+matic_product_code: MATIC/USD
+tcn_modelname_matic: tcn_matic
+tcn_filename_matic: test_matic_tcn.pth.tar
+nbeats_modelname_matic: nbeats_matic
+nbeats_filename_matic: test_matic_nbeats.pth.tar
+matic_csv_filename: tmp/historic_crypto_prices - matic_dec_2020_dec_2021.csv
+
 
 ## Don'y need to load saved models right now, train from scratch
 
