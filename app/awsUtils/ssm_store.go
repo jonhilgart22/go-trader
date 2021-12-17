@@ -47,6 +47,10 @@ func SetSsmToEnvVars() {
 	solSubaccountName := v.Get(`SOL_SUBACOUNT_NAME`)
 	solFtxKey := v.Get(`SOL_FTX_KEY`)
 	solFtxSecret := v.Get(`SOL_FTX_SECRET`)
+	// matic
+	maticSubaccountName := v.Get(`MATIC_SUBACCOUNT_NAME`)
+	maticFtxKey := v.Get(`MATIC_FTX_KEY`)
+	maticFtxSecret := v.Get(`MATIC_FTX_SECRET`)
 	//value should be `a`
 	os.Setenv("FTX_KEY", fmt.Sprintf("%v", ftxKey))
 	os.Setenv("FTX_SECRET", fmt.Sprintf("%v", ftxSecret))
@@ -61,4 +65,8 @@ func SetSsmToEnvVars() {
 	os.Setenv("SOL_SUBACCOUNT_NAME", fmt.Sprintf("%v", solSubaccountName))
 	os.Setenv("SOL_FTX_KEY", fmt.Sprintf("%v", solFtxKey))
 	os.Setenv("SOL_FTX_SECRET", fmt.Sprintf("%v", solFtxSecret))
+	// MATIC
+	os.Setenv("MATIC_SUBACCOUNT_NAME", fmt.Sprintf("%v", maticSubaccountName))
+	os.Setenv("MATIC_FTX_KEY", fmt.Sprintf("%v", maticFtxKey))
+	os.Setenv("MATIC_FTX_SECRET", fmt.Sprintf("%v", maticFtxSecret))
 }

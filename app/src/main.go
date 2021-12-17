@@ -299,6 +299,8 @@ func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {
 	log.Println("ftxSecret = ", ftxSecret)
 	subAcccountName := coinToPredictUpper + "_SUBACCOUNT_NAME"
 	log.Println("subAcccountName = ", subAcccountName)
+	log.Println("ftxKey = ", ftxKey)
+	log.Println("ftxSecret = ", ftxSecret)
 
 	ftxClient := ftx.NewClient(os.Getenv(ftxKey), os.Getenv(ftxSecret), os.Getenv(subAcccountName))
 
