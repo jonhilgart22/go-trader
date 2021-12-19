@@ -38,8 +38,7 @@ run_python:
 
 # update_lambda:
 # 	aws lambda update-function-code --function-name go-trader-function  	--image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
-# download_configs
-upload_configs:
+upload_configs: download_configs
 	aws s3 cp tmp/   s3://go-trader/tmp/  --sse aws:kms --recursive
 
 download_configs:
