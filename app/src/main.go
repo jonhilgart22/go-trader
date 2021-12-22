@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -28,6 +29,8 @@ func main() {
 }
 
 func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, error) {
+
+	start := time.Now() // time how long execution takes. 15 min timeout AWS lambda
 
 	var runningOnAws bool = awsUtils.RunningOnAws()
 	log.Printf("Running on AWS = %v", runningOnAws)
@@ -183,8 +186,10 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 		panic(err)
 	}
 
+	elapsed := time.Since(start)
+
 	if !runningLocally {
-		awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict), constantsMap["log_filename"], sizeToBuy, runningOnAws, constantsMap["email_separator"], defaultPurchaseSize)
+		awsUtils.SendEmail(fmt.Sprintf("Successfully executed go-trader for coin = %v", coinToPredict), constantsMap["log_filename"], sizeToBuy, runningOnAws, constantsMap["email_separator"], defaultPurchaseSize, elapsed.Minutes())
 	} else {
 		log.Println("No emails, running locally")
 	}

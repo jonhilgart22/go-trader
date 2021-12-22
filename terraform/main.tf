@@ -346,7 +346,7 @@ EOF
 resource "aws_cloudwatch_event_rule" "every_day_btc" {
   name                = "every-day-btc"
   description         = "Fires every day for btc"
-  schedule_expression = "cron(02 0 * * ? *)" # run at 12:02am utc
+  schedule_expression = "cron(01 0 * * ? *)" # run at 12:02am utc
 }
 
 resource "aws_cloudwatch_event_target" "check_btc_every_day" {
@@ -369,7 +369,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_model_function
 resource "aws_cloudwatch_event_rule" "every_day_eth" {
   name                = "every-day-eth"
   description         = "Fires every day for eth"
-  schedule_expression = "cron(10 0 * * ? *)" # run at 12:10am utc
+  schedule_expression = "cron(1 0 * * ? *)" # run at 12:01am utc
 }
 
 resource "aws_cloudwatch_event_target" "check_eth_every_day" {
@@ -392,7 +392,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_eth" {
 resource "aws_cloudwatch_event_rule" "every_day_sol" {
   name                = "every-day-sol"
   description         = "Fires every day for sol"
-  schedule_expression = "cron(10 0 * * ? *)" # run at 12:10am utc
+  schedule_expression = "cron(1 0 * * ? *)" # run at 12:01am utc
 }
 
 resource "aws_cloudwatch_event_target" "check_sol_every_day" {
@@ -419,7 +419,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_sol" {
 resource "aws_cloudwatch_event_rule" "every_day_matic" {
   name                = "every-day-matic"
   description         = "Fires every day for matic"
-  schedule_expression = "cron(7 0 * * ? *)" # run at 12:7am utc
+  schedule_expression = "cron(1 0 * * ? *)" # run at 12:01am utc
 }
 
 resource "aws_cloudwatch_event_target" "check_matic_every_day" {
