@@ -46,7 +46,7 @@ func SendEmail(inputSubject string, logsFilename string, sizeToBuy decimal.Decim
 	}
 
 	// add elapsed time
-	body = body + "<br><br>" + "The total execution time was " + fmt.Sprintf("%v", elapsedTime)
+	body = body + "<br><br> ------" + "The total execution time was " + fmt.Sprintf("%v", elapsedTime) + " minutes"
 
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1")},
