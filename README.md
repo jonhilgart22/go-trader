@@ -85,7 +85,7 @@ Via Github Actions
 #### Adding a new coin
 
 1. Add new data to the [google sheet here](https://docs.google.com/spreadsheets/d/1fBvirRK7m17jYj0t1yO6Jagq_aFjQvJ5EApnHOZQz20/edit#gid=114347281). I like using (Coin Market Cap)[https://coinmarketcap.com/] for historical data.
-2. Download this data and put it into the `data/` directory and the `tmp/` directory. The data directory is used for local analysis / simulations. The tmp directory is used for the AWS lambda
+2. Download this data and put it into the `tmp/` directory. The tmp directory is used for the AWS lambda. If you are running experiments, you can put the experiment data into the `data/` folder.
 3. Run simulations in the testing jupyter notebook to see how the default config would work. For new coins, we should use `eth` and `btc` as the additional_dfs argument.
 4. Setup a new FTX account, generate an api key for this account, create aws SSM params for these params, in the `ssm_store.go`, set these values as env vars. Also add these to the env_vars.sh file
 5. Add these env vars using `scripts/set_ssm.sh`. `./scripts/set_ssm.sh FTX_KEY <your-api-key>`
