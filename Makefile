@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs update_lambda download_configs compile_go update_lambda run_golang_btc run_golang_eth coverage_go coverage_python test_go
+PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs_and_data update_lambda download_configs_and_data compile_go update_lambda run_golang_btc run_golang_eth coverage_go coverage_python test_go
 
 PYTHON_VERSION=3.8.2
 
@@ -38,10 +38,10 @@ run_python:
 
 # update_lambda:
 # 	aws lambda update-function-code --function-name go-trader-function  	--image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
-upload_configs: download_configs
+upload_configs_and_data: download_configs_and_data
 	aws s3 cp tmp/   s3://go-trader/tmp/  --sse aws:kms --recursive
 
-download_configs:
+download_configs_and_data:
 	aws s3 cp s3://go-trader/tmp/  tmp/ --sse aws:kms --recursive
 
 

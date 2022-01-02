@@ -166,7 +166,9 @@ class BollingerBandsPredictor:
 
     def _slice_df(self):
         # some dataframes don't have enough data a full lookback window
-        slice_date = self.df.index.min()
+        additional_dfs_min_date = np.max([df.index.min() for df in self.additional_dfs])
+        slice_date = np.max([self.df.index.min(), additional_dfs_min_date])
+
         logger.info(f"Slice date , earliest day of data for main df, = {slice_date}")
 
         self.df = self.df.loc[slice_date:, :].copy()
