@@ -2,6 +2,7 @@
 package awsUtils
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -32,7 +33,7 @@ func readTextFile(fileName string) string {
 	return string(b)
 
 }
-func SendEmail(inputSubject string, logsFilename string, sizeToBuy decimal.Decimal, onAws bool, emailSeparator string, defaultSizeToBuy decimal.Decimal) {
+func SendEmail(inputSubject string, logsFilename string, sizeToBuy decimal.Decimal, onAws bool, emailSeparator string, defaultSizeToBuy decimal.Decimal, elapsedTime float64) {
 	var body string
 	if onAws {
 		body = readTextFile("/tmp/" + logsFilename)
@@ -43,6 +44,9 @@ func SendEmail(inputSubject string, logsFilename string, sizeToBuy decimal.Decim
 	if sizeToBuy.GreaterThan(defaultSizeToBuy) {
 		body = body + "<br>" + "The total size to purchase is  " + sizeToBuy.String() + " coins"
 	}
+
+	// add elapsed time
+	body = body + "<br><br> ------" + "The total execution time was " + fmt.Sprintf("%v", elapsedTime) + " minutes"
 
 	awsSession, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1")},
