@@ -93,7 +93,7 @@ Via Github Actions
 7. Update the `main.py` files for this new coin as well as `predict_price_movements.py` . Grep around for `btc` to see what code to update
 8. Download the current configs `make download_configs` . We're going to be re-uploading the state and want the latest snapshot of reality
 9. Create new `*.yml` files under `tmp/` (here). This includes the three coin specific files (actions_to_take, trading_state_config, won_and_lost), and updating the `constants.yml` file.
-10. Create a new Eventbridge trigger in the `main.tf` file  [here]
+10. Create a new Eventbridge trigger in the `main.tf` file
 11. Upload the configs `make upload_configs`
 12.  build the lambda image `./build.sh`
 13. update the lambda with the new image!
