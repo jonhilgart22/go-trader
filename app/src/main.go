@@ -40,7 +40,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	var coinToPredict string = strings.ToLower(req.CoinToPredict)
 	log.Printf("Coin to predict = %v", coinToPredict)
 
-	if !utils.StringInSlice(coinToPredict, []string{"btc", "eth", "sol", "matic"}) {
+	if !utils.StringInSlice(coinToPredict, []string{"btc", "eth", "sol", "matic", "link"}) {
 		log.Fatal("incorrect coinToPredict = ", coinToPredict)
 	}
 	// set env vars
