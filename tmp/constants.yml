@@ -38,6 +38,13 @@ nbeats_modelname_matic: nbeats_matic
 nbeats_filename_matic: test_matic_nbeats.pth.tar
 matic_csv_filename: tmp/historic_crypto_prices - matic_dec_2020_dec_2021.csv
 
+## LINK
+link_product_code: LINK/USD
+tcn_modelname_link: tcn_link
+tcn_filename_link: test_link_tcn.pth.tar
+nbeats_modelname_link: nbeats_link
+nbeats_filename_link: test_link_nbeats.pth.tar
+link_csv_filename: tmp/historic_crypto_prices - link_jan_2019_jan_2022.csv
 
 ## Don'y need to load saved models right now, train from scratch
 
