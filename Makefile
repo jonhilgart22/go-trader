@@ -36,8 +36,7 @@ test_go:
 run_python:
 	python -m app.mlcode.main --coin_to_predict btc
 
-# update_lambda:
-# 	aws lambda update-function-code --function-name go-trader-function  	--image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
+# we make sure to download first. However, if you've already downloaded, you can copy the upload command
 upload_configs_and_data: download_configs_and_data
 	aws s3 cp tmp/   s3://go-trader/tmp/  --sse aws:kms --recursive
 

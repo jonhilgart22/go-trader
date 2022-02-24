@@ -18,4 +18,4 @@ hyperparameters_nbeats:
     random_state: 0
     num_blocks: 5
     layer_widths: 256
-    epochs: 11
+    epochs: 12

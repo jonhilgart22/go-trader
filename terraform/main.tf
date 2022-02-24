@@ -414,8 +414,6 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_sol" {
 # MATIC
 
 
-# SOL
-
 resource "aws_cloudwatch_event_rule" "every_day_matic" {
   name                = "every-day-matic"
   description         = "Fires every day for matic"
@@ -435,4 +433,30 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_matic" {
   function_name = aws_lambda_function.lambda_model_function.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.every_day_matic.arn
+}
+
+
+
+# LINK
+
+
+resource "aws_cloudwatch_event_rule" "every_day_link" {
+  name                = "every-day-link"
+  description         = "Fires every day for link"
+  schedule_expression = "cron(1 0 * * ? *)" # run at 12:01am utc
+}
+
+resource "aws_cloudwatch_event_target" "check_link_every_day" {
+  rule      = aws_cloudwatch_event_rule.every_day_link.name
+  target_id = "check_link_predictions"
+  arn       = aws_lambda_function.lambda_model_function.arn
+  input     = "{\"coinToPredict\": \"link\"}"
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda_with_link" {
+  statement_id  = "AllowExecutionFromCloudWatchLink"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_model_function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.every_day_link.arn
 }
