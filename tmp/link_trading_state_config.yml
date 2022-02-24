@@ -1,8 +1,8 @@
-buy_entry_price: 15.7865
-buy_has_crossed_mean: 1.0
+buy_entry_price: 13.5105
+buy_has_crossed_mean: 0.0
 mode: buy
-position_entry_date: '2022-02-02 00:00:00'
+position_entry_date: '2022-02-21 00:00:00'
 short_entry_price: 0.0
 short_has_crossed_mean: 0.0
 stop_loss_pct: 0.1
-stop_loss_price: 15.774750000000001
+stop_loss_price: 12.5892
