@@ -37,7 +37,7 @@ def main(directory: str, file_name_glob: str):
                     n_won_for_this_coin = loaded_yaml["n_buy_won"]
                     n_lost_for_this_coin = loaded_yaml["n_buy_lost"]
 
-                    pct_return = dollars_won_for_this_coin / max(dollars_lost_for_this_coin, 1) - 1
+                    pct_return = ((dollars_won_for_this_coin / max(dollars_lost_for_this_coin, 1)) - 1) * 100
                     total_dollars_won += dollars_won_for_this_coin
                     total_dollars_lost += dollars_lost_for_this_coin
                     total_n_won += n_won_for_this_coin
@@ -54,7 +54,7 @@ def main(directory: str, file_name_glob: str):
     logging.info("-----------")
     logging.info(f"Total won = {total_dollars_won}")
     logging.info(f"Total lost = {total_dollars_lost}")
-    logging.info(f"Total return = {total_dollars_won / total_dollars_lost - 1: .2f}%")
+    logging.info(f"Total return = { ((total_dollars_won /  (total_dollars_lost) ) -1)  * 100}%")
     logging.info(f"Total n trades = {total_n_won + total_n_lost:.2f}")
     logging.info(
         f"Won or lost per trade = {(total_dollars_won -  total_dollars_lost)/( total_n_won + total_n_lost) : .2f}"
