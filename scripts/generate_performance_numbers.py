@@ -56,6 +56,7 @@ def main(directory: str, file_name_glob: str):
     logging.info(f"Total lost = {total_dollars_lost}")
     logging.info(f"Total return = { ((total_dollars_won /  (total_dollars_lost) ) -1)  * 100}%")
     logging.info(f"Total n trades = {total_n_won + total_n_lost:.2f}")
+    logging.info(f"Bat rate = {total_n_won / (total_n_won + total_n_lost)*100:.2f}%")
     logging.info(
         f"Won or lost per trade = {(total_dollars_won -  total_dollars_lost)/( total_n_won + total_n_lost) : .2f}"
     )
