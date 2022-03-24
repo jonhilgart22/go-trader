@@ -1,14 +1,15 @@
-import yaml
-import click
 import glob
 import logging
 
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+import click
+import yaml
+
+logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p", level=logging.INFO)
 
 
 @click.command()
-@click.option('--directory', default='tmp', help='The directory where the won_and_lost configs are')
-@click.option('--file_name_glob', default='won_and_lost_config', help='the name in the files to parse')
+@click.option("--directory", default="tmp", help="The directory where the won_and_lost configs are")
+@click.option("--file_name_glob", default="won_and_lost_config", help="the name in the files to parse")
 def main(directory: str, file_name_glob: str):
     if not validate_downloaded_configs():
         return "Need to download the configs. make download_configs_and_data"
@@ -24,17 +25,17 @@ def main(directory: str, file_name_glob: str):
     for file in glob.glob(f"{directory}/*"):
         if file_name_glob in file:
             logging.info(f"File = {file}")
-            coin = file.split('_')[0]
+            coin = file.split("_")[0]
             logging.info("______________")
             logging.info(f"Coin = {coin}")
             logging.info(f"Parsing results for coin {coin}")
             with open(file, "r") as stream:
                 try:
                     loaded_yaml = yaml.safe_load(stream)
-                    dollars_won_for_this_coin = loaded_yaml['dollar_amount_buy_won']
-                    dollars_lost_for_this_coin = loaded_yaml['dollar_amount_buy_lost']
-                    n_won_for_this_coin = loaded_yaml['n_buy_won']
-                    n_lost_for_this_coin = loaded_yaml['n_buy_lost']
+                    dollars_won_for_this_coin = loaded_yaml["dollar_amount_buy_won"]
+                    dollars_lost_for_this_coin = loaded_yaml["dollar_amount_buy_lost"]
+                    n_won_for_this_coin = loaded_yaml["n_buy_won"]
+                    n_lost_for_this_coin = loaded_yaml["n_buy_lost"]
 
                     pct_return = dollars_won_for_this_coin / max(dollars_lost_for_this_coin, 1) - 1
                     total_dollars_won += dollars_won_for_this_coin
@@ -55,7 +56,9 @@ def main(directory: str, file_name_glob: str):
     logging.info(f"Total lost = {total_dollars_lost}")
     logging.info(f"Total return = {total_dollars_won / total_dollars_lost - 1: .2f}%")
     logging.info(f"Total n trades = {total_n_won + total_n_lost:.2f}")
-    logging.info(f"Won or lost per trade = {(total_dollars_won -  total_dollars_lost)/( total_n_won + total_n_lost) : .2f}")
+    logging.info(
+        f"Won or lost per trade = {(total_dollars_won -  total_dollars_lost)/( total_n_won + total_n_lost) : .2f}"
+    )
 
 
 def validate_downloaded_configs():
@@ -63,7 +66,7 @@ def validate_downloaded_configs():
     Validates that you downloaded  configs.
     """
     val = input("Did you download the configs (y,yes,n,no) ")
-    if val.lower() in ['yes', 'y']:
+    if val.lower() in ["yes", "y"]:
         return True
     else:
         return False
@@ -82,5 +85,5 @@ def validate_downloaded_configs():
 #         except yaml.YAMLError as exc:
 #             print(exc)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
