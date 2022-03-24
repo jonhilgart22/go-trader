@@ -19,5 +19,6 @@ cover.out
 .coverage
 coverage.xml
 tmp/historic*
+tmp/
 
 *won_and_lost*
