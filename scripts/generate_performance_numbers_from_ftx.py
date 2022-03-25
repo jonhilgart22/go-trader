@@ -95,7 +95,10 @@ def main(directory: str, file_name_glob: str):
 
         all_trades = list(all_trades.values())
         total_bought = 0
+        total_won = 0
         total_sold = 0
+        total_lost = 0
+        current_buy_price = None
 
         print('Fetched', len(all_trades), 'trades')
         for i in range(0, len(all_trades)):
@@ -106,12 +109,41 @@ def main(directory: str, file_name_glob: str):
 
             if trade['side'] == 'buy':
                 total_bought += dollars_traded
+                current_buy_price = trade['price']
             if trade['side'] == 'sell':
                 total_sold += dollars_traded
+                if current_buy_price is None:
+                    continue
+                elif current_buy_price < trade['price']:  # buy low sell high
+                    total_won += 1
+                else:
+                    total_lost += 1
+
+                current_buy_price = None
 
         logging.info(f"Total won = { total_sold - total_bought }")
-        performance_per_coin[coin] += total_sold - total_bought
+        # profit for long trades, total money at risk, # of trades, winning trades
+        performance_per_coin[coin] = (total_sold - total_bought, total_bought, total_won + total_lost, total_won)
     logging.info(f"performance_per_coin = {performance_per_coin}")
+    # aggregate metrics
+
+    total_dollars_won_or_lost = 0
+    total_dollars_at_risk = 0
+    total_trades_won = 0
+    total_trades = 0
+    for key, value in performance_per_coin.items():
+        total_dollars_won_or_lost += value[0]
+        total_dollars_at_risk += value[1]
+        total_trades_won += value[3]
+        total_trades += value[2]
+
+    logging.info(f"total_dollars_won_or_lost = {total_dollars_won_or_lost}")
+    logging.info(f"total_dollars_at_risk = {total_dollars_at_risk}")
+    logging.info(f"total_trades = {total_trades}")
+    logging.info(f"total_trades_won = {total_trades_won}")
+    logging.info(f"Bat rate = {total_trades_won/total_trades * 100:.2f}%")
+    logging.info(f"Percent Return = {(total_dollars_won_or_lost/total_dollars_at_risk)*100:.2f}%")
+    logging.info(f"Amount won or lost per trade = {total_dollars_won_or_lost/total_trades:.2f}")
 
 
 if __name__ == '__main__':
