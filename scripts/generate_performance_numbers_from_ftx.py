@@ -137,13 +137,13 @@ def main(directory: str, file_name_glob: str):
         total_trades_won += value[3]
         total_trades += value[2]
 
-    logging.info(f"total_dollars_won_or_lost = {total_dollars_won_or_lost}")
-    logging.info(f"total_dollars_at_risk = {total_dollars_at_risk}")
+    logging.info(f"total_dollars_won_or_lost = ${total_dollars_won_or_lost}")
+    logging.info(f"total_dollars_at_risk = ${total_dollars_at_risk}")
     logging.info(f"total_trades = {total_trades}")
     logging.info(f"total_trades_won = {total_trades_won}")
     logging.info(f"Bat rate = {total_trades_won/total_trades * 100:.2f}%")
     logging.info(f"Percent Return = {(total_dollars_won_or_lost/total_dollars_at_risk)*100:.2f}%")
-    logging.info(f"Amount won or lost per trade = {total_dollars_won_or_lost/total_trades:.2f}")
+    logging.info(f"Amount won or lost per trade = ${total_dollars_won_or_lost/total_trades:.2f}")
 
 
 if __name__ == '__main__':
