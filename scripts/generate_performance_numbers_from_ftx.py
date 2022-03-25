@@ -40,22 +40,20 @@ def main(directory: str, file_name_glob: str):
     for coin in unique_coins:
         logging.info(f"Coin = {coin}")
         ftx_key = os.getenv(coin.upper() + "_FTX_KEY")
-        logging.info(ftx_key, "ftx_key")
         ftx_secret = os.getenv(coin.upper() + "_FTX_SECRET")
-        logging.info(ftx_secret, "ftx_secret")
         logging.info(f"Subaccount name env var = {coin.upper() + '_SUBACCOUNT_NAME'}")
         subaccount_name = os.getenv(coin.upper() + "_SUBACCOUNT_NAME")
 
         logging.info(f"Subaccount name = {subaccount_name}")
 
         # make sure your version is 1.51+
-        logging.info("CCXT Version:", ccxt.__version__)
+        logging.info(f"CCXT Version: {ccxt.__version__}")
 
         exchange = ccxt.ftxus({"apiKey": ftx_key, "secret": ftx_secret, "FTXUS-SUBACCOUNT": subaccount_name})
 
         # markets = exchange.load_markets()
 
-        exchange.verbose = True  # uncomment for debugging
+        # exchange.verbose = True  # uncomment for debugging
 
         all_trades = {}
         symbol = coin + "/USD"
