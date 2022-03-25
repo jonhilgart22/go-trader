@@ -26,6 +26,7 @@ jupyterlab = "^3.2.4"
 ipython = "^7.29.0"
 ipykernel = "^6.5.1"
 coverage = "^6.1.2"
+ccxt = "^1.77.11"
 
 [tool.pytest.ini_options]
 env = ["ON_LOCAL=true"]

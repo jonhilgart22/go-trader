@@ -40,11 +40,11 @@ func SetSsmToEnvVars() {
 	btcFtxKey := v.Get(`BTC_FTX_KEY`)
 	btcFtxSecret := v.Get(`BTC_FTX_SECRET`)
 	// eth
-	ethSubaccountName := v.Get(`ETH_SUBACOUNT_NAME`)
+	ethSubaccountName := v.Get(`ETH_SUBACCOUNT_NAME`)
 	ethFtxKey := v.Get(`ETH_FTX_KEY`)
 	ethFtxSecret := v.Get(`ETH_FTX_SECRET`)
 	// sol
-	solSubaccountName := v.Get(`SOL_SUBACOUNT_NAME`)
+	solSubaccountName := v.Get(`SOL_SUBACCOUNT_NAME`)
 	solFtxKey := v.Get(`SOL_FTX_KEY`)
 	solFtxSecret := v.Get(`SOL_FTX_SECRET`)
 	// matic
