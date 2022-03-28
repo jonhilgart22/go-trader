@@ -75,18 +75,5 @@ def validate_downloaded_configs() -> bool:
         return False
 
 
-# def read_in_yaml_files():
-#     """
-#     Reads in the yaml files and returns a dataframe.
-#     """
-#     df = pd.read_csv('configs.csv')
-#     return df
-
-#     with open("example.yaml", "r") as stream:
-#         try:
-#             print(yaml.safe_load(stream))
-#         except yaml.YAMLError as exc:
-#             print(exc)
-
 if __name__ == "__main__":
     main()

@@ -277,13 +277,12 @@ class BollingerBandsPredictor:
 
         ts_stacked_series: the current scaled lists from the df_original provided
         """
-        all_ts_stacked_series: Any = TimeSeries
         all_ts_transfomers = []
-        for df in self.additional_dfs:
+        for idx, df in enumerate(self.additional_dfs):
             (additional_ts_transformers, additional_ts_stacked_series) = self._scale_time_series_df(
                 df, use_pred_col=True
             )
-            if len(all_ts_stacked_series) <= 1:  # type :ignore
+            if idx == 0:  # type :ignore
                 if verbose:
                     logger.info(
                         f"last date for training additional df data {additional_ts_stacked_series.time_index[-1]}"
