@@ -1,5 +1,6 @@
 import glob
 import logging
+from typing import Optional
 
 import click
 import yaml
@@ -10,7 +11,7 @@ logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S
 @click.command()
 @click.option("--directory", default="tmp", help="The directory where the won_and_lost configs are")
 @click.option("--file_name_glob", default="won_and_lost_config", help="the name in the files to parse")
-def main(directory: str, file_name_glob: str):
+def main(directory: str, file_name_glob: str) -> Optional[str]:
     if not validate_downloaded_configs():
         return "Need to download the configs. make download_configs_and_data"
 
@@ -60,9 +61,10 @@ def main(directory: str, file_name_glob: str):
     logging.info(
         f"Won or lost per trade = {(total_dollars_won -  total_dollars_lost)/( total_n_won + total_n_lost) : .2f}"
     )
+    return "Success"
 
 
-def validate_downloaded_configs():
+def validate_downloaded_configs() -> bool:
     """
     Validates that you downloaded  configs.
     """

@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 from collections import defaultdict
+from typing import Any, Dict
 
 import ccxt
 import click
@@ -15,12 +16,12 @@ logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S
 @click.command()
 @click.option("--directory", default="tmp", help="The directory where the won_and_lost configs are")
 @click.option("--file_name_glob", default="won_and_lost_config", help="the name in the files to parse")
-def main(directory: str, file_name_glob: str):
+def main(directory: str, file_name_glob: str) -> None:
 
     response = input("Have you exported the env vars from .env_vars.sh ? (y/n)")
 
     if response.lower() != "y":
-        return "Export env vars! copy and paste them"
+        print("Export env vars! copy and paste them")
 
     not_coins = ["ml", "historic", "logs.txt", "README.md", "actions", "constants.yml"]
 
@@ -34,7 +35,7 @@ def main(directory: str, file_name_glob: str):
 
     unique_coins = list(set(list_of_coins))
 
-    performance_per_coin = defaultdict(int)
+    performance_per_coin: Dict[str, Any] = defaultdict(int)
     # run through coins and pull performance data
 
     for coin in unique_coins:
@@ -82,16 +83,16 @@ def main(directory: str, file_name_glob: str):
                 logging.info("Done")
                 break
 
-        all_trades = list(all_trades.values())
+        all_trades_list = list(all_trades.values())
         total_bought = 0
         total_won = 0
         total_sold = 0
         total_lost = 0
         current_buy_price = None
 
-        logging.info(f"Fetched {len(all_trades)} trades")
-        for i in range(0, len(all_trades)):
-            trade = all_trades[i]
+        logging.info(f"Fetched {len(all_trades_list)} trades")
+        for i in range(0, len(all_trades_list)):
+            trade = all_trades_list[i]
 
             dollars_traded = trade["price"] * trade["amount"]
 

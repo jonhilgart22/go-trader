@@ -28,8 +28,8 @@ class BollingerBandsPredictor:
     def __init__(
         self,
         coin_to_predict: str,
-        constants: Dict[str, Dict[str, any]],
-        ml_constants: Dict[str, Dict[str, any]],
+        constants: Dict[str, Any],
+        ml_constants: Dict[str, Any],
         input_df: pd.DataFrame,
         additional_dfs: List[pd.DataFrame] = [],
         period: str = "24H",
@@ -38,8 +38,8 @@ class BollingerBandsPredictor:
         self.n_years_filter = "3Y"  # use last 3 years of data
 
         self.coin_to_predict = coin_to_predict
-        self.constants: Dict[str, Dict[str, Any]] = constants
-        self.ml_constants: Dict[str, Dict[str, Any]] = ml_constants
+        self.constants: Dict[str, Any] = constants
+        self.ml_constants: Dict[str, Any] = ml_constants
         self.window = self.ml_constants["prediction_params"]["bollinger_window"]
         self.no_of_std = self.ml_constants["prediction_params"]["no_of_std"]
         self.df = input_df
@@ -64,9 +64,14 @@ class BollingerBandsPredictor:
         if type(self.ml_constants["prediction_params"]["lookback_window"]) != list:
             raise ValueError("Need to enter a list for loockback_window")
 
-        self.models = []  # store models here
+        self.models: List[Any] = []  # store models here
 
-    def _create_models(self, load_model: bool = False):
+        self.tcn_model = TCNModel
+        self.nbeats_model = NBEATSModel
+
+    def _create_models(self, load_model: bool = False) -> None:
+
+        nbeats_model_name: str = ""
 
         if self.coin_to_predict.lower() == "btc":
             tcn_model_name = self.constants["tcn_modelname_btc"]
@@ -115,9 +120,10 @@ class BollingerBandsPredictor:
                 save_checkpoints=False,
             )
             if load_model:
+
                 self.nbeats_model.load_from_checkpoint(
                     model_name=nbeats_model_name,
-                    filename=nbeats_filename,
+                    file_name=nbeats_filename,
                     work_dir=self.constants["ml_models_dir"],
                     best=False,
                 )
@@ -147,7 +153,7 @@ class BollingerBandsPredictor:
                 self.tcn_model.load_from_checkpoint(
                     model_name=tcn_model_name,
                     work_dir=self.constants["ml_models_dir"],
-                    filename=tcn_filename,
+                    file_name=tcn_filename,
                     best=False,
                 )
             logger.info("---- Finished creating models ----")
@@ -164,10 +170,10 @@ class BollingerBandsPredictor:
 
         return input_df.fillna(0)
 
-    def _slice_df(self):
+    def _slice_df(self) -> None:
         # some dataframes don't have enough data a full lookback window
-        additional_dfs_min_date = np.max([df.index.min() for df in self.additional_dfs])
-        slice_date = np.max([self.df.index.min(), additional_dfs_min_date])
+        additional_dfs_min_date = np.max([df.index.min() for df in self.additional_dfs])  # type: ignore
+        slice_date = np.max([self.df.index.min(), additional_dfs_min_date])  # type: ignore
 
         logger.info(f"Slice date , earliest day of data for main df, = {slice_date}")
 
@@ -181,7 +187,7 @@ class BollingerBandsPredictor:
 
         self.additional_dfs = sliced_additional_dfs
 
-    def _build_technical_indicators(self):
+    def _build_technical_indicators(self) -> None:
 
         rolling_mean = self.df[self.pred_col].rolling(self.window).mean()
         rolling_std = self.df[self.pred_col].rolling(self.window).std()
@@ -216,8 +222,8 @@ class BollingerBandsPredictor:
 
     def _scale_time_series_df_and_time_cols(
         self, input_df: pd.DataFrame, time_cols: List[str] = ["year", "month", "day"]
-    ):
-        ts_transformers = {}
+    ) -> Tuple[Dict[str, Scaler], TimeSeries, TimeSeries]:
+        ts_transformers: Dict[str, Scaler] = {}
         ts_stacked_series = None
         ts_transformers, ts_stacked_series = self._scale_time_series_df(input_df)
 
@@ -233,7 +239,9 @@ class BollingerBandsPredictor:
 
         return (ts_transformers, ts_stacked_series, TimeSeries.from_series(input_df[self.pred_col], freq=self.period))
 
-    def _scale_time_series_df(self, input_df: pd.DataFrame, use_pred_col: bool = False):
+    def _scale_time_series_df(
+        self, input_df: pd.DataFrame, use_pred_col: bool = False
+    ) -> Tuple[Dict[Any, Scaler], Any]:
         """
         Scale an input time series col from 0 to 1
 
@@ -261,29 +269,33 @@ class BollingerBandsPredictor:
                 ts_stacked_series = transformed_series
         return ts_transformers, ts_stacked_series
 
-    def _add_additional_training_dfs(self, ts_stacked_series: TimeSeries, verbose=False):
+    def _add_additional_training_dfs(
+        self, ts_stacked_series: TimeSeries, verbose: bool = False
+    ) -> Tuple[Dict[Dict[str, Any], Scaler], TimeSeries]:
         """
         Scale any additional DFs provided (such as ETHER)
 
         ts_stacked_series: the current scaled lists from the df_original provided
         """
-        all_ts_stacked_series = None
+        all_ts_stacked_series: Any = TimeSeries
         all_ts_transfomers = []
         for df in self.additional_dfs:
             (additional_ts_transformers, additional_ts_stacked_series) = self._scale_time_series_df(
                 df, use_pred_col=True
             )
-            if all_ts_stacked_series is None:
+            if len(all_ts_stacked_series) <= 1:  # type :ignore
                 if verbose:
-                    print("last date for training additional df data", additional_ts_stacked_series.time_index[-1])
+                    logger.info(
+                        f"last date for training additional df data {additional_ts_stacked_series.time_index[-1]}"
+                    )
                 all_ts_stacked_series = additional_ts_stacked_series.stack(ts_stacked_series)
                 if verbose:
-                    print("all_ts_stacked_series FIRST", all_ts_stacked_series.components)
+                    logger.info(f"all_ts_stacked_series FIRST {all_ts_stacked_series.components}")
                 all_ts_transfomers.append(additional_ts_transformers)
             else:
                 all_ts_stacked_series = all_ts_stacked_series.stack(additional_ts_stacked_series)
                 if verbose:
-                    print("all_ts_stacked_series SECOND", all_ts_stacked_series.components)
+                    logger.info(f"all_ts_stacked_series SECOND {all_ts_stacked_series.components} ")
                 all_ts_transfomers.append(additional_ts_transformers)
                 # return "Error. More than one time series for _add_additional_training_dfs not implemented"
         return additional_ts_transformers, all_ts_stacked_series
@@ -297,8 +309,8 @@ class BollingerBandsPredictor:
 
         if len(self.additional_dfs) > 0:
             # overwrite the ts_stacked_series var if we have additional DFS
-            (additional_ts_transformers, ts_stacked_series) = self._add_additional_training_dfs(ts_stacked_series)
-            ts_transformers = {**additional_ts_transformers, **ts_transformers}  # merge dicts
+            additional_ts_transformers, ts_stacked_series = self._add_additional_training_dfs(ts_stacked_series)
+            ts_transformers = {**additional_ts_transformers, **ts_transformers}  # type: ignore
         self.ts_transformers = ts_transformers
         self.ts_stacked_series = ts_stacked_series
         self.train_close_series = train_close_series
@@ -308,11 +320,13 @@ class BollingerBandsPredictor:
 
         return train_close_series, ts_stacked_series
 
-    def _train_model_with_thread(self, model, train_close_series, ts_stacked_series, epochs):
+    def _train_model_with_thread(
+        self, model: Any, train_close_series: TimeSeries, ts_stacked_series: TimeSeries, epochs: int
+    ) -> None:
         # Target function for training within threads
         model.fit(series=train_close_series, past_covariates=[ts_stacked_series], verbose=self.verbose, epochs=epochs)
 
-    def _train_models(self, train_close_series, ts_stacked_series):
+    def _train_models(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> None:
         dict_of_threads = {}
 
         for lookback_window_models in self.models:  # lookback windows
@@ -358,7 +372,7 @@ class BollingerBandsPredictor:
             logger.info(f"Have thread = {k}")
             v.join()
 
-    def _make_prediction(self, train_close_series, ts_stacked_series):
+    def _make_prediction(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> List[int]:
         all_predictions = []
 
         for lookback_window_models in self.models:  # lookback windows
@@ -398,4 +412,4 @@ class BollingerBandsPredictor:
         prediction = self._make_prediction(train_close_series, ts_stacked_series)
         logger.info(f"prediction = {prediction}")
         sys.stdout.flush()
-        return prediction
+        return np.mean(prediction)

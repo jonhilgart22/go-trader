@@ -2,15 +2,15 @@
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
-import pandas as pd  # type: ignore
+import pandas as pd
 import yaml
 
 __all__ = ["setup_logging", "update_yaml_config", "read_in_data", "running_on_aws", "read_in_yaml"]
 
 
-def setup_logging():
+def setup_logging() -> logging.Logger:
 
     root = logging.getLogger()
     if root.handlers:
@@ -25,7 +25,7 @@ def setup_logging():
 logger = setup_logging()
 
 
-def update_yaml_config(file_name: str, data: Dict[str, Any], running_on_aws: bool):
+def update_yaml_config(file_name: str, data: Dict[str, Any], running_on_aws: bool) -> None:
     if running_on_aws:
         s = file_name.split("/")
         file_name = "/tmp/" + s[-1]
@@ -34,7 +34,7 @@ def update_yaml_config(file_name: str, data: Dict[str, Any], running_on_aws: boo
         yaml_file.write(yaml.dump(data, default_flow_style=False))
 
 
-def read_in_yaml(input_file: str, running_on_aws: bool):
+def read_in_yaml(input_file: str, running_on_aws: bool) -> Union[Dict[str, Any], ValueError]:
     if running_on_aws:
         s = input_file.split("/")
         input_file = "/tmp/" + s[-1]
@@ -45,7 +45,7 @@ def read_in_yaml(input_file: str, running_on_aws: bool):
             constants = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             logger.error(exc)
-            return
+            raise ValueError(f" Incorrect YAML file {input_file}")
 
     for k, v in constants.items():
         logger.info(f"Key = {k} Value = {v}")

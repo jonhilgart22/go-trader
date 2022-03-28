@@ -1,21 +1,24 @@
 import math
 import os
+from typing import Any, Dict
 
-from app.mlcode.determine_trading_state import DetermineTradingState  # type: ignore
-from app.mlcode.predict_price_movements import BollingerBandsPredictor  # type: ignore
+import pandas as pd
+
+from app.mlcode.determine_trading_state import DetermineTradingState
+from app.mlcode.predict_price_movements import BollingerBandsPredictor
 
 os.environ["ON_LOCAL"] = "True"
 
 
 def test_no_btc_action(
-    example_btc_df,
-    example_eth_df,
-    constants,
-    ml_config,
-    btc_trading_state_config,
-    btc_won_and_lost_constants,
-    btc_actions_to_take_constants,
-):
+    example_btc_df: pd.DataFrame,
+    example_eth_df: pd.DataFrame,
+    constants: Dict[Any, Any],
+    ml_config: Dict[Any, Any],
+    btc_trading_state_config: Dict[Any, Any],
+    btc_won_and_lost_constants: Dict[Any, Any],
+    btc_actions_to_take_constants: Dict[Any, Any],
+) -> None:
     """verify everyting works as intended"""
     # for faster tests, uncomment
     # price_prediction = 900
@@ -45,14 +48,14 @@ def test_no_btc_action(
 
 
 def test_no_sol_action(
-    example_sol_df,
-    example_eth_df,
-    constants,
-    ml_config,
-    sol_trading_state_config,
-    sol_won_and_lost_constants,
-    sol_actions_to_take_constants,
-):
+    example_sol_df: pd.DataFrame,
+    example_eth_df: pd.DataFrame,
+    constants: Dict[str, Any],
+    ml_config: Dict[str, Any],
+    sol_trading_state_config: Dict[str, Any],
+    sol_won_and_lost_constants: Dict[str, Any],
+    sol_actions_to_take_constants: Dict[str, Any],
+) -> None:
     """verify everyting works as intended"""
     # for faster tests, uncomment
     # price_prediction = 900
@@ -82,14 +85,14 @@ def test_no_sol_action(
 
 
 def test_no_eth_action(
-    example_btc_df,
-    example_eth_df,
-    constants,
-    ml_config,
-    eth_trading_state_config,
-    eth_won_and_lost_constants,
-    eth_actions_to_take_constants,
-):
+    example_btc_df: pd.DataFrame,
+    example_eth_df: pd.DataFrame,
+    constants: Dict[Any, Any],
+    ml_config: Dict[Any, Any],
+    eth_trading_state_config: Dict[Any, Any],
+    eth_won_and_lost_constants: Dict[Any, Any],
+    eth_actions_to_take_constants: Dict[Any, Any],
+) -> None:
     """verify everyting works as intended"""
 
     coin_to_predict = "eth"
@@ -119,15 +122,15 @@ def test_no_eth_action(
 
 
 def test_buy_btc_action(
-    example_btc_df_bollinger_exit_position,
-    constants,
-    btc_trading_state_config,
-    btc_won_and_lost_constants,
-    btc_actions_to_take_constants,
-    ml_config,
-    example_btc_df,
-    example_eth_df,
-):
+    example_btc_df_bollinger_exit_position: pd.DataFrame,
+    constants: Dict[str, Any],
+    btc_trading_state_config: Dict[str, Any],
+    btc_won_and_lost_constants: Dict[str, Any],
+    btc_actions_to_take_constants: Dict[str, Any],
+    ml_config: Dict[str, Any],
+    example_btc_df: Dict[str, Any],
+    example_eth_df: Dict[str, Any],
+) -> None:
 
     coin_to_predict = "btc"
     btc_predictor = BollingerBandsPredictor(
@@ -209,14 +212,14 @@ def test_buy_btc_action(
 
 
 def test_buy_to_none_via_prediction_btc(
-    example_btc_df_bollinger_exit_position,
-    constants,
-    btc_trading_state_config_buy,
-    btc_won_and_lost_constants,
-    btc_actions_to_take_constants,
-    ml_config,
-    example_eth_df,
-):
+    example_btc_df_bollinger_exit_position: pd.DataFrame,
+    constants: Dict[str, Any],
+    btc_trading_state_config_buy: Dict[str, Any],
+    btc_won_and_lost_constants: Dict[str, Any],
+    btc_actions_to_take_constants: Dict[str, Any],
+    ml_config: Dict[str, Any],
+    example_eth_df: pd.DataFrame,
+) -> None:
 
     coin_to_predict = "btc"
     btc_predictor = BollingerBandsPredictor(
