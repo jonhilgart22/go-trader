@@ -14,7 +14,7 @@ import click
 logger = setup_logging()
 
 
-def add_coin_to_filename(coin: str, filename: str):
+def add_coin_to_filename(coin: str, filename: str) -> str:
     """
     Adds the coin to the filename
     :param coin:
@@ -28,7 +28,7 @@ def add_coin_to_filename(coin: str, filename: str):
 
 @click.command()
 @click.option("--coin_to_predict", help="Coin to predict either btc or eth")
-def main(coin_to_predict: str):
+def main(coin_to_predict: str) -> None:
     is_running_on_aws = running_on_aws()
     logger.info("Running determine trading state")
 
@@ -51,6 +51,7 @@ def main(coin_to_predict: str):
     etherum_df = read_in_data(constants["etherum_csv_filename"], is_running_on_aws)
     sol_df = read_in_data(constants["sol_csv_filename"], is_running_on_aws)
     matic_df = read_in_data(constants["matic_csv_filename"], is_running_on_aws)
+    link_df = read_in_data(constants["link_csv_filename"], is_running_on_aws)
     # spy_df = read_in_data(constants["spu_csv_filename"], is_running_on_aws, missing_dates=True)
     ml_constants = read_in_yaml(constants["ml_config_filename"], is_running_on_aws)
     predictor = None
@@ -71,6 +72,10 @@ def main(coin_to_predict: str):
     elif coin_to_predict == "matic":
         predictor = BollingerBandsPredictor(
             coin_to_predict, constants, ml_constants, matic_df, additional_dfs=[bitcoin_df, etherum_df]
+        )
+    elif coin_to_predict == "link":
+        predictor = BollingerBandsPredictor(
+            coin_to_predict, constants, ml_constants, link_df, additional_dfs=[bitcoin_df, etherum_df]
         )
     else:
         raise ValueError(f"Incorrect coin to predict {coin_to_predict}. Needs to be eth or btc.")
@@ -107,4 +112,4 @@ def main(coin_to_predict: str):
 
 
 if __name__ == "__main__":
-    main()
+    main()  # type: ignore

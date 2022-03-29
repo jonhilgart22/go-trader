@@ -90,6 +90,10 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Println("Records written = ", numRecordsWrittenMatic)
 	log.Println(newestClosePriceMatic, "newestClosePriceMatic", awsSession)
 
+	newestClosePriceLink, numRecordsWrittenLink := DownloadUpdateReuploadData(constantsMap["link_csv_filename"], currentMaticRecords, constantsMap, runningOnAws, awsSession)
+	log.Println("Records written = ", numRecordsWrittenLink)
+	log.Println(newestClosePriceLink, "newestClosePriceLink", awsSession)
+
 	// Call the Python Program here. This is kinda jank
 	if runningLocally {
 		log.Printf("Running only golang code locally")
@@ -149,6 +153,8 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceSol)
 			} else if coinToPredict == "matic" {
 				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceMatic)
+			} else if coinToPredict == "link" {
+				sizeToBuy = info.TotalAccountValue.Div(newestClosePriceLink)
 			}
 
 			log.Println("Taking a position worth of sizeToBuy ~", sizeToBuy)

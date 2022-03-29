@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Any, Dict
 
 import pandas as pd
 import pytest
@@ -7,82 +8,82 @@ from app.mlcode.utils import read_in_yaml
 
 
 @pytest.fixture
-def eth_won_and_lost_constants():
+def eth_won_and_lost_constants() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/eth_won_and_lost_config.yml", False)
 
 
 @pytest.fixture
-def btc_won_and_lost_constants():
+def btc_won_and_lost_constants() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/btc_won_and_lost_config.yml", False)
 
 
 @pytest.fixture
-def sol_won_and_lost_constants():
+def sol_won_and_lost_constants() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/sol_won_and_lost_config.yml", False)
 
 
 @pytest.fixture
-def constants():
+def constants() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/constants.yml", False)
 
 
 @pytest.fixture
-def ml_config():
+def ml_config() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/ml_config.yml", False)
 
 
 @pytest.fixture
-def eth_trading_state_config():
+def eth_trading_state_config() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/eth_trading_state_config.yml", False)
 
 
 @pytest.fixture
-def btc_trading_state_config():
+def btc_trading_state_config() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/btc_trading_state_config.yml", False)
 
 
 @pytest.fixture
-def sol_trading_state_config():
+def sol_trading_state_config() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/sol_trading_state_config.yml", False)
 
 
 @pytest.fixture
-def eth_trading_state_config_buy():
+def eth_trading_state_config_buy() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/eth_trading_state_config_buy.yml", False)
 
 
 @pytest.fixture
-def btc_trading_state_config_short():
+def btc_trading_state_config_short() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/btc_trading_state_config_short.yml", False)
 
 
 @pytest.fixture
-def btc_trading_state_config_buy():
+def btc_trading_state_config_buy() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/btc_trading_state_config_buy.yml", False)
 
 
 @pytest.fixture
-def btc_trading_state_config_short_stop_loss():
+def btc_trading_state_config_short_stop_loss() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/btc_trading_state_config_short_stop_loss.yml", False)
 
 
 @pytest.fixture
-def btc_actions_to_take_constants():
+def btc_actions_to_take_constants() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/btc_actions_to_take.yml", False)
 
 
 @pytest.fixture
-def eth_actions_to_take_constants():
+def eth_actions_to_take_constants() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/eth_actions_to_take.yml", False)
 
 
 @pytest.fixture
-def sol_actions_to_take_constants():
+def sol_actions_to_take_constants() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/sol_actions_to_take.yml", False)
 
 
 @pytest.fixture
-def example_btc_df():
+def example_btc_df() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
@@ -102,7 +103,7 @@ def example_btc_df():
 
 
 @pytest.fixture
-def example_sol_df():
+def example_sol_df() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
@@ -122,7 +123,7 @@ def example_sol_df():
 
 
 @pytest.fixture
-def example_btc_df_bollinger_exit_position():
+def example_btc_df_bollinger_exit_position() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
@@ -145,7 +146,7 @@ def example_btc_df_bollinger_exit_position():
 
 
 @pytest.fixture
-def example_btc_df_bollinger_buy_to_none():
+def example_btc_df_bollinger_buy_to_none() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
@@ -168,7 +169,7 @@ def example_btc_df_bollinger_buy_to_none():
 
 
 @pytest.fixture
-def example_btc_df_bollinger_short():
+def example_btc_df_bollinger_short() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
         {
@@ -191,7 +192,7 @@ def example_btc_df_bollinger_short():
 
 
 @pytest.fixture
-def example_eth_df():
+def example_eth_df() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
         {

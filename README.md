@@ -114,3 +114,5 @@ NB: be sure to update the various checks that look for the correct input coins
 ## Performance
 
 - View the different model performance results [here](https://docs.google.com/spreadsheets/d/1xEaxfYBcXNcGN71LAj_Yw-EDEifm_MficTvFqpLUR3s/edit?usp=sharing)
+- You can check on the current performance by calling the FTX API and parsing the trades made
+  - ` python scripts/generate_performance_numbers_from_ftx.py`
