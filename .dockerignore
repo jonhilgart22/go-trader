@@ -1,1 +1,10 @@
 terraform
+__pycache__
+*.darts*
+.ipynb_checkpoints*
+models/
+*mypy_cache
+*DS_Store
+tmp/historic*
+tmp/
+untrained_models/*
