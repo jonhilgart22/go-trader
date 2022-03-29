@@ -228,7 +228,7 @@ python-versions = "~=3.7"
 
 [[package]]
 name = "ccxt"
-version = "1.77.36"
+version = "1.77.40"
 description = "A JavaScript / Python / PHP cryptocurrency trading library with support for 130+ exchanges"
 category = "dev"
 optional = false
@@ -2199,8 +2199,8 @@ cachetools = [
     {file = "cachetools-5.0.0.tar.gz", hash = "sha256:486471dfa8799eb7ec503a8059e263db000cdda20075ce5e48903087f79d5fd6"},
 ]
 ccxt = [
-    {file = "ccxt-1.77.36-py2.py3-none-any.whl", hash = "sha256:cb4fb9dfa3e65d90dd9129f1466d4219dc5bdc69ddd5dea15daae749921c9910"},
-    {file = "ccxt-1.77.36.tar.gz", hash = "sha256:6e9c8f608d2e99745ac7da6158cd747fb7d94f2e071a89c07f015046a1d66dec"},
+    {file = "ccxt-1.77.40-py2.py3-none-any.whl", hash = "sha256:28dcced397463b0aad84c82eec940c9f45c83e70a005fd85a5557863b7325025"},
+    {file = "ccxt-1.77.40.tar.gz", hash = "sha256:378932e6b95742f3c4011fdd0767024b01c09b9245186b154dc4560ba7ae6972"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},

@@ -5,10 +5,12 @@ RUN mkdir app app/utils app/ftx app/mlcode app/awsUtils app/src app/structs
 
 ## PYTHON
 # COPY poetry env over
-COPY poetry.lock pyproject.toml ./
+
 
 # Poetry install
-RUN  pip install poetry
+RUN POETRY_VERSION=1.1.13
+RUN  pip install 'poetry==$POETRY_VERSION'
+COPY poetry.lock pyproject.toml ./
 RUN set -x \
     && pip install --no-cache-dir --upgrade pip \
     && pip install wheel  \
