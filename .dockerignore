@@ -2,9 +2,19 @@ terraform
 __pycache__
 *.darts*
 .ipynb_checkpoints*
-models/
+models/*
 *mypy_cache
 *DS_Store
 tmp/historic*
-tmp/
-untrained_models/*
+tmp/*
+untrained_models*
+*.vscode*
+checkpoints*
+
+#Ignore the git and cache folders
+.git
+.cache
+
+#Ingore all markdown and class files
+*.md
+**/*.class

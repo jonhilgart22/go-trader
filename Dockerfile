@@ -8,8 +8,7 @@ RUN mkdir app app/utils app/ftx app/mlcode app/awsUtils app/src app/structs
 
 
 # Poetry install
-RUN POETRY_VERSION=1.1.13
-RUN  pip install 'poetry==$POETRY_VERSION'
+RUN  pip install poetry==1.1.13
 COPY poetry.lock pyproject.toml ./
 RUN set -x \
     && pip install --no-cache-dir --upgrade pip \
