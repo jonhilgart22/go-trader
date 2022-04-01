@@ -363,7 +363,7 @@ class DetermineTradingState:
             self.action_to_take = "none_to_buy"
             self.buy_entry_price = self.todays_close_price
             self.stop_loss_price = self.todays_close_price * (1 - self.stop_loss_pct)
-            self.position_entry_date = row.index[0]
+            self.position_entry_date = row.index[0].strftime('%Y-%m-%d')
 
             self._write_and_print_log_statements("ml pred higher than mean taking position", row)
         else:
@@ -387,7 +387,7 @@ class DetermineTradingState:
             self.action_to_take = "none_to_short"
             self.short_entry_price = self.todays_close_price
             self.stop_loss_price = self.todays_close_price * (1 + self.stop_loss_pct)
-            self.position_entry_date = str(row.index[0])
+            self.position_entry_date = row.index[0].strftime('%Y-%m-%d')
 
             self._write_and_print_log_statements("pred  lower than mean taking position to short", row)
         else:

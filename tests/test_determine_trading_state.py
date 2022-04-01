@@ -164,6 +164,7 @@ def test_buy_btc_action(
     assert trading_state_class.trading_state_constants["buy_entry_price"] == 982
     assert trading_state_class.trading_state_constants["stop_loss_price"] == 883.8000000000001
     assert trading_state_class.actions_to_take_constants["action_to_take"] == "none_to_buy"
+    assert trading_state_class.trading_state_constants["position_entry_date"] == "2022-03-31"
 
 
 # def test_short_btc_action(
