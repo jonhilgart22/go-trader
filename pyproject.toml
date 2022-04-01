@@ -27,6 +27,7 @@ coverage = "^6.1.2"
 ccxt = "^1.77.11"
 mypy = "^0.942"
 black = "^22.3.0"
+ipywidgets = "^7.7.0"
 
 [tool.pytest.ini_options]
 env = ["ON_LOCAL=true"]

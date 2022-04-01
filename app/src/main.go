@@ -69,6 +69,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	currentEthereumRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["eth_product_code"], granularity)
 	currentSolRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["sol_product_code"], granularity)
 	currentMaticRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["matic_product_code"], granularity)
+	currentLinkRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["link_product_code"], granularity)
 	// currentSpyRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["spy_product_code"], granularity)
 
 	// Add new data to CSV from FTX to s3. This will be used by our Python program
@@ -90,7 +91,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	log.Println("Records written = ", numRecordsWrittenMatic)
 	log.Println(newestClosePriceMatic, "newestClosePriceMatic", awsSession)
 
-	newestClosePriceLink, numRecordsWrittenLink := DownloadUpdateReuploadData(constantsMap["link_csv_filename"], currentMaticRecords, constantsMap, runningOnAws, awsSession)
+	newestClosePriceLink, numRecordsWrittenLink := DownloadUpdateReuploadData(constantsMap["link_csv_filename"], currentLinkRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenLink)
 	log.Println(newestClosePriceLink, "newestClosePriceLink", awsSession)
 

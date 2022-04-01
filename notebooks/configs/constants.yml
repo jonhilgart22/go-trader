@@ -1,0 +1,90 @@
+## Coins to predict information
+
+## BTC
+btc_product_code: BTC/USD
+tcn_modelname_btc: tcn_btc
+nbeats_modelname_btc: nbeats_btc
+bitcoin_csv_filename: tmp/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv
+tcn_filename_btc: checkpoint_4499.pth.tar
+nbeats_filename_btc: checkpoint_257.pth.tar
+
+## ETH
+eth_product_code: ETH/USD
+tcn_modelname_eth: tcn_eth
+nbeats_modelname_eth: nbeats_eth
+etherum_csv_filename: tmp/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv
+tcn_filename_eth: checkpoint_5649.pth.tar
+nbeats_filename_eth: checkpoint_257.pth.tar
+
+## SPY
+spy_product_code: SPY/USD
+
+## ADA
+ada_product_code: ADA/USD
+
+## SOL
+sol_product_code: SOL/USD
+tcn_modelname_sol: tcn_sol
+tcn_filename_sol: test_sol_tcn.pth.tar
+nbeats_modelname_sol: nbeats_sol
+nbeats_filename_sol: test_sol_nbeats.pth.tar
+sol_csv_filename: tmp/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv
+
+## MATIC
+matic_product_code: MATIC/USD
+tcn_modelname_matic: tcn_matic
+tcn_filename_matic: test_matic_tcn.pth.tar
+nbeats_modelname_matic: nbeats_matic
+nbeats_filename_matic: test_matic_nbeats.pth.tar
+matic_csv_filename: tmp/historic_crypto_prices - matic_dec_2020_dec_2021.csv
+
+## LINK
+link_product_code: LINK/USD
+tcn_modelname_link: tcn_link
+tcn_filename_link: test_link_tcn.pth.tar
+nbeats_modelname_link: nbeats_link
+nbeats_filename_link: test_link_nbeats.pth.tar
+link_csv_filename: tmp/historic_crypto_prices - link_jan_2019_jan_2022.csv
+
+## Don'y need to load saved models right now, train from scratch
+
+candle_granularity: 86400
+
+## S3 and data information
+s3_bucket: go-trader
+s3_data_location: data
+s3_configs_locations:
+# TODO: will need to make a data directory locally?
+actions_to_take_filename: tmp/actions_to_take.yml
+constants_filename: tmp/constants.yml
+ml_config_filename: tmp/ml_config.yml
+trading_state_config_filename: tmp/trading_state_config.yml
+won_and_lost_amount_filename: tmp/won_and_lost_config.yml
+
+
+## DF cols
+rolling_mean_col: Rolling Mean
+bollinger_high_col: Bollinger High
+bollinger_low_col: Bollinger Low
+volume_col: volume
+open_col: open
+high_col: high
+low_col: low
+close_col: close
+macd_col: macd
+macd_signal_col: macd_signal
+stc_col: stc
+stoch_col: stoch
+rsi_col: rsi
+
+# directory information
+
+ml_models_dir: models
+ml_model_dir_prefix: models/checkpoints
+
+python_script_path: app/mlcode/main.py
+
+# email
+log_filename: logs.txt
+default_purchase_size: 0.0001
+email_separator: "<br>"
