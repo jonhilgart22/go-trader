@@ -5,7 +5,7 @@ from typing import Any, Dict
 import pandas as pd
 
 from app.mlcode.determine_trading_state import DetermineTradingState
-from app.mlcode.predict_price_movements import BollingerBandsPredictor
+from app.mlcode.predict_price_movements import CoinPricePredictor
 
 os.environ["ON_LOCAL"] = "True"
 
@@ -23,7 +23,7 @@ def test_no_btc_action(
     # for faster tests, uncomment
     # price_prediction = 900
     coin_to_predict = "btc"
-    btc_predictor = BollingerBandsPredictor(
+    btc_predictor = CoinPricePredictor(
         coin_to_predict, constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
     )
     btc_predictor._build_technical_indicators()
@@ -60,7 +60,7 @@ def test_no_sol_action(
     # for faster tests, uncomment
     # price_prediction = 900
     coin_to_predict = "sol"
-    btc_predictor = BollingerBandsPredictor(
+    btc_predictor = CoinPricePredictor(
         coin_to_predict, constants, ml_config, example_sol_df, additional_dfs=[example_eth_df]
     )
     btc_predictor._build_technical_indicators()
@@ -96,7 +96,7 @@ def test_no_eth_action(
     """verify everyting works as intended"""
 
     coin_to_predict = "eth"
-    btc_predictor = BollingerBandsPredictor(
+    btc_predictor = CoinPricePredictor(
         coin_to_predict, constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
     )
     btc_predictor._build_technical_indicators()
@@ -133,7 +133,7 @@ def test_buy_btc_action(
 ) -> None:
 
     coin_to_predict = "btc"
-    btc_predictor = BollingerBandsPredictor(
+    btc_predictor = CoinPricePredictor(
         coin_to_predict, constants, ml_config, example_btc_df, additional_dfs=[example_eth_df]
     )
 
@@ -223,7 +223,7 @@ def test_buy_to_none_via_prediction_btc(
 ) -> None:
 
     coin_to_predict = "btc"
-    btc_predictor = BollingerBandsPredictor(
+    btc_predictor = CoinPricePredictor(
         coin_to_predict, constants, ml_config, example_btc_df_bollinger_exit_position, additional_dfs=[example_eth_df]
     )
 

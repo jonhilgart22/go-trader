@@ -19,12 +19,12 @@ except ModuleNotFoundError:  # Go is unable to run python modules -m
     from utils import setup_logging
 
 
-__all__ = ["BollingerBandsPredictor"]
+__all__ = ["CoinPricePredictor"]
 
 logger = setup_logging()
 
 
-class BollingerBandsPredictor:
+class CoinPricePredictor:
     def __init__(
         self,
         coin_to_predict: str,

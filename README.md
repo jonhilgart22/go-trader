@@ -36,7 +36,7 @@ Above, we can see a sample run on historic Bitcoin prices.
 
 ### Adding a new col of data
 
-1. Add into the `BollingerBandsPredictor`
+1. Add into the `CoinPricePredictor`
 2. Update the `self.ml_train_cols` to include this col
 
 ## Architecture
