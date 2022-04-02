@@ -237,6 +237,18 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	newestDate, newestCosePrice := utils.FindNewestData(records)
 	log.Println(newestCosePrice, "newestCosePrice")
 	log.Println(newestDate, "newestDate")
+	loc, _ := time.LoadLocation("America/Los_Angeles")
+	todaysTime := time.Now().In(loc).Truncate(24 * time.Hour)
+	// print the current time truncated to the current date
+
+	log.Println("time.Now().In(loc)", time.Now().In(loc).Truncate(24*time.Hour))
+
+	// compare the date to todays date and if it is the same, then we don't need to do anything. Truncate to the day
+	if newestDate.Day() != todaysTime.Day() {
+		log.Fatal("Newest date is not today's date. Something is off with downloading data")
+		panic("Newest date is not today's date. Something is off with downloading data")
+	}
+
 	// add new data as needed
 	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
 	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateReuploadData")

@@ -3,7 +3,8 @@
 
 [![Code Grade](https://api.codiga.io/project/30096/score/svg)](https://www.codiga.io)
 [![Code Grade](https://api.codiga.io/project/30096/status/svg)](https://www.codiga.io)
-
+<a href="https://codeclimate.com/github/jonhilgart22/go-trader/maintainability"><img src="https://api.codeclimate.com/v1/badges/15df26e8f0d53546f16e/maintainability" /></a>
+<a href="https://codeclimate.com/github/jonhilgart22/go-trader/test_coverage"><img src="https://api.codeclimate.com/v1/badges/15df26e8f0d53546f16e/test_coverage" /></a>
 
 - Golang lambda app that triggers buy signals alongside a Python ML model
 

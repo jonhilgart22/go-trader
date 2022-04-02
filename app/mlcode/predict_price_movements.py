@@ -34,8 +34,9 @@ class CoinPricePredictor:
         additional_dfs: List[pd.DataFrame] = [],
         period: str = "24H",
         verbose: bool = True,
+        n_years_filter: int = 3
     ):
-        self.n_years_filter = "3Y"  # use last 3 years of data
+        self.n_years_filer = n_years_filter
 
         self.coin_to_predict = coin_to_predict
         self.constants: Dict[str, Any] = constants
@@ -179,15 +180,19 @@ class CoinPricePredictor:
         # some dataframes don't have enough data a full lookback window
         additional_dfs_min_date = np.max([df.index.min() for df in self.additional_dfs])
         slice_date = np.max([self.df.index.min(), additional_dfs_min_date])
+        # Filter for years class var filter
+        years_filter_slice_date = self.df.index.max() - pd.DateOffset(years=self.n_years_filer)
 
-        logger.info(f"Slice date , earliest day of data for main df, = {slice_date}")
+        final_slice_date = np.max([slice_date, years_filter_slice_date])
 
-        self.df = self.df.loc[slice_date:, :].copy()
+        logger.info(f"Slice date , earliest day of data for main df or years filter = {final_slice_date}")
+
+        self.df = self.df.loc[final_slice_date:, :].copy()
 
         sliced_additional_dfs = []
         if len(self.additional_dfs) > 0:
             for add_df in self.additional_dfs:
-                sliced_df = add_df.loc[slice_date:, :].copy()
+                sliced_df = add_df.loc[final_slice_date:, :].copy()
                 sliced_additional_dfs.append(sliced_df)
 
         self.additional_dfs = sliced_additional_dfs
@@ -218,12 +223,9 @@ class CoinPricePredictor:
                 # add rsi
                 df = self._add_indicators(df)
 
-                df = df.last(self.n_years_filter)
                 new_additional_dfs.append(df)
                 logger.info(df.tail())
         self.additional_dfs = new_additional_dfs
-        # slice to only include last X years
-        self.df = self.df.last(self.n_years_filter)
 
     def _scale_time_series_df_and_time_cols(
         self, input_df: pd.DataFrame, time_cols: List[str] = ["year", "month", "day"]
