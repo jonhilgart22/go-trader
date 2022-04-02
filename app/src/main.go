@@ -246,7 +246,7 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	// compare the date to todays date and if it is the same, then we don't need to do anything. Truncate to the day
 	testingDate := time.Date(2017, time.Month(1), 7, 0, 0, 0, 0, time.UTC)
 	// kinda jank, but if we are testing, check the date in main_test.go. TODO: refactor to use interface
-	if newestDate.Day() != todaysTime.Day() or newestDate.Day() != testingDate.Day() {
+	if (newestDate.Day() != todaysTime.Day()) || (newestDate.Day() != testingDate.Day()) {
 		log.Fatal("Newest date is not today's date. Something is off with downloading data")
 		panic("Newest date is not today's date. Something is off with downloading data")
 	}
