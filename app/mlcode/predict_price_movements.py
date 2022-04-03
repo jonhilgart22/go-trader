@@ -34,7 +34,7 @@ class CoinPricePredictor:
         additional_dfs: List[pd.DataFrame] = [],
         period: str = "24H",
         verbose: bool = True,
-        n_years_filter: int = 3
+        n_years_filter: int = 3,
     ):
         self.n_years_filer = n_years_filter
 

@@ -4,6 +4,7 @@ from typing import Any, Dict
 import pandas as pd
 import pytest
 from freezegun import freeze_time
+
 from app.mlcode.utils import read_in_yaml
 
 
@@ -86,7 +87,7 @@ def sol_actions_to_take_constants() -> Dict[str, Any]:
 @freeze_time("2022-03-31")
 def example_btc_df() -> pd.DataFrame:
     today = datetime.utcnow().date()
-    print(today, 'TODAY')
+    print(today, "TODAY")
     df = pd.DataFrame(
         {
             "date": [

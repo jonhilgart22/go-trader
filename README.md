@@ -87,13 +87,14 @@ Via Github Actions
 
 1. Add new data to the [google sheet here](https://docs.google.com/spreadsheets/d/1fBvirRK7m17jYj0t1yO6Jagq_aFjQvJ5EApnHOZQz20/edit#gid=114347281). I like using (Coin Market Cap)[https://coinmarketcap.com/] for historical data.
 2. Download this data and put it into the `tmp/` directory. The tmp directory is used for the AWS lambda. If you are running experiments, you can put the experiment data into the `data/` folder.
-3. Run simulations in the testing jupyter notebook to see how the default config would work. For new coins, we should use `eth` and `btc` as the additional_dfs argument.
+3. Run simulations in the `'notebooks/training_from_python_code.ipynb'` jupyter notebook to see how the default config would work. For new coins, we should use `eth` and `btc` as the additional_dfs argument.
+   1. This notebook works the same as the inference code. Therefore, it uses the `training_configs` directory to store the results of each coin. You'll need to add in new configs for each coin, or reset the configs to zero for new training runs.
 4. Setup a new FTX account, generate an api key for this account, create aws SSM params for these params, in the `ssm_store.go`, set these values as env vars. Also add these to the env_vars.sh file
 5. Add these env vars using `scripts/set_ssm.sh`. `./scripts/set_ssm.sh FTX_KEY <your-api-key>`
 6. Update the `main.go` file to create a new FTX client for this coin
 7. Update the `main.py` files for this new coin as well as `predict_price_movements.py` . Grep around for `btc` to see what code to update
 8. Download the current configs `make download_configs` . We're going to be re-uploading the state and want the latest snapshot of reality
-9. Create new `*.yml` files under `tmp/` (here). This includes the three coin specific files (actions_to_take, trading_state_config, won_and_lost), and updating the `constants.yml` file.
+9.  Create new `*.yml` files under `tmp/` (here). This includes the three coin specific files (actions_to_take, trading_state_config, won_and_lost), and updating the `constants.yml` file.
 10. Create a new Eventbridge trigger in the `main.tf` file
 11. Upload the configs `make upload_configs`
 12. Upload the dataset `make upload_data`
