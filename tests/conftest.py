@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 import pandas as pd
 import pytest
+from freezegun import freeze_time
 
 from app.mlcode.utils import read_in_yaml
 
@@ -83,8 +84,10 @@ def sol_actions_to_take_constants() -> Dict[str, Any]:
 
 
 @pytest.fixture
+@freeze_time("2022-03-31")
 def example_btc_df() -> pd.DataFrame:
     today = datetime.utcnow().date()
+    print(today, "TODAY")
     df = pd.DataFrame(
         {
             "date": [
@@ -103,6 +106,7 @@ def example_btc_df() -> pd.DataFrame:
 
 
 @pytest.fixture
+@freeze_time("2022-03-31")
 def example_sol_df() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
@@ -123,6 +127,7 @@ def example_sol_df() -> pd.DataFrame:
 
 
 @pytest.fixture
+@freeze_time("2022-03-31")
 def example_btc_df_bollinger_exit_position() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
@@ -146,6 +151,7 @@ def example_btc_df_bollinger_exit_position() -> pd.DataFrame:
 
 
 @pytest.fixture
+@freeze_time("2022-03-31")
 def example_btc_df_bollinger_buy_to_none() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
@@ -169,6 +175,7 @@ def example_btc_df_bollinger_buy_to_none() -> pd.DataFrame:
 
 
 @pytest.fixture
+@freeze_time("2022-03-31")
 def example_btc_df_bollinger_short() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(
@@ -192,6 +199,7 @@ def example_btc_df_bollinger_short() -> pd.DataFrame:
 
 
 @pytest.fixture
+@freeze_time("2022-03-31")
 def example_eth_df() -> pd.DataFrame:
     today = datetime.utcnow().date()
     df = pd.DataFrame(

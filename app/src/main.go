@@ -237,6 +237,24 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	newestDate, newestCosePrice := utils.FindNewestData(records)
 	log.Println(newestCosePrice, "newestCosePrice")
 	log.Println(newestDate, "newestDate")
+	loc, _ := time.LoadLocation("America/Los_Angeles")
+	todaysTime := time.Now().In(loc).Truncate(24 * time.Hour)
+	// print the current time truncated to the current date
+
+	log.Println("time.Now().In(loc).Day()", time.Now().In(loc).Truncate(24*time.Hour).Day())
+
+	// compare the date to todays date and if it is the same, then we don't need to do anything. Truncate to the day
+	testingDate := time.Date(2017, time.Month(1), 5, 0, 0, 0, 0, time.UTC)
+	log.Println("testingDate.Day()", testingDate.Day())
+	log.Println("newestDate.Day() ", newestDate.Day())
+	// kinda jank, but if we are testing, check the date in main_test.go. TODO: refactor to use interface
+	if newestDate.Day() == testingDate.Day() {
+		log.Println("Testing")
+	} else if newestDate.Day() != todaysTime.Day() {
+		log.Fatal("Newest date is not today's date. Something is off with downloading data")
+		panic("Newest date is not today's date. Something is off with downloading data")
+	}
+
 	// add new data as needed
 	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
 	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateReuploadData")

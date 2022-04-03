@@ -93,13 +93,6 @@ class DetermineTradingState:
         two_days_ago = pd.to_datetime(today - timedelta(days=2))
         logger.info(f"Yesterday = {yesterday}")
         logger.info(f"two_days_ago = {two_days_ago}")
-        try:
-            assert row.index == yesterday
-            assert prev_row.index == two_days_ago
-        except Exception as e:
-            raise ValueError(
-                f"Incorrect dates passed. Yesterday = {yesterday} Two days ago = {two_days_ago}. Error = {e}"
-            )
 
         # current stats
         self.todays_close_price = row[self.constants["close_col"]][0]

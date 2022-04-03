@@ -69,13 +69,23 @@ jobs:
       #----------------------------------------------
       #              run test suite
       # #----------------------------------------------
+      - name: Setup Code Climate test-reporter
+        run: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
       - name: Run tests
         run: |
           source .venv/bin/activate
+          ./cc-test-reporter before-build
           poetry run python -m pytest
       - name: Coverage
         run: |
           poetry run coverage run -m pytest && poetry run coverage xml
+      - name: Upload Coverage
+        run: |
+          export CC_TEST_REPORTER_ID=0db0e2cce20c934be6a79128cf743b8b0bd036ef50b4778d5eeda7f1598cd194
+          ./cc-test-reporter format-coverage -t coverage.py
+          ./cc-test-reporter upload-coverage
       - name: lint
         run: poetry run black . --check
       - name: flake8
