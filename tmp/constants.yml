@@ -54,12 +54,14 @@ candle_granularity: 86400
 s3_bucket: go-trader
 s3_data_location: data
 s3_configs_locations:
-# TODO: will need to make a data directory locally?
+# Common configs for all coins. Read in individually in main.py
+## These will all have the coin name appended after tmp/ and before the filename
 actions_to_take_filename: tmp/actions_to_take.yml
 constants_filename: tmp/constants.yml
 ml_config_filename: tmp/ml_config.yml
 trading_state_config_filename: tmp/trading_state_config.yml
 won_and_lost_amount_filename: tmp/won_and_lost_config.yml
+all_predictions_csv_filename: tmp/all_predictions.csv
 
 
 ## DF cols

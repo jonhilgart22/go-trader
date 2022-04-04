@@ -31,6 +31,7 @@ class CoinPricePredictor:
         constants: Dict[str, Any],
         ml_constants: Dict[str, Any],
         input_df: pd.DataFrame,
+        all_predictions_filename: str,
         additional_dfs: List[pd.DataFrame] = [],
         period: str = "24H",
         verbose: bool = True,
@@ -378,8 +379,8 @@ class CoinPricePredictor:
             logger.info(f"Have thread = {k}")
             v.join()
 
-    def _make_prediction(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> List[int]:
-        all_predictions = []
+    def _make_predictions(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> Dict[str, float]:
+        all_predictions_dict = {}
 
         for lookback_window_models in self.models:  # lookback windows
             for model in lookback_window_models:
@@ -391,12 +392,27 @@ class CoinPricePredictor:
                 logger.info(
                     f" Model = { model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {prediction}"
                 )
-                all_predictions.append(prediction)
-        self.all_predictions = all_predictions
+                all_predictions_dict[self.model_name] = prediction
+        self.all_predictions_dict = all_predictions_dict
 
-        return np.mean(all_predictions)
+        return all_predictions_dict
 
-    def predict(self) -> float:
+    def _save_predictions(self, input_predictions: Dict[str, float]) -> None:
+        # 1)  read in the csv file for this coin
+        # 2) Add in the new price predictions, one for each col. If we don't have a col, create a new one
+        # 3) save the file back to the tmp folder (depending if running on AWS or not)
+        predictions_df = pd.read_csv(self.all_predictions_filename)
+
+        all_cols = list(predictions_df.columns)
+        # TODO: figure out how to add in predictions per col for each model
+        # TODO: test the csv schema?
+        for model_name, prediction in input_predictions.items():
+            if model_name in all_cols:
+                predictions_df[model_name]
+
+        predictions_df.to_csv(Index=False)
+
+    def predict(self) -> Dict[str, float]:
         logger.info("Slicing dataframes")
         self._slice_df()
         logger.info("Building Bollinger Bands")
@@ -415,7 +431,7 @@ class CoinPricePredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        prediction = self._make_prediction(train_close_series, ts_stacked_series)
-        logger.info(f"prediction = {prediction}")
+        predictions = self._make_predictions(train_close_series, ts_stacked_series)
+        logger.info(f"predictions = {predictions}")
         sys.stdout.flush()
-        return np.mean(prediction)
+        return predictions

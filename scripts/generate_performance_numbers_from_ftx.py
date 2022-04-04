@@ -64,6 +64,7 @@ def main(directory: str, file_name_glob: str) -> None:
 
         while True:
             logging.info("------------------------------------------------------------------")
+            logging.info(f" Coin = {symbol}")
             params = {"end_time": int(end_time / 1000), "FTXUS-SUBACCOUNT": subaccount_name}
             trades = exchange.fetch_my_trades(symbol, since, limit, params)
             if len(trades):
@@ -93,6 +94,8 @@ def main(directory: str, file_name_glob: str) -> None:
         logging.info(f"Fetched {len(all_trades_list)} trades")
         for i in range(0, len(all_trades_list)):
             trade = all_trades_list[i]
+
+            logging.info(f"{trade['datetime'], trade['side'], trade['price']}")
 
             dollars_traded = trade["price"] * trade["amount"]
 
