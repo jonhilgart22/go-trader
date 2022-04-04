@@ -62,23 +62,48 @@ def main(coin_to_predict: str) -> None:
     sys.stdout.flush()
     if coin_to_predict == "btc":
         predictor = CoinPricePredictor(
-            coin_to_predict=coin_to_predict, constants=constants, ml_constants=ml_constants, input_df=bitcoin_df, all_predictions_filename=all_predictions_filename, additional_dfs=[etherum_df]  # spy_df
+            coin_to_predict=coin_to_predict,
+            constants=constants,
+            ml_constants=ml_constants,
+            input_df=bitcoin_df,
+            all_predictions_filename=all_predictions_filename,
+            additional_dfs=[etherum_df],  # spy_df
         )
     elif coin_to_predict == "eth":
         predictor = CoinPricePredictor(
-            coin_to_predict=coin_to_predict, constants=constants, ml_constants=ml_constants, input_df=etherum_df, all_predictions_filename=all_predictions_filename, additional_dfs=[bitcoin_df]  # spy_df
+            coin_to_predict=coin_to_predict,
+            constants=constants,
+            ml_constants=ml_constants,
+            input_df=etherum_df,
+            all_predictions_filename=all_predictions_filename,
+            additional_dfs=[bitcoin_df],  # spy_df
         )
     elif coin_to_predict == "sol":
         predictor = CoinPricePredictor(
-            coin_to_predict=coin_to_predict, constants=constants, ml_constants=ml_constants, input_df=sol_df, all_predictions_filename=all_predictions_filename, additional_dfs=[bitcoin_df, etherum_df]
+            coin_to_predict=coin_to_predict,
+            constants=constants,
+            ml_constants=ml_constants,
+            input_df=sol_df,
+            all_predictions_filename=all_predictions_filename,
+            additional_dfs=[bitcoin_df, etherum_df],
         )
     elif coin_to_predict == "matic":
         predictor = CoinPricePredictor(
-            coin_to_predict=coin_to_predict, constants=constants, ml_constants=ml_constants, input_df=matic_df, all_predictions_filename=all_predictions_filename, additional_dfs=[bitcoin_df, etherum_df]
+            coin_to_predict=coin_to_predict,
+            constants=constants,
+            ml_constants=ml_constants,
+            input_df=matic_df,
+            all_predictions_filename=all_predictions_filename,
+            additional_dfs=[bitcoin_df, etherum_df],
         )
     elif coin_to_predict == "link":
         predictor = CoinPricePredictor(
-            coin_to_predict=coin_to_predict, constants=constants, ml_constants=ml_constants, input_df=link_df, all_predictions_filename=all_predictions_filename, additional_dfs=[bitcoin_df, etherum_df]
+            coin_to_predict=coin_to_predict,
+            constants=constants,
+            ml_constants=ml_constants,
+            input_df=link_df,
+            all_predictions_filename=all_predictions_filename,
+            additional_dfs=[bitcoin_df, etherum_df],
         )
     else:
         raise ValueError(f"Incorrect coin to predict {coin_to_predict}. Needs to be eth or btc.")
