@@ -182,7 +182,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 	// upload any config changes that we need to maintain state
 	if !runningLocally {
-		IterateAndUploadTmpFiles("/tmp/", constantsMap, runningOnAws, awsSession)
+		IterateAndUploadTmpFilesYmlCsv("/tmp/", constantsMap, runningOnAws, awsSession)
 	} else {
 		log.Println("running locally, no tmp uploads")
 	}
@@ -205,7 +205,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 }
 
-func IterateAndUploadTmpFiles(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session) {
+func IterateAndUploadTmpFilesYmlCsv(path string, constantsMap map[string]string, runningOnAws bool, awsSession *session.Session) {
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -214,7 +214,7 @@ func IterateAndUploadTmpFiles(path string, constantsMap map[string]string, runni
 
 	for _, f := range files {
 
-		if strings.Contains(f.Name(), "yml") {
+		if strings.Contains(f.Name(), "yml") || strings.Contains(f.Name(), "csv") {
 			if !runningOnAws {
 				log.Println("Not uploading to S3, running locally")
 			} else {
@@ -318,6 +318,11 @@ func DownloadConfigFiles(constantsMap map[string]string, runningOnAws bool, awsS
 	WonLostConfigFilename := splitStringsWonLost[0] + "/" + coinToPredict + "_" + splitStringsWonLost[1]
 
 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], WonLostConfigFilename, runningOnAws, awsSession)
+
+	// predictions_csv
+	splitStringsPredictions := strings.Split(constantsMap["all_predictions_csv_filename"], "/")
+	AllPredictionsFilename := splitStringsPredictions[0] + "/" + coinToPredict + "_" + splitStringsPredictions[1]
+	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], AllPredictionsFilename, runningOnAws, awsSession)
 }
 
 func CreateFtxClientAndMarket(coinToPredict string) (*goftx.Client, string) {

@@ -22,3 +22,5 @@ tmp/historic*
 tmp/
 
 *won_and_lost*
+
+*coverage*

@@ -175,7 +175,7 @@ func TestDownloadUpdateReuploadData(t *testing.T) {
 	}
 }
 
-func TestIterateAndUploadTmpFiles(t *testing.T) {
+func TestIterateAndUploadTmpFilesYmlCsv(t *testing.T) {
 	// create a fake directory with two .yml files in it
 	var AppFs = afero.NewOsFs()
 	var bucketName = "test-bucket-uploads"
@@ -221,7 +221,7 @@ func TestIterateAndUploadTmpFiles(t *testing.T) {
 		return
 	}
 
-	IterateAndUploadTmpFiles("/tmp/", constantsMap, true, newSession)
+	IterateAndUploadTmpFilesYmlCsv("/tmp/", constantsMap, true, newSession)
 
 	// list the files that were uploaded
 	// need to count because testing shares the tmp directory

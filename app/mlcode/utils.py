@@ -57,7 +57,7 @@ def running_on_aws() -> bool:
     return os.environ.get("AWS_EXECUTION_ENV") is not None
 
 
-def read_in_data(input_file: str, running_on_aws: bool, missing_dates: bool = False) -> pd.DataFrame:
+def read_in_data(input_file: str, running_on_aws: bool, date_col: str, missing_dates: bool = False, ) -> pd.DataFrame:
     if running_on_aws:
         input_file
         s = input_file.split("/")
@@ -69,7 +69,7 @@ def read_in_data(input_file: str, running_on_aws: bool, missing_dates: bool = Fa
         idx = pd.date_range(df.index.min(), datetime.utcnow().date())
         df.index = pd.DatetimeIndex(df.index)
         df = df.reindex(idx, method="ffill")
-        df.index = df.index.rename("date")
+        df.index = df.index.rename(date_col)
     logger.info(df.head())
     logger.info(df.tail())
     logger.info("---")

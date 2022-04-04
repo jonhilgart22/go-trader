@@ -78,6 +78,7 @@ macd_signal_col: macd_signal
 stc_col: stc
 stoch_col: stoch
 rsi_col: rsi
+date_col: date
 
 # directory information
 

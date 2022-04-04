@@ -39,7 +39,6 @@ def main(coin_to_predict: str) -> None:
     trading_constants = read_in_yaml(trading_state_filename, is_running_on_aws)
 
     all_predictions_filename = add_coin_to_filename(coin_to_predict, constants["all_predictions_csv_filename"])
-    trading_constants = read_in_yaml(all_predictions_filename, is_running_on_aws)
 
     sys.stdout.flush()
 
@@ -50,11 +49,11 @@ def main(coin_to_predict: str) -> None:
     actions_to_take_constants = read_in_yaml(actions_to_take_filename, is_running_on_aws)
 
     # data should already be downloaded from the golang app
-    bitcoin_df = read_in_data(constants["bitcoin_csv_filename"], is_running_on_aws)
-    etherum_df = read_in_data(constants["etherum_csv_filename"], is_running_on_aws)
-    sol_df = read_in_data(constants["sol_csv_filename"], is_running_on_aws)
-    matic_df = read_in_data(constants["matic_csv_filename"], is_running_on_aws)
-    link_df = read_in_data(constants["link_csv_filename"], is_running_on_aws)
+    bitcoin_df = read_in_data(constants["bitcoin_csv_filename"], is_running_on_aws, constants["date_col"])
+    etherum_df = read_in_data(constants["etherum_csv_filename"], is_running_on_aws, constants["date_col"])
+    sol_df = read_in_data(constants["sol_csv_filename"], is_running_on_aws, constants["date_col"])
+    matic_df = read_in_data(constants["matic_csv_filename"], is_running_on_aws, constants["date_col"])
+    link_df = read_in_data(constants["link_csv_filename"], is_running_on_aws, constants["date_col"])
     # spy_df = read_in_data(constants["spu_csv_filename"], is_running_on_aws, missing_dates=True)
     ml_constants = read_in_yaml(constants["ml_config_filename"], is_running_on_aws)
     predictor = None
