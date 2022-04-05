@@ -13,6 +13,7 @@ from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from finta import TA
 from collections import defaultdict
+
 try:  # need modules for pytest to work
     from app.mlcode.utils import setup_logging, read_in_data, running_on_aws
 except ModuleNotFoundError:  # Go is unable to run python modules -m
@@ -430,33 +431,46 @@ class CoinPricePredictor:
                     largest_n_predictions = num_predictions_for_this_model
 
             else:  # new model_name
-                new_model_predictions_array = list(np.zeros(largest_n_predictions))  # edge case that we may not hit the largest n predictions when this is called. unlikely to happen
+                new_model_predictions_array = list(
+                    np.zeros(largest_n_predictions)
+                )  # edge case that we may not hit the largest n predictions when this is called. unlikely to happen
                 # replace last with the current prediction
                 new_model_predictions_array[-1] = input_predictions[model_name]
                 new_predictions_dict[model_name].extend(new_model_predictions_array)
 
         # Add in the dates
-        current_pred_dates_list = [index_date.strftime('%Y-%m-%d') for index_date in predictions_df.index]
-        current_pred_dates_list.append(self.df.index.max().strftime('%Y-%m-%d'))  # current dates
+        current_pred_dates_list = [index_date.strftime("%Y-%m-%d") for index_date in predictions_df.index]
+        current_pred_dates_list.append(self.df.index.max().strftime("%Y-%m-%d"))  # current dates
 
         new_predictions_dict[self.date_col].extend(current_pred_dates_list)
 
         # Add in the pred for dates
         # for example, if we have a prediction_n_days of
         # 7, and we predict on 1/1 the date_prediction_for is 1/8
-        current_date_pred_for_list = list(predictions_df[self.constants['date_prediction_for_col']])
+        current_date_pred_for_list = list(predictions_df[self.constants["date_prediction_for_col"]])
         # add in the prediction_n_days window to the current date
-        timedelta_days = pd.to_timedelta(self.ml_constants["prediction_params"]["prediction_n_days"], unit='days')
-        newest_date_for_pred_str = (self.df.index.max() + timedelta_days).strftime('%Y-%m-%d')
+        timedelta_days = pd.to_timedelta(self.ml_constants["prediction_params"]["prediction_n_days"], unit="days")
+        newest_date_for_pred_str = (self.df.index.max() + timedelta_days).strftime("%Y-%m-%d")
         current_date_pred_for_list.append(newest_date_for_pred_str)
 
         new_predictions_dict[self.constants["date_prediction_for_col"]].extend(current_date_pred_for_list)
+
+        # From the original predictions_df, what cols do we have that we no longer have?
+        # this can happen if we change the predictions params to create new model names
+        missing_cols = list(set(predictions_df.columns).difference(list(input_predictions.keys())))
+        for col in missing_cols:
+            current_preds = predictions_df[col]
+            new_array_for_missing_col = list(np.zeros(largest_n_predictions))
+            new_array_for_missing_col[: len(current_preds)] = current_preds
+            new_predictions_dict[col] = new_array_for_missing_col
 
         # make sure these are all the same length
         try:
             updated_df = pd.DataFrame(new_predictions_dict)
         except ValueError as e:
-            logger.error(f"Found an array without the same length. {e}. This either means we have a new model or a new lookback window. Check that all arrays are the same length")
+            logger.error(
+                f"Found an array without the same length. {e}. This either means we have a new model or a new lookback window. Check that all arrays are the same length"
+            )
             logger.error(f"new_predictions_dict  = {new_predictions_dict}")
 
         # make sure the 'date' is the first col

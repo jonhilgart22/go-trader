@@ -57,7 +57,12 @@ def running_on_aws() -> bool:
     return os.environ.get("AWS_EXECUTION_ENV") is not None
 
 
-def read_in_data(input_file: str, running_on_aws: bool, date_col: str, missing_dates: bool = False, ) -> pd.DataFrame:
+def read_in_data(
+    input_file: str,
+    running_on_aws: bool,
+    date_col: str,
+    missing_dates: bool = False,
+) -> pd.DataFrame:
     if running_on_aws:
         input_file
         s = input_file.split("/")
