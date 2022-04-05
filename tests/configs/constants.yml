@@ -60,6 +60,10 @@ macd_signal_col: macd_signal
 stc_col: stc
 stoch_col: stoch
 rsi_col: rsi
+date_col: date
+
+## DF cols for price predictions
+date_prediction_for_col: date_prediction_for
 
 # directory information
 

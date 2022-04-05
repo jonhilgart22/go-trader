@@ -64,7 +64,7 @@ won_and_lost_amount_filename: tmp/won_and_lost_config.yml
 all_predictions_csv_filename: tmp/all_predictions.csv
 
 
-## DF cols
+## DF cols for historical prices
 rolling_mean_col: Rolling Mean
 bollinger_high_col: Bollinger High
 bollinger_low_col: Bollinger Low
@@ -79,6 +79,9 @@ stc_col: stc
 stoch_col: stoch
 rsi_col: rsi
 date_col: date
+
+## DF cols for price predictions
+date_prediction_for_col: date_prediction_for
 
 # directory information
 

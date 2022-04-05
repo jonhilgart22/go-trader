@@ -413,8 +413,8 @@ class CoinPricePredictor:
         new_predictions_dict = defaultdict(list)
 
         all_cols = list(predictions_df.columns)
-        largest_n_predictions = 0
-        # TODO: figure out how to add in predictions per col for each model
+        largest_n_predictions = 1 + np.max(predictions_df.count())
+
         # TODO: test the csv schema?
         for model_name, prediction in input_predictions.items():
             if model_name in all_cols:
@@ -436,18 +436,33 @@ class CoinPricePredictor:
                 new_predictions_dict[model_name].extend(new_model_predictions_array)
 
         # Add in the dates
-        current_pred_dates_list = list(predictions_df.index)
-        current_pred_dates_list.append(self.df.index.max())  # current dates
-        # TODO: are these the same type ^^
+        current_pred_dates_list = [index_date.strftime('%Y-%m-%d') for index_date in predictions_df.index]
+        current_pred_dates_list.append(self.df.index.max().strftime('%Y-%m-%d'))  # current dates
 
         new_predictions_dict[self.date_col].extend(current_pred_dates_list)
+
+        # Add in the pred for dates
+        # for example, if we have a prediction_n_days of
+        # 7, and we predict on 1/1 the date_prediction_for is 1/8
+        current_date_pred_for_list = list(predictions_df[self.constants['date_prediction_for_col']])
+        # add in the prediction_n_days window to the current date
+        timedelta_days = pd.to_timedelta(self.ml_constants["prediction_params"]["prediction_n_days"], unit='days')
+        newest_date_for_pred_str = (self.df.index.max() + timedelta_days).strftime('%Y-%m-%d')
+        current_date_pred_for_list.append(newest_date_for_pred_str)
+
+        new_predictions_dict[self.constants["date_prediction_for_col"]].extend(current_date_pred_for_list)
 
         # make sure these are all the same length
         try:
             updated_df = pd.DataFrame(new_predictions_dict)
         except ValueError as e:
             logger.error(f"Found an array without the same length. {e}. This either means we have a new model or a new lookback window. Check that all arrays are the same length")
-        updated_df.to_csv(self.all_predictions_filename)
+            logger.error(f"new_predictions_dict  = {new_predictions_dict}")
+
+        # make sure the 'date' is the first col
+        first_col = updated_df.pop(self.date_col)
+        updated_df.insert(0, self.date_col, first_col)
+        updated_df.to_csv(self.all_predictions_filename, index=False)
 
     def predict(self) -> Dict[str, float]:
         logger.info("Slicing dataframes")
@@ -470,5 +485,7 @@ class CoinPricePredictor:
         sys.stdout.flush()
         predictions = self._make_predictions(train_close_series, ts_stacked_series)
         logger.info(f"predictions = {predictions}")
+        self._save_predictions(predictions)
         sys.stdout.flush()
-        return predictions
+        # for now, still return the mean
+        return np.mean(list(predictions.values()))
