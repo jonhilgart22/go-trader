@@ -66,17 +66,11 @@ def main(coin_to_predict: str) -> None:
             coin_to_predict, constants, ml_constants, etherum_df, additional_dfs=[bitcoin_df]  # spy_df
         )
     elif coin_to_predict == "sol":
-        predictor = CoinPricePredictor(
-            coin_to_predict, constants, ml_constants, sol_df, additional_dfs=[bitcoin_df]
-        )
+        predictor = CoinPricePredictor(coin_to_predict, constants, ml_constants, sol_df, additional_dfs=[bitcoin_df])
     elif coin_to_predict == "matic":
-        predictor = CoinPricePredictor(
-            coin_to_predict, constants, ml_constants, matic_df, additional_dfs=[bitcoin_df]
-        )
+        predictor = CoinPricePredictor(coin_to_predict, constants, ml_constants, matic_df, additional_dfs=[bitcoin_df])
     elif coin_to_predict == "link":
-        predictor = CoinPricePredictor(
-            coin_to_predict, constants, ml_constants, link_df, additional_dfs=[bitcoin_df]
-        )
+        predictor = CoinPricePredictor(coin_to_predict, constants, ml_constants, link_df, additional_dfs=[bitcoin_df])
     else:
         raise ValueError(f"Incorrect coin to predict {coin_to_predict}. Needs to be eth or btc.")
     sys.stdout.flush()
