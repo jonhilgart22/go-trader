@@ -230,13 +230,14 @@ func TestIterateAndUploadTmpFilesYmlCsv(t *testing.T) {
 	for _, key := range respNew.Contents {
 		t.Log(*key.Key, "new key")
 		// make sure the tmp/ is added back and that we only upload the yml
-		if *key.Key == "tmp/test_file_1.yml" {
+		if *key.Key == "tmp/test_file_1.yml" || *key.Key == "tmp/test_file_1.csv" {
 			countOfMatchingFiles += 1
 		}
 	}
 
-	if countOfMatchingFiles != 1 {
+	if countOfMatchingFiles != 2 {
 		t.Log(countOfMatchingFiles, "countOfMatchingFiles")
+		t.Log(respNew.Contents)
 		t.Fail()
 	}
 }
@@ -246,24 +247,29 @@ func TestDownloadConfigFiles(t *testing.T) {
 	var bucketName = "test-bucket-two"
 	var coinToPredict = "btc"
 	var actionsToTakeFilename = "tmp/test_actions_to_take.yml"
-	var mlConfigFilenane = "tmp/ml_config.yml"
+	var mlConfigFilename = "tmp/ml_config.yml"
+	var allPredictionsCsvFilename = "tmp/all_predictions.csv"
 	var tradingStateConfigFIlename = "tmp/test_trading_state_config.yml"
 	var wonAndLostAmountFilename = "tmp/test_won_and_lost_amount.yml"
 	// filesnames with the tmp removed. This is what we will see as we iterate through the downloaded directory
 	var tmpBtcActionsToTakeFilename = "btc_test_actions_to_take.yml"
 	var tmpBtcTradingStateConfigFIlename = "btc_test_trading_state_config.yml"
 	var tmpBtcWonAndLostAmountFilename = "btc_test_won_and_lost_amount.yml"
+	var tmpPrecitionsCsvFilename = "btc_all_predictions.csv"
 	// filenames with btc added
 	var btcActionsToTakeFilename = "tmp/" + tmpBtcActionsToTakeFilename
 	var btcTradingStateConfigFIlename = "tmp/" + tmpBtcTradingStateConfigFIlename
 	var btcWonAndLostAmountFilename = "tmp/" + tmpBtcWonAndLostAmountFilename
+	var btcPrecitionsCsvFilename = "tmp/" + tmpPrecitionsCsvFilename
 
 	// fake directory
 	var AppFs = afero.NewOsFs()
 
 	AppFs.MkdirAll("/tmp/", os.ModePerm)
 
-	constantsMap := map[string]string{"s3_bucket": bucketName, "actions_to_take_filename": actionsToTakeFilename, "ml_config_filename": mlConfigFilenane, "trading_state_config_filename": tradingStateConfigFIlename, "won_and_lost_amount_filename": wonAndLostAmountFilename}
+	constantsMap := map[string]string{"s3_bucket": bucketName, "actions_to_take_filename": actionsToTakeFilename, "ml_config_filename": mlConfigFilename, "trading_state_config_filename": tradingStateConfigFIlename, "won_and_lost_amount_filename": wonAndLostAmountFilename,
+		"all_predictions_csv_filename": allPredictionsCsvFilename,
+	}
 
 	// fake s3 uploads
 	// fake s3
@@ -317,7 +323,7 @@ func TestDownloadConfigFiles(t *testing.T) {
 		Body: strings.NewReader(`action_to_take: buy_to_continue_buy
 			`),
 		Bucket: aws.String(bucketName),
-		Key:    aws.String(mlConfigFilenane),
+		Key:    aws.String(mlConfigFilename),
 	})
 	if putErr != nil {
 		t.Log(putErr.Error())
@@ -346,6 +352,17 @@ func TestDownloadConfigFiles(t *testing.T) {
 		return
 	}
 
+	_, putErr = s3Client.PutObject(&s3.PutObjectInput{
+		Body: strings.NewReader(`action_to_take: buy_to_continue_buy
+			`),
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(btcPrecitionsCsvFilename),
+	})
+	if putErr != nil {
+		t.Log(putErr.Error())
+		return
+	}
+
 	params := &s3.ListObjectsInput{
 		Bucket: aws.String(bucketName),
 	}
@@ -354,6 +371,7 @@ func TestDownloadConfigFiles(t *testing.T) {
 	for _, key := range resp.Contents {
 		t.Log("S3 file = ", *key.Key)
 	}
+	t.Log("finished downloading files ")
 
 	// download the files
 	DownloadConfigFiles(constantsMap, true, newSession, coinToPredict)
@@ -367,14 +385,14 @@ func TestDownloadConfigFiles(t *testing.T) {
 	// need to count because testing shares the tmp directory with other tests
 	countOfMatchingFiles := 0
 
-	sliceOfUploadedFilenames := []string{tmpBtcActionsToTakeFilename, tmpBtcTradingStateConfigFIlename, tmpBtcWonAndLostAmountFilename}
+	sliceOfUploadedFilenames := []string{tmpBtcActionsToTakeFilename, tmpBtcTradingStateConfigFIlename, tmpBtcWonAndLostAmountFilename, tmpPrecitionsCsvFilename}
 	for _, f := range files {
 		t.Log("downloaded filename = ", f.Name())
 		if utils.StringInSlice(f.Name(), sliceOfUploadedFilenames) {
 			countOfMatchingFiles += 1
 		}
 	}
-	if countOfMatchingFiles != 3 {
+	if countOfMatchingFiles != 4 {
 		t.Log("countOfMatchingFiles = ", countOfMatchingFiles)
 		t.Fail()
 	}
