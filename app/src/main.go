@@ -258,8 +258,8 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	// add new data as needed
 	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
 	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateReuploadData")
-
-	awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
+	// TODO: we shouldn't need to upload as  IterateAndUploadTmpFilesYmlCsv should handle this
+	// awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
 
 	return newestCosePrice, numRecordsWritten
 
