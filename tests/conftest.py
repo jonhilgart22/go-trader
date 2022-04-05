@@ -18,7 +18,7 @@ def btc_updated_predictions_df() -> pd.DataFrame:
             "test_model_lookback_1": [1, 2, 3],
             "date_prediction_for": ["2022-01-05", "2022-01-06", "2022-01-07"],
             "nbeats_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
-            "tcn_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0]
+            "tcn_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
         }
     )
 

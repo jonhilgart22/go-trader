@@ -140,4 +140,4 @@ def main(directory: str, file_name_glob: str) -> None:
 
 
 if __name__ == "__main__":
-    main()  # type: ignore
+    main()

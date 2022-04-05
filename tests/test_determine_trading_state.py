@@ -1,8 +1,10 @@
 import math
 import os
 from typing import Any, Dict
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from app.mlcode.determine_trading_state import DetermineTradingState
 from app.mlcode.predict_price_movements import CoinPricePredictor
 
@@ -18,7 +20,7 @@ def test_no_btc_action(
     btc_won_and_lost_constants: Dict[Any, Any],
     btc_actions_to_take_constants: Dict[Any, Any],
     btc_all_predictions_csv: str,
-    btc_updated_predictions_df: pd.DataFrame
+    btc_updated_predictions_df: pd.DataFrame,
 ) -> None:
     """verify everyting works as intended"""
 
@@ -56,7 +58,9 @@ def test_no_btc_action(
     original_predictions_df = pd.read_csv(btc_all_predictions_csv)
 
     assert set(btc_updated_predictions_df.columns) == set(original_predictions_df.columns)
-    assert np.max([len(col) for col in btc_updated_predictions_df.columns]) == np.max([len(col) for col in original_predictions_df.columns])
+    assert np.max([len(col) for col in btc_updated_predictions_df.columns]) == np.max(
+        [len(col) for col in original_predictions_df.columns]
+    )
     # post-test clean up. revert the updated .csv to the original. kinda jank
     original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
     original_df.to_csv(btc_all_predictions_csv, index=False)
@@ -71,15 +75,19 @@ def test_no_sol_action(
     sol_won_and_lost_constants: Dict[str, Any],
     sol_actions_to_take_constants: Dict[str, Any],
     sol_all_predictions_csv: str,
-    sol_updated_predictions_df: pd.DataFrame
+    sol_updated_predictions_df: pd.DataFrame,
 ) -> None:
     """verify everyting works as intended"""
     # for faster tests, uncomment
     # price_prediction = 900
     coin_to_predict = "sol"
     predictor = CoinPricePredictor(
-        coin_to_predict, constants, ml_config, example_sol_df, all_predictions_filename=sol_all_predictions_csv,
-        additional_dfs=[example_eth_df]
+        coin_to_predict,
+        constants,
+        ml_config,
+        example_sol_df,
+        all_predictions_filename=sol_all_predictions_csv,
+        additional_dfs=[example_eth_df],
     )
     predictor._build_technical_indicators()
     price_prediction = predictor.predict()
@@ -104,7 +112,9 @@ def test_no_sol_action(
     original_predictions_df = pd.read_csv(sol_all_predictions_csv)
 
     assert set(sol_updated_predictions_df.columns) == set(original_predictions_df.columns)
-    assert np.max([len(col) for col in sol_updated_predictions_df.columns]) == np.max([len(col) for col in original_predictions_df.columns])
+    assert np.max([len(col) for col in sol_updated_predictions_df.columns]) == np.max(
+        [len(col) for col in original_predictions_df.columns]
+    )
     # post-test clean up. revert the updated .csv to the original. kinda jank
     original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
     original_df.to_csv(sol_all_predictions_csv, index=False)
@@ -119,13 +129,18 @@ def test_no_eth_action(
     eth_won_and_lost_constants: Dict[Any, Any],
     eth_actions_to_take_constants: Dict[Any, Any],
     eth_all_predictions_csv: str,
-    eth_updated_predictions_df: pd.DataFrame
+    eth_updated_predictions_df: pd.DataFrame,
 ) -> None:
     """verify everyting works as intended"""
 
     coin_to_predict = "eth"
     btc_predictor = CoinPricePredictor(
-        coin_to_predict, constants, ml_config, example_btc_df, all_predictions_filename=eth_all_predictions_csv, additional_dfs=[example_eth_df]
+        coin_to_predict,
+        constants,
+        ml_config,
+        example_btc_df,
+        all_predictions_filename=eth_all_predictions_csv,
+        additional_dfs=[example_eth_df],
     )
     btc_predictor._build_technical_indicators()
     price_prediction = btc_predictor.predict()
@@ -151,7 +166,9 @@ def test_no_eth_action(
     original_predictions_df = pd.read_csv(eth_all_predictions_csv)
 
     assert set(eth_updated_predictions_df.columns) == set(original_predictions_df.columns)
-    assert np.max([len(col) for col in eth_updated_predictions_df.columns]) == np.max([len(col) for col in original_predictions_df.columns])
+    assert np.max([len(col) for col in eth_updated_predictions_df.columns]) == np.max(
+        [len(col) for col in original_predictions_df.columns]
+    )
     # post-test clean up. revert the updated .csv to the original. kinda jank
     original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
     original_df.to_csv(eth_all_predictions_csv, index=False)
@@ -167,12 +184,17 @@ def test_buy_btc_action(
     example_btc_df: Dict[str, Any],
     example_eth_df: Dict[str, Any],
     btc_all_predictions_csv: str,
-    btc_updated_predictions_df: pd.DataFrame
+    btc_updated_predictions_df: pd.DataFrame,
 ) -> None:
 
     coin_to_predict = "btc"
     btc_predictor = CoinPricePredictor(
-        coin_to_predict, constants, ml_config, example_btc_df, all_predictions_filename=btc_all_predictions_csv, additional_dfs=[example_eth_df]
+        coin_to_predict,
+        constants,
+        ml_config,
+        example_btc_df,
+        all_predictions_filename=btc_all_predictions_csv,
+        additional_dfs=[example_eth_df],
     )
 
     price_prediction = btc_predictor.predict()
@@ -209,7 +231,9 @@ def test_buy_btc_action(
     original_predictions_df = pd.read_csv(btc_all_predictions_csv)
 
     assert set(btc_updated_predictions_df.columns) == set(original_predictions_df.columns)
-    assert np.max([len(col) for col in btc_updated_predictions_df.columns]) == np.max([len(col) for col in original_predictions_df.columns])
+    assert np.max([len(col) for col in btc_updated_predictions_df.columns]) == np.max(
+        [len(col) for col in original_predictions_df.columns]
+    )
     # post-test clean up. revert the updated .csv to the original. kinda jank
     original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
     original_df.to_csv(btc_all_predictions_csv, index=False)
@@ -273,7 +297,12 @@ def test_buy_to_none_via_prediction_btc(
 
     coin_to_predict = "btc"
     btc_predictor = CoinPricePredictor(
-        coin_to_predict, constants, ml_config, example_btc_df_bollinger_exit_position, all_predictions_filename=btc_all_predictions_csv, additional_dfs=[example_eth_df]
+        coin_to_predict,
+        constants,
+        ml_config,
+        example_btc_df_bollinger_exit_position,
+        all_predictions_filename=btc_all_predictions_csv,
+        additional_dfs=[example_eth_df],
     )
 
     price_prediction = btc_predictor.predict()

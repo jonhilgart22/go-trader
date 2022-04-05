@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
+from collections import defaultdict
 from threading import Thread
 from typing import Any, Dict, List, Tuple
 
@@ -12,12 +13,11 @@ from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from finta import TA
-from collections import defaultdict
 
 try:  # need modules for pytest to work
-    from app.mlcode.utils import setup_logging, read_in_data, running_on_aws
+    from app.mlcode.utils import read_in_data, running_on_aws, setup_logging
 except ModuleNotFoundError:  # Go is unable to run python modules -m
-    from utils import setup_logging, read_in_data, running_on_aws
+    from utils import read_in_data, running_on_aws, setup_logging
 
 
 __all__ = ["CoinPricePredictor"]
@@ -411,7 +411,7 @@ class CoinPricePredictor:
         # this sets the date to be the index
         predictions_df = read_in_data(self.all_predictions_filename, running_on_aws(), self.constants["date_col"])
 
-        new_predictions_dict = defaultdict(list)
+        new_predictions_dict: Dict[str, Any] = defaultdict(list)
 
         all_cols = list(predictions_df.columns)
         largest_n_predictions = 1 + np.max(predictions_df.count())
@@ -431,10 +431,7 @@ class CoinPricePredictor:
                     largest_n_predictions = num_predictions_for_this_model
 
             else:  # new model_name
-                new_model_predictions_array = list(
-                    np.zeros(largest_n_predictions)
-                )  # edge case that we may not hit the largest n predictions when this is called. unlikely to happen
-                # replace last with the current prediction
+                new_model_predictions_array = list(np.zeros(largest_n_predictions))
                 new_model_predictions_array[-1] = input_predictions[model_name]
                 new_predictions_dict[model_name].extend(new_model_predictions_array)
 

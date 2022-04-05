@@ -139,4 +139,4 @@ def main(coin_to_predict: str) -> None:
 
 
 if __name__ == "__main__":
-    main()  # type: ignore
+    main()
