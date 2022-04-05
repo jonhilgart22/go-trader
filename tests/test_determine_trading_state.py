@@ -228,14 +228,15 @@ def test_buy_btc_action(
     # assert our predictions have been saved
     # assert the the cols and LEN are the same. Vals wil be different
 
-    original_predictions_df = pd.read_csv(btc_all_predictions_csv)
+    updated_predictions_df = pd.read_csv(btc_all_predictions_csv)
 
-    assert set(btc_updated_predictions_df.columns) == set(original_predictions_df.columns)
+    assert set(btc_updated_predictions_df.columns) == set(updated_predictions_df.columns)
     assert np.max([len(col) for col in btc_updated_predictions_df.columns]) == np.max(
-        [len(col) for col in original_predictions_df.columns]
+        [len(col) for col in updated_predictions_df.columns]
     )
     # post-test clean up. revert the updated .csv to the original. kinda jank
     original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
+
     original_df.to_csv(btc_all_predictions_csv, index=False)
 
 
@@ -293,6 +294,7 @@ def test_buy_to_none_via_prediction_btc(
     ml_config: Dict[str, Any],
     example_eth_df: pd.DataFrame,
     btc_all_predictions_csv: str,
+    btc_updated_predictions_df: pd.DataFrame,
 ) -> None:
 
     coin_to_predict = "btc"
@@ -339,6 +341,20 @@ def test_buy_to_none_via_prediction_btc(
     ## assert win/lose is correct
     assert trading_state_class.won_and_lose_amount_dict["n_buy_lost"] == 1
     assert trading_state_class.won_and_lose_amount_dict["dollar_amount_buy_lost"] == 18
+
+    # assert our predictions have been saved
+    # assert the the cols and LEN are the same. Vals wil be different
+
+    updated_predictions_df = pd.read_csv(btc_all_predictions_csv)
+
+    assert set(btc_updated_predictions_df.columns) == set(updated_predictions_df.columns)
+    assert np.max([len(col) for col in btc_updated_predictions_df.columns]) == np.max(
+        [len(col) for col in updated_predictions_df.columns]
+    )
+    # post-test clean up. revert the updated .csv to the original. kinda jank
+    original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
+    # overwrite the updated with the original for future tests
+    original_df.to_csv(btc_all_predictions_csv, index=False)
 
 
 # # TODO: uncomment once FTX.US supports short tokens

@@ -424,7 +424,7 @@ class CoinPricePredictor:
                 # add in previous
                 new_predictions_dict[model_name].extend(current_predictions_list)
                 # add in new
-                new_predictions_dict[model_name].extend(prediction)
+                new_predictions_dict[model_name].append(prediction)
                 num_predictions_for_this_model = len(new_predictions_dict[model_name])
                 # if
                 if num_predictions_for_this_model > largest_n_predictions:
