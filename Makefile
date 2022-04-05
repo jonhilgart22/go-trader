@@ -16,8 +16,8 @@ install:
 
 lint: install
 	poetry run isort .
-	poetry run black .
 	poetry run flake8
+	poetry run black .
 	poetry run mypy .
 	go vet ./...
 	go fmt ./...
