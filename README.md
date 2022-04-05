@@ -77,7 +77,7 @@ Via Github Actions
 ### Deploy
 
 1. Make any config changes and then `make upload_configs`
-2. Build and push the docker image `./build.sh`
+2. Build and push the docker image `./scripts/build.sh`
 3. If you need to update any env vars, use the `scripts/set_ssm.sh` script with the name and value. This includes new FTX env vars for different accounts.
 4. Update the Docker Image for the lambda if you've build a new one
 - `aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')`
@@ -98,7 +98,7 @@ Via Github Actions
 10. Create a new Eventbridge trigger in the `main.tf` file
 11. Upload the configs `make upload_configs`
 12. Upload the dataset `make upload_data`
-13.  build the lambda image `./build.sh`
+13.  build the lambda image `./scripts/build.sh`
 14. update the lambda with the new image!
 `aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')`
 NB: be sure to update the various checks that look for the correct input coins
