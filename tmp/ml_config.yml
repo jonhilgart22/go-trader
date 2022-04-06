@@ -17,5 +17,5 @@ hyperparameters_tcn:
 hyperparameters_nbeats:
     random_state: 0
     num_blocks: 4
-    layer_widths: 123
+    layer_widths: 124
     epochs: 10
