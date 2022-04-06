@@ -239,6 +239,8 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	log.Println(newestDate, "newestDate")
 	loc, _ := time.LoadLocation("America/Los_Angeles")
 	todaysTime := time.Now().In(loc).Truncate(24 * time.Hour)
+	yesterdaysTime := todaysTime.AddDate(0, 0, -1)
+
 	// print the current time truncated to the current date
 
 	log.Println("time.Now().In(loc).Day()", time.Now().In(loc).Truncate(24*time.Hour).Day())
@@ -250,7 +252,7 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 	// kinda jank, but if we are testing, check the date in main_test.go. TODO: refactor to use interface
 	if newestDate.Day() == testingDate.Day() {
 		log.Println("Testing")
-	} else if newestDate.Day() != todaysTime.Day() {
+	} else if newestDate.Day() != yesterdaysTime.Day() {
 		log.Fatal("Newest date is not today's date. Something is off with downloading data")
 		panic("Newest date is not today's date. Something is off with downloading data")
 	}
