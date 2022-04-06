@@ -1,0 +1,8 @@
+{
+  "action_to_take": [
+    "none_to_none",
+    "none_to_buy",
+    "buy_to_none",
+    "buy_to_continue_buy"
+  ]
+}
