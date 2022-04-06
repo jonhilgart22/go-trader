@@ -473,7 +473,11 @@ class CoinPricePredictor:
         # make sure the 'date' is the first col
         first_col = updated_df.pop(self.date_col)
         updated_df.insert(0, self.date_col, first_col)
-        updated_df.to_csv(self.all_predictions_filename, index=False)
+        if running_on_aws():
+            all_predictions_filename = "/" + self.all_predictions_filename
+        else:
+            all_predictions_filename = self.all_predictions_filename
+        updated_df.to_csv(all_predictions_filename, index=False)
 
     def predict(self) -> Dict[str, float]:
         logger.info("Slicing dataframes")
