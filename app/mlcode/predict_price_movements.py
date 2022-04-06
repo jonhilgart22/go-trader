@@ -437,6 +437,7 @@ class CoinPricePredictor:
 
         # Add in the dates
         current_pred_dates_list = [index_date.strftime("%Y-%m-%d") for index_date in predictions_df.index]
+        logger.info(f"Newest date for all predictions = {self.df.index.max()}")
         current_pred_dates_list.append(self.df.index.max().strftime("%Y-%m-%d"))  # current dates
 
         new_predictions_dict[self.date_col].extend(current_pred_dates_list)
@@ -444,22 +445,31 @@ class CoinPricePredictor:
         # Add in the pred for dates
         # for example, if we have a prediction_n_days of
         # 7, and we predict on 1/1 the date_prediction_for is 1/8
+
         current_date_pred_for_list = list(predictions_df[self.constants["date_prediction_for_col"]])
         # add in the prediction_n_days window to the current date
         timedelta_days = pd.to_timedelta(self.ml_constants["prediction_params"]["prediction_n_days"], unit="days")
         newest_date_for_pred_str = (self.df.index.max() + timedelta_days).strftime("%Y-%m-%d")
+        logger.info(f"newest_date_for_pred_str = {newest_date_for_pred_str}")
         current_date_pred_for_list.append(newest_date_for_pred_str)
+        logger.info(f"current_date_pred_for_list = {current_date_pred_for_list}")
 
         new_predictions_dict[self.constants["date_prediction_for_col"]].extend(current_date_pred_for_list)
+        logger.info(f"new_predictions_dict= {new_predictions_dict}")
 
         # From the original predictions_df, what cols do we have that we no longer have?
         # this can happen if we change the predictions params to create new model names
         missing_cols = list(set(predictions_df.columns).difference(list(input_predictions.keys())))
+        logger.info(f"missing_cols ={missing_cols}")
+        #  make sure to exclude the date cols
+        dates_cols = [self.constants["date_prediction_for_col"], self.date_col]
+
         for col in missing_cols:
-            current_preds = predictions_df[col]
-            new_array_for_missing_col = list(np.zeros(largest_n_predictions))
-            new_array_for_missing_col[: len(current_preds)] = current_preds
-            new_predictions_dict[col] = new_array_for_missing_col
+            if col not in dates_cols:
+                current_preds = predictions_df[col]
+                new_array_for_missing_col = list(np.zeros(largest_n_predictions))
+                new_array_for_missing_col[: len(current_preds)] = current_preds
+                new_predictions_dict[col] = new_array_for_missing_col
 
         # make sure these are all the same length
         try:
