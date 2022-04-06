@@ -74,24 +74,24 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 
 	// Add new data to CSV from FTX to s3. This will be used by our Python program
 
-	newestClosePriceBtc, numRecordsWrittenBtc := DownloadUpdateReuploadData(constantsMap["bitcoin_csv_filename"], currentBitcoinRecords, constantsMap, runningOnAws, awsSession)
+	newestClosePriceBtc, numRecordsWrittenBtc := DownloadUpdateData(constantsMap["bitcoin_csv_filename"], currentBitcoinRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenBtc)
 
 	log.Println(newestClosePriceBtc, "newestClosePriceBtc")
 
-	newestClosePriceEth, numRecordsWrittenEth := DownloadUpdateReuploadData(constantsMap["etherum_csv_filename"], currentEthereumRecords, constantsMap, runningOnAws, awsSession)
+	newestClosePriceEth, numRecordsWrittenEth := DownloadUpdateData(constantsMap["etherum_csv_filename"], currentEthereumRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenEth)
 	log.Println(newestClosePriceEth, "newestClosePriceEth")
 
-	newestClosePriceSol, numRecordsWrittenSol := DownloadUpdateReuploadData(constantsMap["sol_csv_filename"], currentSolRecords, constantsMap, runningOnAws, awsSession)
+	newestClosePriceSol, numRecordsWrittenSol := DownloadUpdateData(constantsMap["sol_csv_filename"], currentSolRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenSol)
 	log.Println(newestClosePriceSol, "newestClosePriceSol", awsSession)
 
-	newestClosePriceMatic, numRecordsWrittenMatic := DownloadUpdateReuploadData(constantsMap["matic_csv_filename"], currentMaticRecords, constantsMap, runningOnAws, awsSession)
+	newestClosePriceMatic, numRecordsWrittenMatic := DownloadUpdateData(constantsMap["matic_csv_filename"], currentMaticRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenMatic)
 	log.Println(newestClosePriceMatic, "newestClosePriceMatic", awsSession)
 
-	newestClosePriceLink, numRecordsWrittenLink := DownloadUpdateReuploadData(constantsMap["link_csv_filename"], currentLinkRecords, constantsMap, runningOnAws, awsSession)
+	newestClosePriceLink, numRecordsWrittenLink := DownloadUpdateData(constantsMap["link_csv_filename"], currentLinkRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenLink)
 	log.Println(newestClosePriceLink, "newestClosePriceLink", awsSession)
 
@@ -228,7 +228,7 @@ func IterateAndUploadTmpFilesYmlCsv(path string, constantsMap map[string]string,
 
 }
 
-func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool, s3Client *session.Session) (decimal.Decimal, int) {
+func DownloadUpdateData(csvFilename string, inputRecords []*models.HistoricalPrice, constantsMap map[string]string, runningOnAws bool, s3Client *session.Session) (decimal.Decimal, int) {
 
 	// download the files from s3
 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
@@ -259,9 +259,7 @@ func DownloadUpdateReuploadData(csvFilename string, inputRecords []*models.Histo
 
 	// add new data as needed
 	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
-	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateReuploadData")
-	// TODO: we shouldn't need to upload as  IterateAndUploadTmpFilesYmlCsv should handle this
-	// awsUtils.UploadToS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
+	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateData")
 
 	return newestCosePrice, numRecordsWritten
 
