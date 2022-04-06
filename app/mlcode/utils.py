@@ -60,7 +60,7 @@ def running_on_aws() -> bool:
 def read_in_data(
     input_file: str,
     running_on_aws: bool,
-    date_col: str,
+    date_col: str = "date",
     missing_dates: bool = False,
 ) -> pd.DataFrame:
     if running_on_aws:

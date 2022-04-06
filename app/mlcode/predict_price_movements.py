@@ -419,8 +419,8 @@ class CoinPricePredictor:
         # TODO: test the csv schema?
         for model_name, prediction in input_predictions.items():
             if model_name in all_cols:
-                # predictions_df[model_name]
-                current_predictions_list = list(new_predictions_dict[model_name])
+                # previous predictions
+                current_predictions_list = list(predictions_df[model_name])
                 # add in previous
                 new_predictions_dict[model_name].extend(current_predictions_list)
                 # add in new
