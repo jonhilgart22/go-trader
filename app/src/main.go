@@ -258,14 +258,17 @@ func DownloadUpdateData(csvFilename string, inputRecords []*models.HistoricalPri
 	log.Println("testingDate.Day()", testingDate.Day())
 	log.Println("newestDate.Day() ", newestDate.Day())
 	log.Println("yesterdaysTime.Day() ", yesterdaysTime.Day())
+	log.Println("todaysTime.Day() ", todaysTime.Day())
 	// kinda jank, but if we are testing, check the date in main_test.go. TODO: refactor to use interface
 	_, localEnvVarPresent := os.LookupEnv("ON_LOCAL")
 	if newestDate.Day() == testingDate.Day() {
 		log.Println("Testing")
 	} else if localEnvVarPresent {
 		log.Println("Running on local")
+	} else if newestDate.Day() == todaysTime.Day() {
+		log.Println("Must be testing the lambda on off times.")
 	} else if newestDate.Day() != yesterdaysTime.Day() {
-		log.Fatal("Newest date is not yesterday's date. Something is off with downloading data")
+		log.Fatal("Newest date is not yesterday's date or todays date. Something is off with downloading data")
 		panic("Newest date is not yesterday's date. Something is off with downloading data")
 	}
 
