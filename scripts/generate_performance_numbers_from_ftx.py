@@ -1,3 +1,4 @@
+# flake8: noqa
 import glob
 import logging
 import os
@@ -23,12 +24,12 @@ def main(directory: str, file_name_glob: str) -> None:
     if response.lower() != "y":
         print("Export env vars! copy and paste them")
 
-    not_coins = ["ml", "historic", "logs.txt", "README.md", "actions", "constants.yml"]
+    not_coins = ["ml", "historic", "logs.txt", "README.md", "actions", "constants.yml", "example"]
 
     list_of_coins = []
 
     for file in glob.glob(f"{directory}/*"):
-        logging.info(file)
+        logging.info(f"file = {file}")
         coin = file.split("/")[1].split("_")[0]
         if coin not in list_of_coins and coin not in not_coins:
             list_of_coins.append(coin)
@@ -64,6 +65,7 @@ def main(directory: str, file_name_glob: str) -> None:
 
         while True:
             logging.info("------------------------------------------------------------------")
+            logging.info(f" Coin = {symbol}")
             params = {"end_time": int(end_time / 1000), "FTXUS-SUBACCOUNT": subaccount_name}
             trades = exchange.fetch_my_trades(symbol, since, limit, params)
             if len(trades):
@@ -93,6 +95,8 @@ def main(directory: str, file_name_glob: str) -> None:
         logging.info(f"Fetched {len(all_trades_list)} trades")
         for i in range(0, len(all_trades_list)):
             trade = all_trades_list[i]
+
+            logging.info(f"{trade['datetime'], trade['side'], trade['price']}")
 
             dollars_traded = trade["price"] * trade["amount"]
 
@@ -136,4 +140,4 @@ def main(directory: str, file_name_glob: str) -> None:
 
 
 if __name__ == "__main__":
-    main()  # type: ignore
+    main()
