@@ -22,6 +22,7 @@ import (
 	"github.com/jonhilgart22/go-trader/app/ftx"
 	"github.com/jonhilgart22/go-trader/app/structs"
 	"github.com/jonhilgart22/go-trader/app/utils"
+	"github.com/jonhilgart22/go-trader/app/yahoo"
 )
 
 func main() {
@@ -64,15 +65,18 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	}
 
 	ftxClient, marketToOrder := CreateFtxClientAndMarket(coinToPredict)
-
+	// ftx
 	currentBitcoinRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["btc_product_code"], granularity)
 	currentEthereumRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["eth_product_code"], granularity)
 	currentSolRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["sol_product_code"], granularity)
 	currentMaticRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["matic_product_code"], granularity)
 	currentLinkRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["link_product_code"], granularity)
+	// yahoo
+	currentTbtRecords := yahoo.PullDataFromYahoo(constantsMap["tbt_product_code"])
+	log.Println(currentTbtRecords, "currentTbtRecords")
 	// currentSpyRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["spy_product_code"], granularity)
 
-	// Add new data to CSV from FTX to s3. This will be used by our Python program
+	// Add new data to CSV from FTX/yahoo to s3. This will be used by our Python program
 
 	newestClosePriceBtc, numRecordsWrittenBtc := DownloadUpdateData(constantsMap["bitcoin_csv_filename"], currentBitcoinRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenBtc)
@@ -94,6 +98,10 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	newestClosePriceLink, numRecordsWrittenLink := DownloadUpdateData(constantsMap["link_csv_filename"], currentLinkRecords, constantsMap, runningOnAws, awsSession)
 	log.Println("Records written = ", numRecordsWrittenLink)
 	log.Println(newestClosePriceLink, "newestClosePriceLink", awsSession)
+
+	newestClosePriceTbt, numRecordsWrittenTbt := DownloadUpdateData(constantsMap["tbt_csv_filename"], currentTbtRecords, constantsMap, runningOnAws, awsSession)
+	log.Println("Records written = ", numRecordsWrittenTbt)
+	log.Println(newestClosePriceTbt, "newestClosePriceTbt", awsSession)
 
 	// Call the Python Program here. This is kinda jank
 	if runningLocally {
@@ -249,12 +257,16 @@ func DownloadUpdateData(csvFilename string, inputRecords []*models.HistoricalPri
 	testingDate := time.Date(2017, time.Month(1), 5, 0, 0, 0, 0, time.UTC)
 	log.Println("testingDate.Day()", testingDate.Day())
 	log.Println("newestDate.Day() ", newestDate.Day())
+	log.Println("yesterdaysTime.Day() ", yesterdaysTime.Day())
 	// kinda jank, but if we are testing, check the date in main_test.go. TODO: refactor to use interface
+	_, localEnvVarPresent := os.LookupEnv("ON_LOCAL")
 	if newestDate.Day() == testingDate.Day() {
 		log.Println("Testing")
+	} else if localEnvVarPresent {
+		log.Println("Running on local")
 	} else if newestDate.Day() != yesterdaysTime.Day() {
-		log.Fatal("Newest date is not today's date. Something is off with downloading data")
-		panic("Newest date is not today's date. Something is off with downloading data")
+		log.Fatal("Newest date is not yesterday's date. Something is off with downloading data")
+		panic("Newest date is not yesterday's date. Something is off with downloading data")
 	}
 
 	// add new data as needed

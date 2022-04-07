@@ -44,7 +44,7 @@ require (
 
 require (
 	github.com/jarcoal/httpmock v1.0.8 // indirect
-	github.com/markcheno/go-quote v0.0.0-20211116021555-bb34b59a97eb // indirect
+	github.com/markcheno/go-quote v0.0.0-20211116021555-bb34b59a97eb
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
 	github.com/shabbyrobe/gocovmerge v0.0.0-20190829150210-3e036491d500 // indirect
 	golang.org/x/tools v0.1.10 // indirect

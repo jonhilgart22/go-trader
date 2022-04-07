@@ -54,6 +54,7 @@ def main(coin_to_predict: str) -> None:
     sol_df = read_in_data(constants["sol_csv_filename"], is_running_on_aws, constants["date_col"])
     matic_df = read_in_data(constants["matic_csv_filename"], is_running_on_aws, constants["date_col"])
     link_df = read_in_data(constants["link_csv_filename"], is_running_on_aws, constants["date_col"])
+    tbt_df = read_in_data(constants["tbt_csv_filename"], is_running_on_aws, constants["date_col"])
     # spy_df = read_in_data(constants["spu_csv_filename"], is_running_on_aws, missing_dates=True)
     ml_constants = read_in_yaml(constants["ml_config_filename"], is_running_on_aws)
     predictor = None
@@ -66,7 +67,7 @@ def main(coin_to_predict: str) -> None:
             ml_constants=ml_constants,
             input_df=bitcoin_df,
             all_predictions_filename=all_predictions_filename,
-            additional_dfs=[etherum_df],  # spy_df
+            additional_dfs=[etherum_df, tbt_df],  # spy_df
         )
     elif coin_to_predict == "eth":
         predictor = CoinPricePredictor(
@@ -75,7 +76,7 @@ def main(coin_to_predict: str) -> None:
             ml_constants=ml_constants,
             input_df=etherum_df,
             all_predictions_filename=all_predictions_filename,
-            additional_dfs=[bitcoin_df],  # spy_df
+            additional_dfs=[bitcoin_df, tbt_df],  # spy_df
         )
     elif coin_to_predict == "sol":
         predictor = CoinPricePredictor(
@@ -84,7 +85,7 @@ def main(coin_to_predict: str) -> None:
             ml_constants=ml_constants,
             input_df=sol_df,
             all_predictions_filename=all_predictions_filename,
-            additional_dfs=[bitcoin_df, etherum_df],
+            additional_dfs=[bitcoin_df, tbt_df],
         )
     elif coin_to_predict == "matic":
         predictor = CoinPricePredictor(
@@ -93,7 +94,7 @@ def main(coin_to_predict: str) -> None:
             ml_constants=ml_constants,
             input_df=matic_df,
             all_predictions_filename=all_predictions_filename,
-            additional_dfs=[bitcoin_df, etherum_df],
+            additional_dfs=[bitcoin_df, tbt_df],
         )
     elif coin_to_predict == "link":
         predictor = CoinPricePredictor(
@@ -102,15 +103,14 @@ def main(coin_to_predict: str) -> None:
             ml_constants=ml_constants,
             input_df=link_df,
             all_predictions_filename=all_predictions_filename,
-            additional_dfs=[bitcoin_df, etherum_df],
+            additional_dfs=[bitcoin_df, tbt_df],
         )
     else:
-        raise ValueError(f"Incorrect coin to predict {coin_to_predict}. Needs to be eth or btc.")
+        raise ValueError(f"Incorrect coin to predict {coin_to_predict}. Should be btc, eth, sol, matic or link")
     sys.stdout.flush()
     logger.info("Predict Price Movements")
     sys.stdout.flush()
     price_prediction = predictor.predict()
-    # print(price_prediction, "price_prediction")
     logger.info("Determine trading state")
 
     # predictor.df has the bollinger bands
@@ -126,7 +126,7 @@ def main(coin_to_predict: str) -> None:
     )
     sys.stdout.flush()
     trading_state_class.calculate_positions()
-    logger.info("---- Finished determinig trading strategy --- ")
+    logger.info("---- Finished determining trading strategy --- ")
     trading_state_class.update_state()
     # this works
 
