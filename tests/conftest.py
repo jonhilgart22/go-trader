@@ -7,6 +7,68 @@ from freezegun import freeze_time
 
 from app.mlcode.utils import read_in_yaml
 
+# csv for predictions
+
+
+@pytest.fixture
+def btc_updated_predictions_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "date": ["2022-01-01", "2022-01-02", "2022-01-03"],
+            "test_model_lookback_1": [1, 2, 3],
+            "date_prediction_for": ["2022-01-05", "2022-01-06", "2022-01-07"],
+            "nbeats_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+            "tcn_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+        }
+    )
+
+
+@pytest.fixture
+def btc_all_predictions_csv() -> str:
+    btc_filename = "tests/configs/btc_all_predictions_updated.csv"
+    return btc_filename
+
+
+@pytest.fixture
+def sol_updated_predictions_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "date": ["2022-01-01", "2022-01-02", "2022-01-03"],
+            "test_model_lookback_1": [1, 2, 3],
+            "date_prediction_for": ["2022-01-05", "2022-01-06", "2022-01-07"],
+            "nbeats_sol_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+            "tcn_sol_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+        }
+    )
+
+
+@pytest.fixture
+def sol_all_predictions_csv() -> str:
+    sol_filename = "tests/configs/sol_all_predictions_updated.csv"
+    return sol_filename
+
+
+@pytest.fixture
+def eth_updated_predictions_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "date": ["2022-01-01", "2022-01-02", "2022-01-03"],
+            "test_model_lookback_1": [1, 2, 3],
+            "date_prediction_for": ["2022-01-05", "2022-01-06", "2022-01-07"],
+            "nbeats_eth_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+            "tcn_eth_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+        }
+    )
+
+
+@pytest.fixture
+def eth_all_predictions_csv() -> str:
+    eth_filename = "tests/configs/eth_all_predictions_updated.csv"
+    return eth_filename
+
+
+# configs
+
 
 @pytest.fixture
 def eth_won_and_lost_constants() -> Dict[str, Any]:
@@ -81,6 +143,9 @@ def eth_actions_to_take_constants() -> Dict[str, Any]:
 @pytest.fixture
 def sol_actions_to_take_constants() -> Dict[str, Any]:
     return read_in_yaml("tests/configs/sol_actions_to_take.yml", False)
+
+
+# Dataframes
 
 
 @pytest.fixture

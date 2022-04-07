@@ -51,6 +51,42 @@ download_configs_and_data:
 update_lambda:
 	aws lambda update-function-code --function-name go-trader-function --image-uri $(aws lambda get-function --function-name go-trader-function | jq -r '.Code.ImageUri')
 
+invoke_lambda_btc:
+	payload=`echo '{"coinToPredict":"btc"}' | openssl base64`
+	aws lambda invoke \
+    --function-name go-trader-function \
+    --payload "$payload" \
+	outfile_btc.txt
+
+invoke_lambda_eth:
+	payload=`echo '{"coinToPredict":"eth"}' | openssl base64`
+	aws lambda invoke \
+    --function-name go-trader-function \
+    --payload "$payload" \
+	outfile_eth.txt
+
+invoke_lambda_sol:
+	payload=`echo '{"coinToPredict":"sol"}' | openssl base64`
+	aws lambda invoke \
+    --function-name go-trader-function \
+    --payload "$payload" \
+	outfile_sol.txt
+
+
+invoke_lambda_matic:
+	payload=`echo '{"coinToPredict":"matic"}' | openssl base64`
+	aws lambda invoke \
+    --function-name go-trader-function \
+    --payload "$payload" \
+	outfile_matic.txt
+
+invoke_lambda_link:
+	payload=`echo '{"coinToPredict":"link"}' | openssl base64`
+	aws lambda invoke \
+    --function-name go-trader-function \
+    --payload "$payload" \
+	outfile_link.txt
+
 # upload_models:
 #  	aws s3 cp ./models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar s3://go-trader/models/checkpoints/31_tcn_eth/checkpoint_5649.pth.tar --sse aws:kms
 # 	aws s3 cp ./models/checkpoints/31_tcn_btc/checkpoint_4499.pth.tar s3://go-trader/models/checkpoints/31_tcn_btc/checkpoint_4499.pth.tar --sse aws:kms
