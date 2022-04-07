@@ -38,7 +38,7 @@ run_python:
 	python -m app.mlcode.main --coin_to_predict btc
 
 # we make sure to download first. However, if you've already downloaded, you can copy the upload command
-upload_configs_and_data: download_configs_and_data
+upload_configs_and_data:
 	aws s3 cp tmp/   s3://go-trader/tmp/  --sse aws:kms --recursive
 
 download_configs_and_data:
