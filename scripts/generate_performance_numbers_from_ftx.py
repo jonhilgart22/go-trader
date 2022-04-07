@@ -24,12 +24,12 @@ def main(directory: str, file_name_glob: str) -> None:
     if response.lower() != "y":
         print("Export env vars! copy and paste them")
 
-    not_coins = ["ml", "historic", "logs.txt", "README.md", "actions", "constants.yml"]
+    not_coins = ["ml", "historic", "logs.txt", "README.md", "actions", "constants.yml", "example"]
 
     list_of_coins = []
 
     for file in glob.glob(f"{directory}/*"):
-        logging.info(file)
+        logging.info(f"file = {file}")
         coin = file.split("/")[1].split("_")[0]
         if coin not in list_of_coins and coin not in not_coins:
             list_of_coins.append(coin)
