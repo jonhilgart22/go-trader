@@ -19,6 +19,10 @@ cover.out
 .coverage
 coverage.xml
 tmp/historic*
-tmp/
+*.csv
 
-*won_and_lost*
+*won_and_lost_config.yml
+
+*coverage*
+
+*_outfile*

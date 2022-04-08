@@ -18,3 +18,5 @@ checkpoints*
 #Ingore all markdown and class files
 *.md
 **/*.class
+
+*coverage*

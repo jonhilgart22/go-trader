@@ -16,8 +16,9 @@ etherum_csv_filename: tmp/historic_crypto_prices - etherum_jan_2017_sept_4_2021 
 tcn_filename_eth: checkpoint_5649.pth.tar
 nbeats_filename_eth: checkpoint_257.pth.tar
 
-## SPY
-spy_product_code: SPY/USD
+## TBT
+tbt_product_code: TBT
+tbt_csv_filename: tmp/historic_crypto_prices - tbt_april_2017_april_5_2022.csv
 
 ## ADA
 ada_product_code: ADA/USD
@@ -54,15 +55,17 @@ candle_granularity: 86400
 s3_bucket: go-trader
 s3_data_location: data
 s3_configs_locations:
-# TODO: will need to make a data directory locally?
+# Common configs for all coins. Read in individually in main.py
+## These will all have the coin name appended after tmp/ and before the filename
 actions_to_take_filename: tmp/actions_to_take.yml
 constants_filename: tmp/constants.yml
 ml_config_filename: tmp/ml_config.yml
 trading_state_config_filename: tmp/trading_state_config.yml
 won_and_lost_amount_filename: tmp/won_and_lost_config.yml
+all_predictions_csv_filename: tmp/all_predictions.csv
 
 
-## DF cols
+## DF cols for historical prices
 rolling_mean_col: Rolling Mean
 bollinger_high_col: Bollinger High
 bollinger_low_col: Bollinger Low
@@ -76,6 +79,10 @@ macd_signal_col: macd_signal
 stc_col: stc
 stoch_col: stoch
 rsi_col: rsi
+date_col: date
+
+## DF cols for price predictions
+date_prediction_for_col: date_prediction_for
 
 # directory information
 

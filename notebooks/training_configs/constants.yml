@@ -16,8 +16,9 @@ etherum_csv_filename: tmp/historic_crypto_prices - etherum_jan_2017_sept_4_2021 
 tcn_filename_eth: checkpoint_5649.pth.tar
 nbeats_filename_eth: checkpoint_257.pth.tar
 
-## SPY
-spy_product_code: SPY/USD
+## TBT
+tbt_product_code: TBT
+tbt_csv_filename: tmp/historic_crypto_prices - tbt_april_2017_april_5_2022.csv
 
 ## ADA
 ada_product_code: ADA/USD
@@ -76,6 +77,10 @@ macd_signal_col: macd_signal
 stc_col: stc
 stoch_col: stoch
 rsi_col: rsi
+date_col: date
+
+## DF cols for price predictions
+date_prediction_for_col: date_prediction_for
 
 # directory information
 
