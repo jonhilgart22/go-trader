@@ -196,10 +196,17 @@ class CoinPricePredictor:
 
         self.df = self.df.loc[final_slice_date:, :].copy()
 
+        logger.info(f"self.df.shape = {self.df.shape}")
+        logger.info(f"self.df.index.min() = {self.df.index.min()}")
+
         sliced_additional_dfs = []
         if len(self.additional_dfs) > 0:
             for add_df in self.additional_dfs:
                 sliced_df = add_df.loc[final_slice_date:, :].copy()
+                logger.info(f"sliced_df.shape = {sliced_df.shape}")
+                logger.info(f"sliced_df.index.min() {sliced_df.index.min()}")
+                logger.info(f"sliced_df.index.max() {sliced_df.index.max()}")
+                sliced_additional_dfs.append(sliced_df)
                 sliced_additional_dfs.append(sliced_df)
 
         self.additional_dfs = sliced_additional_dfs

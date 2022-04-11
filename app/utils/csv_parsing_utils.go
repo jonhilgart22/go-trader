@@ -61,11 +61,12 @@ func Contains(s []string, str string) bool {
 	return false
 }
 
-func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.Time, csvFileName string, runningOnAws bool) int {
+func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.Time, csvFileName string, runningOnAws bool) (int, time.Time) {
 	loc, _ := time.LoadLocation("UTC")
 	today := time.Now().In(loc)
 	roundedToday := RoundTimeToDay(today)
 	numRecordsWritten := 0
+	mostRecentWrittenDate := time.Date(2017, time.Month(1), 7, 0, 0, 0, 0, time.UTC)
 
 	if runningOnAws {
 		s := strings.Split(csvFileName, "/")
@@ -77,11 +78,14 @@ func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.T
 
 		if currentVal.StartTime.After(newestDate) && !currentVal.StartTime.Equal(roundedToday) { // add this data, but not today's data
 			log.Println("Adding data from this date =", currentVal.StartTime)
+			if mostRecentWrittenDate.Before(currentVal.StartTime) {
+				mostRecentWrittenDate = currentVal.StartTime
+			}
 
 			f, err := os.OpenFile(csvFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 			if err != nil {
 				log.Println(err)
-				return 0
+				return 0, mostRecentWrittenDate
 			}
 			w := csv.NewWriter(f)
 			// csv format is date,open,high,low,close,volume
@@ -103,7 +107,7 @@ func WriteNewCsvData(currentRecords []*models.HistoricalPrice, newestDate time.T
 			numRecordsWritten += 1
 		}
 	}
-	return numRecordsWritten
+	return numRecordsWritten, mostRecentWrittenDate
 }
 
 func FindNewestData(inputRecords []structs.HistoricCandles) (time.Time, decimal.Decimal) {
