@@ -10,12 +10,12 @@ hyperparameters_tcn:
     random_state: 0
     dilation_base: 2
     kernel_size: 14
-    num_filters: 7
-    num_layers: 7
+    num_filters: 5
+    num_layers: 5
     weight_norm: True
-    epochs: 50
+    epochs: 45
 hyperparameters_nbeats:
     random_state: 0
     num_blocks: 4
     layer_widths: 128
-    epochs: 11
+    epochs: 10

@@ -29,7 +29,7 @@ run_go:
 	go run app/src/main.go
 
 test_python:
-	poetry run  python -m pytest -vs
+	poetry run  python -m pytest -vvs
 
 test_go:
 	go test -v ./...

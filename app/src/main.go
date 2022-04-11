@@ -242,8 +242,8 @@ func DownloadUpdateData(csvFilename string, inputRecords []*models.HistoricalPri
 	awsUtils.DownloadFromS3(constantsMap["s3_bucket"], csvFilename, runningOnAws, s3Client)
 	// read the data into memory
 	records := utils.ReadCsvFile(csvFilename, runningOnAws)
-	newestDate, newestCosePrice := utils.FindNewestData(records)
-	log.Println(newestCosePrice, "newestCosePrice")
+	newestDate, newestClosePrice := utils.FindNewestData(records)
+	log.Println(newestClosePrice, "newestClosePrice")
 	log.Println(newestDate, "newestDate")
 	loc, _ := time.LoadLocation("America/Los_Angeles")
 	todaysTime := time.Now().In(loc).Truncate(24 * time.Hour)
@@ -253,30 +253,29 @@ func DownloadUpdateData(csvFilename string, inputRecords []*models.HistoricalPri
 
 	log.Println("time.Now().In(loc).Day()", time.Now().In(loc).Truncate(24*time.Hour).Day())
 
+	// add new data as needed
+	numRecordsWritten, newestWrittenDate := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
+	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateData")
+
 	// compare the date to todays date and if it is the same, then we don't need to do anything. Truncate to the day
 	testingDate := time.Date(2017, time.Month(1), 5, 0, 0, 0, 0, time.UTC)
 	log.Println("testingDate.Day()", testingDate.Day())
-	log.Println("newestDate.Day() ", newestDate.Day())
+	log.Println("newestWrittenDate.Day() ", newestWrittenDate.Day())
 	log.Println("yesterdaysTime.Day() ", yesterdaysTime.Day())
 	log.Println("todaysTime.Day() ", todaysTime.Day())
 	// kinda jank, but if we are testing, check the date in main_test.go. TODO: refactor to use interface
 	_, localEnvVarPresent := os.LookupEnv("ON_LOCAL")
-	if newestDate.Day() == testingDate.Day() {
+	if newestWrittenDate.Day() == testingDate.Day() {
 		log.Println("Testing")
 	} else if localEnvVarPresent {
 		log.Println("Running on local")
-	} else if newestDate.Day() == todaysTime.Day() {
+	} else if newestWrittenDate.Day() == todaysTime.Day() {
 		log.Println("Must be testing the lambda on off times.")
-	} else if newestDate.Day() != yesterdaysTime.Day() {
-		log.Fatal("Newest date is not yesterday's date or todays date. Something is off with downloading data")
-		panic("Newest date is not yesterday's date. Something is off with downloading data")
+	} else if newestWrittenDate.Day() != yesterdaysTime.Day() {
+		log.Println("Assuming that we don't have a newest date to update. ")
 	}
 
-	// add new data as needed
-	numRecordsWritten := utils.WriteNewCsvData(inputRecords, newestDate, csvFilename, runningOnAws)
-	log.Println(numRecordsWritten, "numRecordsWritten inside of DownloadUpdateData")
-
-	return newestCosePrice, numRecordsWritten
+	return newestClosePrice, numRecordsWritten
 
 }
 
