@@ -272,8 +272,7 @@ func DownloadUpdateData(csvFilename string, inputRecords []*models.HistoricalPri
 	} else if newestWrittenDate.Day() == todaysTime.Day() {
 		log.Println("Must be testing the lambda on off times.")
 	} else if newestWrittenDate.Day() != yesterdaysTime.Day() {
-		log.Fatal("Newest date is not yesterday's date or todays date. Something is off with downloading data")
-		panic("Newest date is not yesterday's date. Something is off with downloading data")
+		log.Println("Assuming that we don't have a newest date to update. ")
 	}
 
 	return newestClosePrice, numRecordsWritten
