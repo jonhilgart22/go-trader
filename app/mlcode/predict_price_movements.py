@@ -77,6 +77,7 @@ class CoinPricePredictor:
         self.tcn_model = TCNModel
         self.nbeats_model = NBEATSModel
         self.stacking_model_name = stacking_model_name
+        self.random_state = 432
 
     def _create_models(self, load_model: bool = False) -> None:
         # TODO: we should really convert self.additional_dfs into a dict so we can lookup the names of the addtional DFs we are using to predict against. Using the length is ok as long as we don't remove DFs. 🤷‍♂️
@@ -126,14 +127,14 @@ class CoinPricePredictor:
             nbeats_model = NBEATSModel(
                 input_chunk_length=lookback_window,
                 output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
-                random_state=0,
+                random_state=self.random_state,
                 model_name=nbeats_model_name + MODEL_NAME_CONSTANT,
                 num_blocks=self.ml_constants["hyperparameters_nbeats"]["num_blocks"],
                 layer_widths=self.ml_constants["hyperparameters_nbeats"]["layer_widths"],
                 force_reset=True,
                 log_tensorboard=False,
                 work_dir=work_dir,
-                save_checkpoints=False,
+                save_checkpoints=False
             )
             if load_model:
 
@@ -150,7 +151,7 @@ class CoinPricePredictor:
 
             tcn_model = TCNModel(
                 dropout=self.ml_constants["hyperparameters_tcn"]["dropout"],
-                random_state=0,
+                random_state=self.random_state,
                 dilation_base=self.ml_constants["hyperparameters_tcn"]["dilation_base"],
                 weight_norm=self.ml_constants["hyperparameters_tcn"]["weight_norm"],
                 kernel_size=self.ml_constants["hyperparameters_tcn"]["kernel_size"],
@@ -162,7 +163,7 @@ class CoinPricePredictor:
                 force_reset=True,
                 log_tensorboard=False,
                 work_dir=work_dir,
-                save_checkpoints=False,
+                save_checkpoints=False
             )
             # This works
             if load_model:
@@ -583,7 +584,7 @@ class CoinPricePredictor:
                 logger.info(set(stacked_x_data_train.columns) - set(testing_df.columns))
                 logger.info(set(testing_df.columns) - set(stacked_x_data_train.columns))
             rf = RandomForestRegressor(
-                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"], n_jobs=-1
+                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"], n_jobs=-1, random_state=self.random_state
             )
             rf.fit(stacked_x_data_train, stacked_y_data_train)
             # need to predict
