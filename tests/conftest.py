@@ -211,8 +211,8 @@ def example_btc_df_bollinger_exit_position() -> pd.DataFrame:
             "close": [958, 996, 982, 982],
             "volume": [147775008, 222184992, 177875208, 177875208],
             "Rolling Mean": [50, 50, 50, 50],
-            "Bollinger High": [1000, 900, 1000, 1000],
-            "Bollinger Low": [1000, 900, 1000, 1000],
+            "Bollinger High": [1000, 1000, 800, 1000],
+            "Bollinger Low": [1000, 1000, 800, 1000],
         }
     )
     return df.set_index("date")
