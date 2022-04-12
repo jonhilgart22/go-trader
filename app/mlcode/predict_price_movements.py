@@ -583,9 +583,9 @@ class CoinPricePredictor:
             prediction = rf.predict(testing_df)
 
         # save prediction as part of all predictions
-        current_stacking_predictions = self.final_all_predictions_df[self.constants['stacking_prediction_col']]
+        current_stacking_predictions = self.final_all_predictions_df[self.constants["stacking_prediction_col"]]
         current_stacking_predictions[-1] = prediction
-        self.final_all_predictions_df[self.constants['stacking_prediction_col']] = current_stacking_predictions
+        self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = current_stacking_predictions
         if running_on_aws():
             all_predictions_filename = "/" + self.all_predictions_filename
         else:
