@@ -19,6 +19,7 @@ def btc_updated_predictions_df() -> pd.DataFrame:
             "date_prediction_for": ["2022-03-29", "2022-03-30", "2022-03-31"],
             "nbeats_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
             "tcn_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+            "stacking_prediction": [0, 0, 0],
         }
     )
 
@@ -38,6 +39,7 @@ def sol_updated_predictions_df() -> pd.DataFrame:
             "date_prediction_for": ["2022-03-29", "2022-03-30", "2022-03-31"],
             "nbeats_sol_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
             "tcn_sol_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+            "stacking_prediction": [0, 0, 0],
         }
     )
 
@@ -57,6 +59,7 @@ def eth_updated_predictions_df() -> pd.DataFrame:
             "date_prediction_for": ["2022-03-29", "2022-03-30", "2022-03-31"],
             "nbeats_eth_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
             "tcn_eth_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
+            "stacking_prediction": [0, 0, 0],
         }
     )
 

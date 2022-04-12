@@ -411,7 +411,7 @@ class CoinPricePredictor:
 
         return all_predictions_dict
 
-    def _save_predictions(self, input_predictions: Dict[str, float]) -> None:
+    def _generate_base_predictions_df(self, input_predictions: Dict[str, float]) -> None:
         # 1)  read in the csv file for this coin
         # 2) Add in the new price predictions, one for each col. If we don't have a col, create a new one
         # 3) save the file back to the tmp folder (depending if running on AWS or not)
@@ -491,30 +491,28 @@ class CoinPricePredictor:
         # make sure the 'date' is the first col
         first_col = final_all_predictions_df.pop(self.date_col)
         final_all_predictions_df.insert(0, self.date_col, first_col)
-        if running_on_aws():
-            all_predictions_filename = "/" + self.all_predictions_filename
-        else:
-            all_predictions_filename = self.all_predictions_filename
-        self.final_all_predictions_df = final_all_predictions_df
-        final_all_predictions_df.to_csv(all_predictions_filename, index=False)
 
-    def _make_stacking_prediction(self) -> float:
+        self.final_all_predictions_df = final_all_predictions_df
+
+    def _make_stacking_prediction_and_save(self) -> float:
         # train a RF model on the input predictions from each model.
         # we need to date align the previous predictions on the date_prediction_for
         # from the  _all_predictions file
         # test on the current days predictions
-        DATE_PART_COLS_TO_EXCLUDE = [
+        # save the predictions to the tmp folder including the stacking prediction
+        DATE_PART_AND_STACKING_COLS_TO_EXCLUDE = [
             self.constants["date_col"],
             "date_pred",
             "date_true",
             self.constants["date_prediction_for_col"],
+            self.constants["stacking_prediction_col"],
         ]
         NUMERIC_COLS_TO_EXCLUDE = [
             self.constants["bollinger_low_col"],
             self.constants["bollinger_high_col"],
             self.constants["close_col"],
         ] + self.ml_train_cols
-        ALL_COLS_TO_EXCLUDE_RF_TRAINING = DATE_PART_COLS_TO_EXCLUDE + NUMERIC_COLS_TO_EXCLUDE
+        ALL_COLS_TO_EXCLUDE_RF_TRAINING = DATE_PART_AND_STACKING_COLS_TO_EXCLUDE + NUMERIC_COLS_TO_EXCLUDE
 
         if self.stacking_model_name.lower() == "rf":
             # self.df # this has the actual close prices
@@ -552,7 +550,7 @@ class CoinPricePredictor:
             training_df = _create_date_part_cols(training_df)
             # Exclude the date related cols
 
-            testing_df = testing_df.iloc[:, ~testing_df.columns.isin(DATE_PART_COLS_TO_EXCLUDE)]
+            testing_df = testing_df.iloc[:, ~testing_df.columns.isin(DATE_PART_AND_STACKING_COLS_TO_EXCLUDE)]
 
             stacked_x_data_train = training_df.iloc[
                 :, ~training_df.columns.isin(ALL_COLS_TO_EXCLUDE_RF_TRAINING)
@@ -569,6 +567,7 @@ class CoinPricePredictor:
                 logger.info(f"{merged_df.index}, merged_df index")
                 logger.info(f"{todays_date}, todays_date")
                 logger.info(f"self.final_all_predictions_df = {self.final_all_predictions_df}")
+                logger.info(f"self.final_all_predictions_df cols = {self.final_all_predictions_df.columns}")
                 logger.info(
                     f"self.final_all_predictions_df date prediction for = {self.final_all_predictions_df.date_prediction_for}"
                 )
@@ -583,6 +582,15 @@ class CoinPricePredictor:
             # need to predict
             prediction = rf.predict(testing_df)
 
+        # save prediction as part of all predictions
+        current_stacking_predictions = self.final_all_predictions_df[self.constants['stacking_prediction_col']]
+        current_stacking_predictions[-1] = prediction
+        self.final_all_predictions_df[self.constants['stacking_prediction_col']] = current_stacking_predictions
+        if running_on_aws():
+            all_predictions_filename = "/" + self.all_predictions_filename
+        else:
+            all_predictions_filename = self.all_predictions_filename
+        self.final_all_predictions_df.to_csv(all_predictions_filename, index=False)
         return prediction
 
     def predict(self) -> float:
@@ -606,9 +614,9 @@ class CoinPricePredictor:
         sys.stdout.flush()
         predictions = self._make_predictions(train_close_series, ts_stacked_series)
         logger.info(f"predictions = {predictions}")
-        self._save_predictions(predictions)
+        self._generate_base_predictions_df(predictions)
         logger.info(f" stacking the predictions with {self.stacking_model_name}")
-        prediction = self._make_stacking_prediction()
+        prediction = self._make_stacking_prediction_and_save()
         logger.info(f"Prediction = {prediction}")
         sys.stdout.flush()
         # for now, still return the mean
