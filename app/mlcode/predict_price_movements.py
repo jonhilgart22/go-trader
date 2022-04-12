@@ -12,6 +12,7 @@ from darts.dataprocessing.transformers import Scaler
 from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
+from sklearn.ensemble import RandomForestRegressor
 from finta import TA
 
 try:  # need modules for pytest to work
@@ -37,6 +38,7 @@ class CoinPricePredictor:
         period: str = "24H",
         verbose: bool = True,
         n_years_filter: int = 3,
+        stacking_model_name: str = "RF"
     ):
         self.n_years_filer = n_years_filter
 
@@ -74,6 +76,7 @@ class CoinPricePredictor:
 
         self.tcn_model = TCNModel
         self.nbeats_model = NBEATSModel
+        self.stacking_model_name = stacking_model_name
 
     def _create_models(self, load_model: bool = False) -> None:
         # TODO: we should really convert self.additional_dfs into a dict so we can lookup the names of the addtional DFs we are using to predict against. Using the length is ok as long as we don't remove DFs. 🤷‍♂️
@@ -478,7 +481,7 @@ class CoinPricePredictor:
 
         # make sure these are all the same length
         try:
-            updated_df = pd.DataFrame(new_predictions_dict)
+            final_all_predictions_df = pd.DataFrame(new_predictions_dict)
         except ValueError as e:
             logger.error(
                 f"Found an array without the same length. {e}. This either means we have a new model or a new lookback window. Check that all arrays are the same length"
@@ -486,13 +489,79 @@ class CoinPricePredictor:
             logger.error(f"new_predictions_dict  = {new_predictions_dict}")
 
         # make sure the 'date' is the first col
-        first_col = updated_df.pop(self.date_col)
-        updated_df.insert(0, self.date_col, first_col)
+        first_col = final_all_predictions_df.pop(self.date_col)
+        final_all_predictions_df.insert(0, self.date_col, first_col)
         if running_on_aws():
             all_predictions_filename = "/" + self.all_predictions_filename
         else:
             all_predictions_filename = self.all_predictions_filename
-        updated_df.to_csv(all_predictions_filename, index=False)
+        self.final_all_predictions_df = final_all_predictions_df
+        final_all_predictions_df.to_csv(all_predictions_filename, index=False)
+
+    def _make_stacking_prediction(self) -> float:
+        # train a RF model on the input predictions from each model.
+        # we need to date align the previous predictions on the date_prediction_for
+        # from the  _all_predictions file
+        # test on the current days predictions
+        DATE_PART_COLS_TO_EXCLUDE = [self.constants['date_col'], 'date_pred', 'date_true', self.constants['date_prediction_for_col']]
+        NUMERIC_COLS_TO_EXCLUDE = [self.constants['bollinger_low_col'], self.constants['bollinger_high_col'], self.constants['close_col']] + self.ml_train_cols
+        ALL_COLS_TO_EXCLUDE_RF_TRAINING = DATE_PART_COLS_TO_EXCLUDE + NUMERIC_COLS_TO_EXCLUDE
+
+        if self.stacking_model_name.lower() == "rf":
+            # self.df # this has the actual close prices
+            # self.final_all_predictions_df # this has all predictions
+            self.final_all_predictions_df.date_prediction_for = pd.to_datetime(self.final_all_predictions_df.date_prediction_for)
+            self.final_all_predictions_df.index = pd.to_datetime(self.final_all_predictions_df.date)
+
+            # merge on the future date for this prediction to compare to the close price
+            merged_df = pd.merge(self.final_all_predictions_df, self.df,
+                                 left_on='date_prediction_for', right_index=True, suffixes=['_pred', '_true'])
+            merged_df.index = merged_df.date_prediction_for
+            todays_date = self.df.index.max()
+
+            # for training, we need to use the aligned date of the prediction FOR which is in merged_df
+            training_df = merged_df[merged_df.index < todays_date]
+            testing_df = self.final_all_predictions_df[self.final_all_predictions_df.index == todays_date]
+
+            def _create_date_part_cols(input_df: pd.DataFrame) -> pd.DataFrame:
+                # for  DFs used for RF, create day part cols
+                input_df['day'] = [t.day for t in pd.to_datetime(input_df.date)]
+                input_df['month'] = [t.month for t in pd.to_datetime(input_df.date)]
+                input_df['quarter'] = [t.quarter for t in pd.to_datetime(input_df.date)]
+                input_df['day_of_year'] = [t.strftime('%j') for t in pd.to_datetime(input_df.date)]
+                input_df['year'] = [t.year for t in pd.to_datetime(input_df.date)]
+                return input_df
+
+            testing_df = _create_date_part_cols(testing_df)
+            training_df = _create_date_part_cols(training_df)
+            # Exclude the date related cols
+
+            testing_df = testing_df.iloc[:, ~testing_df.columns.isin(DATE_PART_COLS_TO_EXCLUDE)]
+
+            stacked_x_data_train = training_df.iloc[:, ~training_df.columns.isin(ALL_COLS_TO_EXCLUDE_RF_TRAINING)]  # don't include the current row
+            stacked_y_data_train = training_df[self.pred_col]  # don't include the current row
+
+            if self.verbose:
+                logger.info(f"{stacked_x_data_train.shape} 'stacked_x_data_train shape'")
+                logger.info(f"{stacked_x_data_train.index.min()} 'stacked_x_data_train index min'")
+                logger.info(f"{stacked_x_data_train.index.max()} 'stacked_x_data_train index max'")
+                logger.info(f"{stacked_y_data_train.shape} 'stacked_y_data_train.shape'")
+                logger.info(f"{testing_df.shape} 'testing_df.shape'")
+                logger.info(f"{merged_df}, merged_df")
+                logger.info(f"{merged_df.index}, merged_df index")
+                logger.info(f"{todays_date}, todays_date")
+                logger.info(f"self.final_all_predictions_df = {self.final_all_predictions_df}")
+                logger.info(f"self.final_all_predictions_df date prediction for = {self.final_all_predictions_df.date_prediction_for}")
+                logger.info(f"self.df.index = {self.df.index}")
+                logger.info("cols difference")
+                logger.info(set(stacked_x_data_train.columns) - set(testing_df.columns))
+                logger.info(set(testing_df.columns) - set(stacked_x_data_train.columns))
+            rf = RandomForestRegressor(n_estimators=self.ml_constants['hyperparameters_random_forest']['n_estimators'], n_jobs=-1)
+            rf.fit(stacked_x_data_train, stacked_y_data_train)
+            # need to predict
+            prediction = rf.predict(testing_df)
+
+        return prediction
 
     def predict(self) -> Dict[str, float]:
         logger.info("Slicing dataframes")
@@ -516,6 +585,9 @@ class CoinPricePredictor:
         predictions = self._make_predictions(train_close_series, ts_stacked_series)
         logger.info(f"predictions = {predictions}")
         self._save_predictions(predictions)
+        logger.info(f" stacking the predictions with {self.stacking_model_name}")
+        prediction = self._make_stacking_prediction()
+        logger.info(f"Prediction = {prediction}")
         sys.stdout.flush()
         # for now, still return the mean
-        return np.mean(list(predictions.values()))
+        return prediction

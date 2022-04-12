@@ -1,2 +1,5 @@
-date,date_prediction_for,test_model_lookback_1
-2022-01-01, 2022-01-09,5.0
+date,nbeats_sol_lookback_2_window_2_std_1.5_num_add_dfs_1,tcn_sol_lookback_2_window_2_std_1.5_num_add_dfs_1,date_prediction_for,test_model_lookback_1,tcn_btc_lookback_2_window_2_std_1.5_num_add_dfs_1,nbeats_btc_lookback_2_window_2_std_1.5_num_add_dfs_1
+2022-01-01,0.0,0.0, 2022-01-09,5.0,0.0,0.0
+2022-03-29,0.0,0.0,2022-03-30,0.0,-73.34786700518204,1278.5655277651754
+2022-03-30,0.0,0.0,2022-03-31,0.0,-73.34786700518204,1278.5655277651754
+2022-03-31,1270.6732511884659,141.49820465938706,2022-04-01,0.0,0.0,0.0

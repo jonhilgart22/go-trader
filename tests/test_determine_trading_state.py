@@ -62,7 +62,7 @@ def test_no_btc_action(
         [len(col) for col in original_predictions_df.columns]
     )
     # post-test clean up. revert the updated .csv to the original. kinda jank
-    original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
+    original_df = pd.read_csv("tests/configs/btc_all_predictions_original.csv")
     original_df.to_csv(btc_all_predictions_csv, index=False)
 
 
@@ -116,7 +116,7 @@ def test_no_sol_action(
         [len(col) for col in original_predictions_df.columns]
     )
     # post-test clean up. revert the updated .csv to the original. kinda jank
-    original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
+    original_df = pd.read_csv("tests/configs/sol_all_predictions_original.csv")
     original_df.to_csv(sol_all_predictions_csv, index=False)
 
 
@@ -170,7 +170,7 @@ def test_no_eth_action(
         [len(col) for col in original_predictions_df.columns]
     )
     # post-test clean up. revert the updated .csv to the original. kinda jank
-    original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
+    original_df = pd.read_csv("tests/configs/eth_all_predictions_original.csv")
     original_df.to_csv(eth_all_predictions_csv, index=False)
 
 
@@ -235,7 +235,7 @@ def test_buy_btc_action(
         [len(col) for col in updated_predictions_df.columns]
     )
     # post-test clean up. revert the updated .csv to the original. kinda jank
-    original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
+    original_df = pd.read_csv("tests/configs/btc_all_predictions_original.csv")
 
     original_df.to_csv(btc_all_predictions_csv, index=False)
 
@@ -352,7 +352,7 @@ def test_buy_to_none_via_prediction_btc(
         [len(col) for col in updated_predictions_df.columns]
     )
     # post-test clean up. revert the updated .csv to the original. kinda jank
-    original_df = pd.read_csv("tests/configs/all_predictions_original.csv")
+    original_df = pd.read_csv("tests/configs/btc_all_predictions_original.csv")
     # overwrite the updated with the original for future tests
     original_df.to_csv(btc_all_predictions_csv, index=False)
 

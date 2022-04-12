@@ -16,7 +16,7 @@ def btc_updated_predictions_df() -> pd.DataFrame:
         {
             "date": ["2022-01-01", "2022-01-02", "2022-01-03"],
             "test_model_lookback_1": [1, 2, 3],
-            "date_prediction_for": ["2022-01-05", "2022-01-06", "2022-01-07"],
+            "date_prediction_for": ["2022-03-29", "2022-03-30", "2022-03-31"],
             "nbeats_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
             "tcn_btc_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
         }
@@ -35,7 +35,7 @@ def sol_updated_predictions_df() -> pd.DataFrame:
         {
             "date": ["2022-01-01", "2022-01-02", "2022-01-03"],
             "test_model_lookback_1": [1, 2, 3],
-            "date_prediction_for": ["2022-01-05", "2022-01-06", "2022-01-07"],
+            "date_prediction_for": ["2022-03-29", "2022-03-30", "2022-03-31"],
             "nbeats_sol_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
             "tcn_sol_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
         }
@@ -54,7 +54,7 @@ def eth_updated_predictions_df() -> pd.DataFrame:
         {
             "date": ["2022-01-01", "2022-01-02", "2022-01-03"],
             "test_model_lookback_1": [1, 2, 3],
-            "date_prediction_for": ["2022-01-05", "2022-01-06", "2022-01-07"],
+            "date_prediction_for": ["2022-03-29", "2022-03-30", "2022-03-31"],
             "nbeats_eth_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
             "tcn_eth_lookback_2_window_2_std_1.5_num_add_dfs_1": [0, 0, 0],
         }
@@ -159,12 +159,13 @@ def example_btc_df() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
+                today
             ],
-            "open": [963.66, 993.66, 988],
-            "high": [1103, 1031, 11024],
-            "low": [958, 996, 978],
-            "close": [958, 996, 982],
-            "volume": [147775008, 222184992, 177875208],
+            "open": [963.66, 993.66, 988, 988],
+            "high": [1103, 1031, 11024, 11024],
+            "low": [958, 996, 978, 978],
+            "close": [958, 996, 982, 982],
+            "volume": [147775008, 222184992, 177875208, 177875208],
         }
     )
     return df.set_index("date")
@@ -180,12 +181,13 @@ def example_sol_df() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
+                today
             ],
-            "open": [963.66, 993.66, 988],
-            "high": [1103, 1031, 11024],
-            "low": [958, 996, 978],
-            "close": [958, 996, 982],
-            "volume": [147775008, 222184992, 177875208],
+            "open": [963.66, 993.66, 988, 988],
+            "high": [1103, 1031, 11024, 11024],
+            "low": [958, 996, 978, 978],
+            "close": [958, 996, 982, 982],
+            "volume": [147775008, 222184992, 177875208, 177875208],
         }
     )
     return df.set_index("date")
@@ -201,15 +203,16 @@ def example_btc_df_bollinger_exit_position() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
+                today
             ],
-            "open": [963.66, 993.66, 988],
-            "high": [1103, 1031, 11024],
-            "low": [958, 996, 978],
-            "close": [958, 996, 982],
-            "volume": [147775008, 222184992, 177875208],
-            "Rolling Mean": [50, 50, 50],
-            "Bollinger High": [1000, 900, 1000],
-            "Bollinger Low": [1000, 900, 1000],
+            "open": [963.66, 993.66, 988, 988],
+            "high": [1103, 1031, 11024, 11024],
+            "low": [958, 996, 978, 978],
+            "close": [958, 996, 982, 982],
+            "volume": [147775008, 222184992, 177875208, 177875208],
+            "Rolling Mean": [50, 50, 50, 50],
+            "Bollinger High": [1000, 900, 1000, 1000],
+            "Bollinger Low": [1000, 900, 1000, 1000],
         }
     )
     return df.set_index("date")
@@ -225,15 +228,16 @@ def example_btc_df_bollinger_buy_to_none() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
+                today
             ],
-            "open": [963.66, 993.66, 988],
-            "high": [1103, 1031, 11024],
-            "low": [958, 996, 978],
-            "close": [958, 996, 400],
-            "volume": [147775008, 222184992, 177875208],
-            "Rolling Mean": [500, 500, 500],
-            "Bollinger High": [1000, 900, 1000],
-            "Bollinger Low": [1000, 900, 1000],
+            "open": [963.66, 993.66, 988, 988],
+            "high": [1103, 1031, 11024, 11024],
+            "low": [958, 996, 978, 978],
+            "close": [958, 996, 400, 100],
+            "volume": [147775008, 222184992, 177875208, 177875208],
+            "Rolling Mean": [500, 500, 500, 500],
+            "Bollinger High": [1000, 900, 1000, 1000],
+            "Bollinger Low": [1000, 900, 1000, 1000],
         }
     )
     return df.set_index("date")
@@ -249,15 +253,16 @@ def example_btc_df_bollinger_short() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
+                today
             ],
-            "open": [963.66, 993.66, 988],
-            "high": [1103, 1031, 11024],
-            "low": [958, 996, 978],
-            "close": [958, 800, 1500],
-            "volume": [147775008, 222184992, 177875208],
-            "Rolling Mean": [5000, 5000, 5000],
-            "Bollinger High": [1000, 900, 1000],
-            "Bollinger Low": [1000, 900, 1000],
+            "open": [963.66, 993.66, 988, 988],
+            "high": [1103, 1031, 11024, 11024],
+            "low": [958, 996, 978, 978],
+            "close": [958, 800, 1500, 1500],
+            "volume": [147775008, 222184992, 177875208, 177875208],
+            "Rolling Mean": [5000, 5000, 5000, 5000],
+            "Bollinger High": [1000, 900, 1000, 1000],
+            "Bollinger Low": [1000, 900, 1000, 1000],
         }
     )
     return df.set_index("date")
@@ -273,15 +278,16 @@ def example_eth_df() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
+                today
             ],
-            "open": [7.98, 8.17, 9.12],
-            "high": [8.47, 8.44, 10.12],
-            "low": [7.98, 8.05, 5.65],
-            "close": [8.17, 8.38, 8.01],
-            "volume": [14731700, 14579600, 12579800],
-            "Rolling Mean": [10, 10, 10],
-            "Bollinger High": [10, 10, 10],
-            "Bollinger Low": [10, 10, 10],
+            "open": [7.98, 8.17, 9.12, 10.12],
+            "high": [8.47, 8.44, 10.12, 10.12],
+            "low": [7.98, 8.05, 5.65, 5.65],
+            "close": [8.17, 8.38, 8.01, 8.01],
+            "volume": [14731700, 14579600, 12579800, 12579800],
+            "Rolling Mean": [10, 10, 10, 10],
+            "Bollinger High": [10, 10, 10, 10],
+            "Bollinger Low": [10, 10, 10, 10],
         }
     )
     return df.set_index("date")

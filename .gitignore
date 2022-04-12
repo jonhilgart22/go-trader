@@ -26,3 +26,9 @@ tmp/historic*
 *coverage*
 
 *outfile*
+
+!example_all_predictions.csv!
+
+!tests/configs/*
+
+!notebooks/training_configs/*
