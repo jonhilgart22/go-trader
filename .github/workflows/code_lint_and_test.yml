@@ -88,7 +88,7 @@ jobs:
       - name: Upload Coverage Golang
         run: |
 
-          ./cc-test-reporter after-build --prefix github.com/jonhilgart22/go-trader
+          ./cc-test-reporter after-build --prefix github.com/jonhilgart22/go-trader ${CC_TEST_REPORTER_ID}
 
       - name: lint
         run: poetry run black . --check
