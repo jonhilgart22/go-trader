@@ -480,7 +480,7 @@ class CoinPricePredictor:
                 new_predictions_dict[col] = new_array_for_missing_col
         # add in the stacking col predictions. We'll update this below
         current_stacking_preds = list(predictions_df[self.constants["stacking_prediction_col"]])
-        current_stacking_preds.append([0 for _ in range(largest_n_predictions - len(current_stacking_preds))])
+        current_stacking_preds.extend([0 for _ in range(largest_n_predictions - len(current_stacking_preds))])
         new_predictions_dict[self.constants["stacking_prediction_col"]] = current_stacking_preds
 
         # make sure these are all the same length
