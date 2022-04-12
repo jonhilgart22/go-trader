@@ -77,7 +77,7 @@ jobs:
           poetry run coverage run -m pytest && poetry run coverage xml
 
       - name: Test golang app
-        run: cd app/awsUtils && go test -v ./... -coverprofile=c.out
+        run: cd app && go test -v ./... -coverprofile=c.out
 
       - name: Upload Coverage Python
         run: |
