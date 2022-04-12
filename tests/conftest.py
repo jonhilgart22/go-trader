@@ -159,7 +159,7 @@ def example_btc_df() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
-                today
+                today,
             ],
             "open": [963.66, 993.66, 988, 988],
             "high": [1103, 1031, 11024, 11024],
@@ -181,7 +181,7 @@ def example_sol_df() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
-                today
+                today,
             ],
             "open": [963.66, 993.66, 988, 988],
             "high": [1103, 1031, 11024, 11024],
@@ -203,7 +203,7 @@ def example_btc_df_bollinger_exit_position() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
-                today
+                today,
             ],
             "open": [963.66, 993.66, 988, 988],
             "high": [1103, 1031, 11024, 11024],
@@ -228,7 +228,7 @@ def example_btc_df_bollinger_buy_to_none() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
-                today
+                today,
             ],
             "open": [963.66, 993.66, 988, 988],
             "high": [1103, 1031, 11024, 11024],
@@ -253,7 +253,7 @@ def example_btc_df_bollinger_short() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
-                today
+                today,
             ],
             "open": [963.66, 993.66, 988, 988],
             "high": [1103, 1031, 11024, 11024],
@@ -278,7 +278,7 @@ def example_eth_df() -> pd.DataFrame:
                 pd.to_datetime(today - timedelta(days=3)),
                 pd.to_datetime(today - timedelta(days=2)),
                 pd.to_datetime(today - timedelta(days=1)),
-                today
+                today,
             ],
             "open": [7.98, 8.17, 9.12, 10.12],
             "high": [8.47, 8.44, 10.12, 10.12],

@@ -12,8 +12,8 @@ from darts.dataprocessing.transformers import Scaler
 from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
-from sklearn.ensemble import RandomForestRegressor
 from finta import TA
+from sklearn.ensemble import RandomForestRegressor
 
 try:  # need modules for pytest to work
     from app.mlcode.utils import read_in_data, running_on_aws, setup_logging
@@ -38,7 +38,7 @@ class CoinPricePredictor:
         period: str = "24H",
         verbose: bool = True,
         n_years_filter: int = 3,
-        stacking_model_name: str = "RF"
+        stacking_model_name: str = "RF",
     ):
         self.n_years_filer = n_years_filter
 
@@ -503,19 +503,35 @@ class CoinPricePredictor:
         # we need to date align the previous predictions on the date_prediction_for
         # from the  _all_predictions file
         # test on the current days predictions
-        DATE_PART_COLS_TO_EXCLUDE = [self.constants['date_col'], 'date_pred', 'date_true', self.constants['date_prediction_for_col']]
-        NUMERIC_COLS_TO_EXCLUDE = [self.constants['bollinger_low_col'], self.constants['bollinger_high_col'], self.constants['close_col']] + self.ml_train_cols
+        DATE_PART_COLS_TO_EXCLUDE = [
+            self.constants["date_col"],
+            "date_pred",
+            "date_true",
+            self.constants["date_prediction_for_col"],
+        ]
+        NUMERIC_COLS_TO_EXCLUDE = [
+            self.constants["bollinger_low_col"],
+            self.constants["bollinger_high_col"],
+            self.constants["close_col"],
+        ] + self.ml_train_cols
         ALL_COLS_TO_EXCLUDE_RF_TRAINING = DATE_PART_COLS_TO_EXCLUDE + NUMERIC_COLS_TO_EXCLUDE
 
         if self.stacking_model_name.lower() == "rf":
             # self.df # this has the actual close prices
             # self.final_all_predictions_df # this has all predictions
-            self.final_all_predictions_df.date_prediction_for = pd.to_datetime(self.final_all_predictions_df.date_prediction_for)
+            self.final_all_predictions_df.date_prediction_for = pd.to_datetime(
+                self.final_all_predictions_df.date_prediction_for
+            )
             self.final_all_predictions_df.index = pd.to_datetime(self.final_all_predictions_df.date)
 
             # merge on the future date for this prediction to compare to the close price
-            merged_df = pd.merge(self.final_all_predictions_df, self.df,
-                                 left_on='date_prediction_for', right_index=True, suffixes=['_pred', '_true'])
+            merged_df = pd.merge(
+                self.final_all_predictions_df,
+                self.df,
+                left_on="date_prediction_for",
+                right_index=True,
+                suffixes=["_pred", "_true"],
+            )
             merged_df.index = merged_df.date_prediction_for
             todays_date = self.df.index.max()
 
@@ -525,11 +541,11 @@ class CoinPricePredictor:
 
             def _create_date_part_cols(input_df: pd.DataFrame) -> pd.DataFrame:
                 # for  DFs used for RF, create day part cols
-                input_df['day'] = [t.day for t in pd.to_datetime(input_df.date)]
-                input_df['month'] = [t.month for t in pd.to_datetime(input_df.date)]
-                input_df['quarter'] = [t.quarter for t in pd.to_datetime(input_df.date)]
-                input_df['day_of_year'] = [t.strftime('%j') for t in pd.to_datetime(input_df.date)]
-                input_df['year'] = [t.year for t in pd.to_datetime(input_df.date)]
+                input_df["day"] = [t.day for t in pd.to_datetime(input_df.date)]
+                input_df["month"] = [t.month for t in pd.to_datetime(input_df.date)]
+                input_df["quarter"] = [t.quarter for t in pd.to_datetime(input_df.date)]
+                input_df["day_of_year"] = [t.strftime("%j") for t in pd.to_datetime(input_df.date)]
+                input_df["year"] = [t.year for t in pd.to_datetime(input_df.date)]
                 return input_df
 
             testing_df = _create_date_part_cols(testing_df)
@@ -538,7 +554,9 @@ class CoinPricePredictor:
 
             testing_df = testing_df.iloc[:, ~testing_df.columns.isin(DATE_PART_COLS_TO_EXCLUDE)]
 
-            stacked_x_data_train = training_df.iloc[:, ~training_df.columns.isin(ALL_COLS_TO_EXCLUDE_RF_TRAINING)]  # don't include the current row
+            stacked_x_data_train = training_df.iloc[
+                :, ~training_df.columns.isin(ALL_COLS_TO_EXCLUDE_RF_TRAINING)
+            ]  # don't include the current row
             stacked_y_data_train = training_df[self.pred_col]  # don't include the current row
 
             if self.verbose:
@@ -551,19 +569,23 @@ class CoinPricePredictor:
                 logger.info(f"{merged_df.index}, merged_df index")
                 logger.info(f"{todays_date}, todays_date")
                 logger.info(f"self.final_all_predictions_df = {self.final_all_predictions_df}")
-                logger.info(f"self.final_all_predictions_df date prediction for = {self.final_all_predictions_df.date_prediction_for}")
+                logger.info(
+                    f"self.final_all_predictions_df date prediction for = {self.final_all_predictions_df.date_prediction_for}"
+                )
                 logger.info(f"self.df.index = {self.df.index}")
                 logger.info("cols difference")
                 logger.info(set(stacked_x_data_train.columns) - set(testing_df.columns))
                 logger.info(set(testing_df.columns) - set(stacked_x_data_train.columns))
-            rf = RandomForestRegressor(n_estimators=self.ml_constants['hyperparameters_random_forest']['n_estimators'], n_jobs=-1)
+            rf = RandomForestRegressor(
+                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"], n_jobs=-1
+            )
             rf.fit(stacked_x_data_train, stacked_y_data_train)
             # need to predict
             prediction = rf.predict(testing_df)
 
         return prediction
 
-    def predict(self) -> Dict[str, float]:
+    def predict(self) -> float:
         logger.info("Slicing dataframes")
         self._slice_df()
         logger.info("Building Bollinger Bands")
