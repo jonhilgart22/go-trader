@@ -394,7 +394,7 @@ class CoinPricePredictor:
             logger.info(f"Have thread = {k}")
             v.join()
 
-    def _make_predictions(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> Dict[str, float]:
+    def _make_predictions_dict(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> Dict[str, float]:
         all_predictions_dict = {}
 
         for lookback_window_models in self.models:  # lookback windows
@@ -586,8 +586,11 @@ class CoinPricePredictor:
             rf = RandomForestRegressor(
                 n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"], n_jobs=-1, random_state=self.random_state
             )
+
             rf.fit(stacked_x_data_train, stacked_y_data_train)
-            # need to predict
+            # if we have multiple rows for todays_date, ran this multiple times, take the first
+            if len(testing_df) > 1:
+                testing_df = testing_df.iloc[0, :]
             prediction = rf.predict(testing_df)
 
         # save prediction as part of all predictions. Update the last stacking prediction to this new prediction
@@ -621,11 +624,13 @@ class CoinPricePredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        predictions = self._make_predictions(train_close_series, ts_stacked_series)
-        logger.info(f"predictions = {predictions}")
-        self._generate_base_predictions_df(predictions)
-        logger.info(f" stacking the predictions with {self.stacking_model_name}")
-        prediction = self._make_stacking_prediction_and_save()
+        predictions_dict = self._make_predictions_dict(train_close_series, ts_stacked_series)
+        logger.info(f"predictions_dict = {predictions_dict}")
+        self._generate_base_predictions_df(predictions_dict)
+        # TODO: uncomment this once we have enough date_pred data
+        # logger.info(f" stacking the predictions with {self.stacking_model_name}")
+        # prediction = self._make_stacking_prediction_and_save()
+        prediction = np.mean([i for i in predictions_dict.values()])  # TODO: delete this
         logger.info(f"Prediction = {prediction}")
         sys.stdout.flush()
         # for now, still return the mean
