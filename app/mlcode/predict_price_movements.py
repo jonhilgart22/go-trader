@@ -134,7 +134,7 @@ class CoinPricePredictor:
                 force_reset=True,
                 log_tensorboard=False,
                 work_dir=work_dir,
-                save_checkpoints=False
+                save_checkpoints=False,
             )
             if load_model:
 
@@ -163,7 +163,7 @@ class CoinPricePredictor:
                 force_reset=True,
                 log_tensorboard=False,
                 work_dir=work_dir,
-                save_checkpoints=False
+                save_checkpoints=False,
             )
             # This works
             if load_model:
@@ -464,7 +464,6 @@ class CoinPricePredictor:
         logger.info(f"current_date_pred_for_list = {current_date_pred_for_list}")
 
         new_predictions_dict[self.constants["date_prediction_for_col"]].extend(current_date_pred_for_list)
-        logger.info(f"new_predictions_dict= {new_predictions_dict}")
 
         # From the original predictions_df, what cols do we have that we no longer have?
         # this can happen if we change the predictions params to create new model names
@@ -486,6 +485,8 @@ class CoinPricePredictor:
 
         current_stacking_preds.extend([0 for _ in range(largest_n_predictions - len(current_stacking_preds))])
         new_predictions_dict[self.constants["stacking_prediction_col"]] = current_stacking_preds
+
+        logger.info(f"new_predictions_dict= {new_predictions_dict}")
 
         # make sure these are all the same length
         try:
@@ -566,6 +567,9 @@ class CoinPricePredictor:
             stacked_y_data_train = training_df[self.pred_col]  # don't include the current row
 
             if self.verbose:
+                logger.info(f"{training_df.head} training_df head")
+                logger.info(f"training_df tail ={training_df.tail()}")
+                logger.info(f"training_df cols {training_df.columns}")
                 logger.info(f"{stacked_x_data_train.shape} 'stacked_x_data_train shape'")
                 logger.info(f"{stacked_x_data_train.index.min()} 'stacked_x_data_train index min'")
                 logger.info(f"{stacked_x_data_train.index.max()} 'stacked_x_data_train index max'")
@@ -584,14 +588,16 @@ class CoinPricePredictor:
                 logger.info(set(stacked_x_data_train.columns) - set(testing_df.columns))
                 logger.info(set(testing_df.columns) - set(stacked_x_data_train.columns))
             rf = RandomForestRegressor(
-                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"], n_jobs=-1, random_state=self.random_state
+                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"],
+                n_jobs=-1,
+                random_state=self.random_state,
             )
 
             rf.fit(stacked_x_data_train, stacked_y_data_train)
-            # if we have multiple rows for todays_date, ran this multiple times, take the first
+            # if we have multiple rows for todays_date, run this multiple times, take the first
             if len(testing_df) > 1:
                 testing_df = testing_df.iloc[0, :]
-            prediction = rf.predict(testing_df)
+            prediction = rf.predict(testing_df)[0]  # predict returns a numpy array, so we need to index it
 
         # save prediction as part of all predictions. Update the last stacking prediction to this new prediction
         current_stacking_predictions = self.final_all_predictions_df[self.constants["stacking_prediction_col"]]
@@ -627,10 +633,10 @@ class CoinPricePredictor:
         predictions_dict = self._make_predictions_dict(train_close_series, ts_stacked_series)
         logger.info(f"predictions_dict = {predictions_dict}")
         self._generate_base_predictions_df(predictions_dict)
-        # TODO: uncomment this once we have enough date_pred data
-        # logger.info(f" stacking the predictions with {self.stacking_model_name}")
-        # prediction = self._make_stacking_prediction_and_save()
-        prediction = np.mean([i for i in predictions_dict.values()])  # TODO: delete this
+
+        logger.info(f" stacking the predictions with {self.stacking_model_name}")
+        prediction = self._make_stacking_prediction_and_save()
+
         logger.info(f"Prediction = {prediction}")
         sys.stdout.flush()
         # for now, still return the mean
