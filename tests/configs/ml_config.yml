@@ -20,3 +20,7 @@ hyperparameters_nbeats:
     num_blocks: 4
     layer_widths: 256
     epochs: 1
+hyperparameters_random_forest:
+    n_estimators: 200
+hyperparameters_gradient_boosting:
+    n_estimators: 150

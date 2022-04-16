@@ -64,6 +64,7 @@ date_col: date
 
 ## DF cols for price predictions
 date_prediction_for_col: date_prediction_for
+stacking_prediction_col: stacking_prediction
 
 # directory information
 

@@ -25,12 +25,6 @@ jobs:
         run: |
           go vet ./...
           go fmt ./...
-      - name: Run testing aws utils
-        run: cd app/awsUtils && go test -v
-      - name: Run testing ftx
-        run: cd app/ftx && go test -v
-      - name: Run testing src
-        run: cd app/src && go test -v
       ## setup python
       - name: Set up python
         uses: actions/setup-python@v2
@@ -81,11 +75,21 @@ jobs:
       - name: Coverage
         run: |
           poetry run coverage run -m pytest && poetry run coverage xml
-      - name: Upload Coverage
+
+      - name: Test golang app
+        run: cd app && go test -v ./... -coverprofile=c.out
+
+      - name: Upload Coverage Python
         run: |
           export CC_TEST_REPORTER_ID=0db0e2cce20c934be6a79128cf743b8b0bd036ef50b4778d5eeda7f1598cd194
           ./cc-test-reporter format-coverage -t coverage.py
           ./cc-test-reporter upload-coverage
+
+      - name: Upload Coverage Golang
+        run: |
+
+          ./cc-test-reporter after-build --prefix github.com/jonhilgart22/go-trader -r 0db0e2cce20c934be6a79128cf743b8b0bd036ef50b4778d5eeda7f1598cd194
+
       - name: lint
         run: poetry run black . --check
       - name: flake8

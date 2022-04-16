@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import sys
-from collections import defaultdict
 from threading import Thread
 from typing import Any, Dict, List, Tuple
 
@@ -13,11 +12,14 @@ from darts.models import NBEATSModel, TCNModel
 from darts.utils.missing_values import fill_missing_values
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from finta import TA
+from sklearn.ensemble import RandomForestRegressor
 
 try:  # need modules for pytest to work
-    from app.mlcode.utils import read_in_data, running_on_aws, setup_logging
+    from app.mlcode.base_predictions import BasePredictor
+    from app.mlcode.utils import running_on_aws, setup_logging
 except ModuleNotFoundError:  # Go is unable to run python modules -m
-    from utils import read_in_data, running_on_aws, setup_logging
+    from base_predictions import BasePredictor
+    from utils import running_on_aws, setup_logging
 
 
 __all__ = ["CoinPricePredictor"]
@@ -25,7 +27,7 @@ __all__ = ["CoinPricePredictor"]
 logger = setup_logging()
 
 
-class CoinPricePredictor:
+class CoinPricePredictor(BasePredictor):
     def __init__(
         self,
         coin_to_predict: str,
@@ -37,7 +39,9 @@ class CoinPricePredictor:
         period: str = "24H",
         verbose: bool = True,
         n_years_filter: int = 3,
+        stacking_model_name: str = "RF",
     ):
+        super().__init__()
         self.n_years_filer = n_years_filter
 
         self.coin_to_predict = coin_to_predict
@@ -74,6 +78,8 @@ class CoinPricePredictor:
 
         self.tcn_model = TCNModel
         self.nbeats_model = NBEATSModel
+        self.stacking_model_name = stacking_model_name
+        self.random_state = 432
 
     def _create_models(self, load_model: bool = False) -> None:
         # TODO: we should really convert self.additional_dfs into a dict so we can lookup the names of the addtional DFs we are using to predict against. Using the length is ok as long as we don't remove DFs. 🤷‍♂️
@@ -123,7 +129,7 @@ class CoinPricePredictor:
             nbeats_model = NBEATSModel(
                 input_chunk_length=lookback_window,
                 output_chunk_length=self.ml_constants["prediction_params"]["prediction_n_days"],
-                random_state=0,
+                random_state=self.random_state,
                 model_name=nbeats_model_name + MODEL_NAME_CONSTANT,
                 num_blocks=self.ml_constants["hyperparameters_nbeats"]["num_blocks"],
                 layer_widths=self.ml_constants["hyperparameters_nbeats"]["layer_widths"],
@@ -147,7 +153,7 @@ class CoinPricePredictor:
 
             tcn_model = TCNModel(
                 dropout=self.ml_constants["hyperparameters_tcn"]["dropout"],
-                random_state=0,
+                random_state=self.random_state,
                 dilation_base=self.ml_constants["hyperparameters_tcn"]["dilation_base"],
                 weight_norm=self.ml_constants["hyperparameters_tcn"]["weight_norm"],
                 kernel_size=self.ml_constants["hyperparameters_tcn"]["kernel_size"],
@@ -384,117 +390,121 @@ class CoinPricePredictor:
                     dict_of_threads[str(lookback_window_models) + "_tcn"].start()
 
                 else:
-                    raise ValueError(f"We hdave an incorrect model name of {model.model_name} we need tcn or nbeats")
+                    raise ValueError(f"We have an incorrect model name of {model.model_name} we need tcn or nbeats")
         # block until all models are trained
         for k, v in dict_of_threads.items():
             logger.info(f"Have thread = {k}")
             v.join()
 
-    def _make_predictions(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> Dict[str, float]:
-        all_predictions_dict = {}
+    def _make_stacking_prediction_and_save(self) -> float:
+        # train a RF model on the input predictions from each model.
+        # we need to date align the previous predictions on the date_prediction_for
+        # from the  _all_predictions file
+        # test on the current days predictions
+        # save the predictions to the tmp folder including the stacking prediction
+        DATE_PART_AND_STACKING_COLS_TO_EXCLUDE = [
+            self.constants["date_col"],
+            "date_pred",
+            "date_true",
+            self.constants["date_prediction_for_col"],
+            self.constants["stacking_prediction_col"],
+        ]
+        NUMERIC_COLS_TO_EXCLUDE = [
+            self.constants["bollinger_low_col"],
+            self.constants["bollinger_high_col"],
+            self.constants["close_col"],
+        ] + self.ml_train_cols
+        ALL_COLS_TO_EXCLUDE_RF_TRAINING = DATE_PART_AND_STACKING_COLS_TO_EXCLUDE + NUMERIC_COLS_TO_EXCLUDE
 
-        for lookback_window_models in self.models:  # lookback windows
-            for model in lookback_window_models:
-                prediction = model.predict(
-                    n=self.ml_constants["prediction_params"]["prediction_n_days"],
-                    series=train_close_series,
-                    past_covariates=[ts_stacked_series],
-                ).last_value()  # grab the last value
-                logger.info(
-                    f" Model = { model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {prediction}"
-                )
-                all_predictions_dict[model.model_name] = prediction
-        self.all_predictions_dict = all_predictions_dict
-
-        return all_predictions_dict
-
-    def _save_predictions(self, input_predictions: Dict[str, float]) -> None:
-        # 1)  read in the csv file for this coin
-        # 2) Add in the new price predictions, one for each col. If we don't have a col, create a new one
-        # 3) save the file back to the tmp folder (depending if running on AWS or not)
-
-        # this sets the date to be the index
-        predictions_df = read_in_data(self.all_predictions_filename, running_on_aws(), self.constants["date_col"])
-
-        new_predictions_dict: Dict[str, Any] = defaultdict(list)
-
-        all_cols = list(predictions_df.columns)
-        largest_n_predictions = 1 + np.max(predictions_df.count())
-
-        # TODO: test the csv schema?
-        for model_name, prediction in input_predictions.items():
-            if model_name in all_cols:
-                # previous predictions
-                current_predictions_list = list(predictions_df[model_name])
-                # add in previous
-                new_predictions_dict[model_name].extend(current_predictions_list)
-                # add in new
-                new_predictions_dict[model_name].append(prediction)
-                num_predictions_for_this_model = len(new_predictions_dict[model_name])
-                # if
-                if num_predictions_for_this_model > largest_n_predictions:
-                    largest_n_predictions = num_predictions_for_this_model
-
-            else:  # new model_name
-                new_model_predictions_array = list(np.zeros(largest_n_predictions))
-                new_model_predictions_array[-1] = input_predictions[model_name]
-                new_predictions_dict[model_name].extend(new_model_predictions_array)
-
-        # Add in the dates
-        current_pred_dates_list = [index_date.strftime("%Y-%m-%d") for index_date in predictions_df.index]
-        logger.info(f"Newest date for all predictions = {self.df.index.max()}")
-        current_pred_dates_list.append(self.df.index.max().strftime("%Y-%m-%d"))  # current dates
-
-        new_predictions_dict[self.date_col].extend(current_pred_dates_list)
-
-        # Add in the pred for dates
-        # for example, if we have a prediction_n_days of
-        # 7, and we predict on 1/1 the date_prediction_for is 1/8
-
-        current_date_pred_for_list = list(predictions_df[self.constants["date_prediction_for_col"]])
-        # add in the prediction_n_days window to the current date
-        timedelta_days = pd.to_timedelta(self.ml_constants["prediction_params"]["prediction_n_days"], unit="days")
-        newest_date_for_pred_str = (self.df.index.max() + timedelta_days).strftime("%Y-%m-%d")
-        logger.info(f"newest_date_for_pred_str = {newest_date_for_pred_str}")
-        current_date_pred_for_list.append(newest_date_for_pred_str)
-        logger.info(f"current_date_pred_for_list = {current_date_pred_for_list}")
-
-        new_predictions_dict[self.constants["date_prediction_for_col"]].extend(current_date_pred_for_list)
-        logger.info(f"new_predictions_dict= {new_predictions_dict}")
-
-        # From the original predictions_df, what cols do we have that we no longer have?
-        # this can happen if we change the predictions params to create new model names
-        missing_cols = list(set(predictions_df.columns).difference(list(input_predictions.keys())))
-        logger.info(f"missing_cols ={missing_cols}")
-        #  make sure to exclude the date cols
-        dates_cols = [self.constants["date_prediction_for_col"], self.date_col]
-
-        for col in missing_cols:
-            if col not in dates_cols:
-                current_preds = predictions_df[col]
-                new_array_for_missing_col = list(np.zeros(largest_n_predictions))
-                new_array_for_missing_col[: len(current_preds)] = current_preds
-                new_predictions_dict[col] = new_array_for_missing_col
-
-        # make sure these are all the same length
-        try:
-            updated_df = pd.DataFrame(new_predictions_dict)
-        except ValueError as e:
-            logger.error(
-                f"Found an array without the same length. {e}. This either means we have a new model or a new lookback window. Check that all arrays are the same length"
+        if self.stacking_model_name.lower() == "rf":
+            # self.df # this has the actual close prices
+            # self.final_all_predictions_df # this has all predictions
+            self.final_all_predictions_df.date_prediction_for = pd.to_datetime(
+                self.final_all_predictions_df.date_prediction_for
             )
-            logger.error(f"new_predictions_dict  = {new_predictions_dict}")
+            self.final_all_predictions_df.index = pd.to_datetime(self.final_all_predictions_df.date)
 
-        # make sure the 'date' is the first col
-        first_col = updated_df.pop(self.date_col)
-        updated_df.insert(0, self.date_col, first_col)
+            # merge on the future date for this prediction to compare to the close price
+            merged_df = pd.merge(
+                self.final_all_predictions_df,
+                self.df,
+                left_on="date_prediction_for",
+                right_index=True,
+                suffixes=["_pred", "_true"],
+            )
+            merged_df.index = merged_df.date_prediction_for
+            todays_date = self.df.index.max()
+
+            # for training, we need to use the aligned date of the prediction FOR which is in merged_df
+            training_df = merged_df[merged_df.index < todays_date]
+            testing_df = self.final_all_predictions_df[self.final_all_predictions_df.index == todays_date]
+
+            def _create_date_part_cols(input_df: pd.DataFrame) -> pd.DataFrame:
+                # for  DFs used for RF, create day part cols
+                input_df["day"] = [t.day for t in pd.to_datetime(input_df.date)]
+                input_df["month"] = [t.month for t in pd.to_datetime(input_df.date)]
+                input_df["quarter"] = [t.quarter for t in pd.to_datetime(input_df.date)]
+                input_df["day_of_year"] = [t.strftime("%j") for t in pd.to_datetime(input_df.date)]
+                input_df["year"] = [t.year for t in pd.to_datetime(input_df.date)]
+                return input_df
+
+            testing_df = _create_date_part_cols(testing_df)
+            training_df = _create_date_part_cols(training_df)
+            # Exclude the date related cols
+
+            testing_df = testing_df.iloc[:, ~testing_df.columns.isin(DATE_PART_AND_STACKING_COLS_TO_EXCLUDE)]
+
+            stacked_x_data_train = training_df.iloc[
+                :, ~training_df.columns.isin(ALL_COLS_TO_EXCLUDE_RF_TRAINING)
+            ]  # don't include the current row
+            stacked_y_data_train = training_df[self.pred_col]  # don't include the current row
+
+            if self.verbose:
+                logger.info(f"{training_df.head} training_df head")
+                logger.info(f"training_df tail ={training_df.tail()}")
+                logger.info(f"training_df cols {training_df.columns}")
+                logger.info(f"{stacked_x_data_train.shape} 'stacked_x_data_train shape'")
+                logger.info(f"{stacked_x_data_train.index.min()} 'stacked_x_data_train index min'")
+                logger.info(f"{stacked_x_data_train.index.max()} 'stacked_x_data_train index max'")
+                logger.info(f"{stacked_y_data_train.shape} 'stacked_y_data_train.shape'")
+                logger.info(f"{testing_df.shape} 'testing_df.shape'")
+                logger.info(f"{merged_df}, merged_df")
+                logger.info(f"{merged_df.index}, merged_df index")
+                logger.info(f"{todays_date}, todays_date")
+                logger.info(f"self.final_all_predictions_df = {self.final_all_predictions_df}")
+                logger.info(f"self.final_all_predictions_df cols = {self.final_all_predictions_df.columns}")
+                logger.info(
+                    f"self.final_all_predictions_df date prediction for = {self.final_all_predictions_df.date_prediction_for}"
+                )
+                logger.info(f"self.df.index = {self.df.index}")
+                logger.info("cols difference")
+                logger.info(set(stacked_x_data_train.columns) - set(testing_df.columns))
+                logger.info(set(testing_df.columns) - set(stacked_x_data_train.columns))
+            estimator = RandomForestRegressor(
+                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"],
+                n_jobs=-1,
+                random_state=self.random_state,
+            )
+
+            estimator.fit(stacked_x_data_train, stacked_y_data_train)
+            # if we have multiple rows for todays_date, run this multiple times, take the first
+            if len(testing_df) > 1:
+                testing_df = testing_df.iloc[0, :]
+            prediction = estimator.predict(testing_df)[0]  # predict returns a numpy array, so we need to index it
+
+        # save prediction as part of all predictions. Update the last stacking prediction to this new prediction
+        current_stacking_predictions = self.final_all_predictions_df[self.constants["stacking_prediction_col"]]
+        current_stacking_predictions[-1] = prediction
+        self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = current_stacking_predictions
+
         if running_on_aws():
             all_predictions_filename = "/" + self.all_predictions_filename
         else:
             all_predictions_filename = self.all_predictions_filename
-        updated_df.to_csv(all_predictions_filename, index=False)
+        self.final_all_predictions_df.to_csv(all_predictions_filename, index=False)
+        return prediction
 
-    def predict(self) -> Dict[str, float]:
+    def predict(self) -> float:
         logger.info("Slicing dataframes")
         self._slice_df()
         logger.info("Building Bollinger Bands")
@@ -504,7 +514,6 @@ class CoinPricePredictor:
         sys.stdout.flush()
         # turns out, it's better to create new models than retrain old ones
         self._create_models()
-
         logger.info("Converting data to timeseries")
         sys.stdout.flush()
         train_close_series, ts_stacked_series = self._convert_data_to_timeseries()
@@ -513,9 +522,14 @@ class CoinPricePredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        predictions = self._make_predictions(train_close_series, ts_stacked_series)
-        logger.info(f"predictions = {predictions}")
-        self._save_predictions(predictions)
+        # base predictions from child class
+        predictions_dict = self._make_base_predictions_dict(train_close_series, ts_stacked_series)
+        logger.info(f"predictions_dict = {predictions_dict}")
+        self._generate_base_predictions_df(predictions_dict)
+
+        logger.info(f" stacking the predictions with {self.stacking_model_name}")
+        prediction = self._make_stacking_prediction_and_save()
+        logger.info(f"Prediction = {prediction}")
         sys.stdout.flush()
         # for now, still return the mean
-        return np.mean(list(predictions.values()))
+        return prediction
