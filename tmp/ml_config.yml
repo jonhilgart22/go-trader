@@ -21,3 +21,5 @@ hyperparameters_nbeats:
     epochs: 10
 hyperparameters_random_forest:
     n_estimators: 200
+hyperparameters_gradient_boosting:
+    n_estimators: 150

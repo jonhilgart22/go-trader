@@ -3,7 +3,7 @@ import os
 import sys
 from collections import defaultdict
 from threading import Thread
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -394,7 +394,7 @@ class CoinPricePredictor:
             logger.info(f"Have thread = {k}")
             v.join()
 
-    def _make_predictions_dict(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> Dict[str, float]:
+    def _make_base_predictions_dict(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> Dict[str, float]:
         all_predictions_dict = {}
 
         for lookback_window_models in self.models:  # lookback windows
@@ -417,15 +417,38 @@ class CoinPricePredictor:
         # 2) Add in the new price predictions, one for each col. If we don't have a col, create a new one
         # 3) save the file back to the tmp folder (depending if running on AWS or not)
 
+        def _add_in_date_cols(df: pd.DataFrame, new_predictions_dict: Dict[str, List[Union[int, float]]], predictions_df: pd.DataFrame, date_prediction_for_col: str, date_col: str, prediction_n_days: int) -> Dict[str, List[Union[int, float]]]:
+            # Add in the dates
+            current_pred_dates_list = [index_date.strftime("%Y-%m-%d") for index_date in predictions_df.index]
+            logger.info(f"Newest date for all predictions = {df.index.max()}")
+            current_pred_dates_list.append(df.index.max().strftime("%Y-%m-%d"))  # current dates
+
+            new_predictions_dict[date_col].extend(current_pred_dates_list)
+
+            # Add in the pred for dates
+            # for example, if we have a prediction_n_days of
+            # 7, and we predict on 1/1 the date_prediction_for is 1/8
+
+            current_date_pred_for_list = list(predictions_df[date_prediction_for_col])
+            # add in the prediction_n_days window to the current date
+            timedelta_days = pd.to_timedelta(prediction_n_days, unit="days")
+            newest_date_for_pred_str = (self.df.index.max() + timedelta_days).strftime("%Y-%m-%d")
+            logger.info(f"newest_date_for_pred_str = {newest_date_for_pred_str}")
+            current_date_pred_for_list.append(newest_date_for_pred_str)
+            logger.info(f"current_date_pred_for_list = {current_date_pred_for_list}")
+
+            new_predictions_dict[date_prediction_for_col].extend(current_date_pred_for_list)
+
+            return new_predictions_dict
+
         # this sets the date to be the index
         predictions_df = read_in_data(self.all_predictions_filename, running_on_aws(), self.constants["date_col"])
-
+        # store all arrays we will need to add to the df
         new_predictions_dict: Dict[str, Any] = defaultdict(list)
-
         all_cols = list(predictions_df.columns)
         largest_n_predictions = 1 + np.max(predictions_df.count())
 
-        # TODO: test the csv schema?
+        # for the current base predictions
         for model_name, prediction in input_predictions.items():
             if model_name in all_cols:
                 # previous predictions
@@ -444,27 +467,7 @@ class CoinPricePredictor:
                 new_model_predictions_array[-1] = input_predictions[model_name]
                 new_predictions_dict[model_name].extend(new_model_predictions_array)
 
-        # Add in the dates
-        current_pred_dates_list = [index_date.strftime("%Y-%m-%d") for index_date in predictions_df.index]
-        logger.info(f"Newest date for all predictions = {self.df.index.max()}")
-        current_pred_dates_list.append(self.df.index.max().strftime("%Y-%m-%d"))  # current dates
-
-        new_predictions_dict[self.date_col].extend(current_pred_dates_list)
-
-        # Add in the pred for dates
-        # for example, if we have a prediction_n_days of
-        # 7, and we predict on 1/1 the date_prediction_for is 1/8
-
-        current_date_pred_for_list = list(predictions_df[self.constants["date_prediction_for_col"]])
-        # add in the prediction_n_days window to the current date
-        timedelta_days = pd.to_timedelta(self.ml_constants["prediction_params"]["prediction_n_days"], unit="days")
-        newest_date_for_pred_str = (self.df.index.max() + timedelta_days).strftime("%Y-%m-%d")
-        logger.info(f"newest_date_for_pred_str = {newest_date_for_pred_str}")
-        current_date_pred_for_list.append(newest_date_for_pred_str)
-        logger.info(f"current_date_pred_for_list = {current_date_pred_for_list}")
-
-        new_predictions_dict[self.constants["date_prediction_for_col"]].extend(current_date_pred_for_list)
-
+        new_predictions_dict = _add_in_date_cols(self.df, new_predictions_dict, predictions_df, self.constants["date_prediction_for_col"], self.date_col, self.ml_constants["prediction_params"]["prediction_n_days"])
         # From the original predictions_df, what cols do we have that we no longer have?
         # this can happen if we change the predictions params to create new model names
         missing_cols = list(set(predictions_df.columns).difference(list(input_predictions.keys())))
@@ -587,17 +590,16 @@ class CoinPricePredictor:
                 logger.info("cols difference")
                 logger.info(set(stacked_x_data_train.columns) - set(testing_df.columns))
                 logger.info(set(testing_df.columns) - set(stacked_x_data_train.columns))
-            rf = RandomForestRegressor(
-                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"],
-                n_jobs=-1,
+            estimator = RandomForestRegressor(
+                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"], n_jobs=-1,
                 random_state=self.random_state,
             )
 
-            rf.fit(stacked_x_data_train, stacked_y_data_train)
+            estimator.fit(stacked_x_data_train, stacked_y_data_train)
             # if we have multiple rows for todays_date, run this multiple times, take the first
             if len(testing_df) > 1:
                 testing_df = testing_df.iloc[0, :]
-            prediction = rf.predict(testing_df)[0]  # predict returns a numpy array, so we need to index it
+            prediction = estimator.predict(testing_df)[0]  # predict returns a numpy array, so we need to index it
 
         # save prediction as part of all predictions. Update the last stacking prediction to this new prediction
         current_stacking_predictions = self.final_all_predictions_df[self.constants["stacking_prediction_col"]]
@@ -621,7 +623,6 @@ class CoinPricePredictor:
         sys.stdout.flush()
         # turns out, it's better to create new models than retrain old ones
         self._create_models()
-
         logger.info("Converting data to timeseries")
         sys.stdout.flush()
         train_close_series, ts_stacked_series = self._convert_data_to_timeseries()
@@ -630,13 +631,11 @@ class CoinPricePredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
-        predictions_dict = self._make_predictions_dict(train_close_series, ts_stacked_series)
+        predictions_dict = self._make_base_predictions_dict(train_close_series, ts_stacked_series)
         logger.info(f"predictions_dict = {predictions_dict}")
         self._generate_base_predictions_df(predictions_dict)
-
         logger.info(f" stacking the predictions with {self.stacking_model_name}")
         prediction = self._make_stacking_prediction_and_save()
-
         logger.info(f"Prediction = {prediction}")
         sys.stdout.flush()
         # for now, still return the mean

@@ -1,5 +1,5 @@
 buy_entry_price: 13.7645
-buy_has_crossed_mean: 0.0
+buy_has_crossed_mean: 1.0
 mode: buy
 position_entry_date: '2022-04-11'
 short_entry_price: 0.0
