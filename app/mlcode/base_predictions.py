@@ -18,6 +18,13 @@ logger = setup_logging()
 
 
 class BasePredictor:
+    models: List[Any]  # Union[NBEATSModel, TCNModel]
+    ml_constants: Dict[str, Any]
+    df: pd.DataFrame
+    date_col: str
+    all_predictions_filename: str
+    constants: Dict[str, Any]
+
     def _make_base_predictions_dict(
         self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries
     ) -> Dict[str, float]:
