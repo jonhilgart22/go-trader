@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 import os
 import sys
-from collections import defaultdict
 from threading import Thread
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -16,9 +15,11 @@ from finta import TA
 from sklearn.ensemble import RandomForestRegressor
 
 try:  # need modules for pytest to work
-    from app.mlcode.utils import read_in_data, running_on_aws, setup_logging
+    from app.mlcode.utils import running_on_aws, setup_logging
+    from app.mlcode.base_predictions import BasePredictor
 except ModuleNotFoundError:  # Go is unable to run python modules -m
-    from utils import read_in_data, running_on_aws, setup_logging
+    from utils import running_on_aws, setup_logging
+    from base_predictions import BasePredictor
 
 
 __all__ = ["CoinPricePredictor"]
@@ -26,7 +27,7 @@ __all__ = ["CoinPricePredictor"]
 logger = setup_logging()
 
 
-class CoinPricePredictor:
+class CoinPricePredictor(BasePredictor):
     def __init__(
         self,
         coin_to_predict: str,
@@ -40,6 +41,7 @@ class CoinPricePredictor:
         n_years_filter: int = 3,
         stacking_model_name: str = "RF",
     ):
+        super().__init__()
         self.n_years_filer = n_years_filter
 
         self.coin_to_predict = coin_to_predict
@@ -394,118 +396,6 @@ class CoinPricePredictor:
             logger.info(f"Have thread = {k}")
             v.join()
 
-    def _make_base_predictions_dict(self, train_close_series: TimeSeries, ts_stacked_series: TimeSeries) -> Dict[str, float]:
-        all_predictions_dict = {}
-
-        for lookback_window_models in self.models:  # lookback windows
-            for model in lookback_window_models:
-                prediction = model.predict(
-                    n=self.ml_constants["prediction_params"]["prediction_n_days"],
-                    series=train_close_series,
-                    past_covariates=[ts_stacked_series],
-                ).last_value()  # grab the last value
-                logger.info(
-                    f" Model = { model.model_name} Lookback = {self.ml_constants['prediction_params']['prediction_n_days']} Prediction = {prediction}"
-                )
-                all_predictions_dict[model.model_name] = prediction
-        self.all_predictions_dict = all_predictions_dict
-
-        return all_predictions_dict
-
-    def _generate_base_predictions_df(self, input_predictions: Dict[str, float]) -> None:
-        # 1)  read in the csv file for this coin
-        # 2) Add in the new price predictions, one for each col. If we don't have a col, create a new one
-        # 3) save the file back to the tmp folder (depending if running on AWS or not)
-
-        def _add_in_date_cols(df: pd.DataFrame, new_predictions_dict: Dict[str, List[Union[int, float]]], predictions_df: pd.DataFrame, date_prediction_for_col: str, date_col: str, prediction_n_days: int) -> Dict[str, List[Union[int, float]]]:
-            # Add in the dates
-            current_pred_dates_list = [index_date.strftime("%Y-%m-%d") for index_date in predictions_df.index]
-            logger.info(f"Newest date for all predictions = {df.index.max()}")
-            current_pred_dates_list.append(df.index.max().strftime("%Y-%m-%d"))  # current dates
-
-            new_predictions_dict[date_col].extend(current_pred_dates_list)
-
-            # Add in the pred for dates
-            # for example, if we have a prediction_n_days of
-            # 7, and we predict on 1/1 the date_prediction_for is 1/8
-
-            current_date_pred_for_list = list(predictions_df[date_prediction_for_col])
-            # add in the prediction_n_days window to the current date
-            timedelta_days = pd.to_timedelta(prediction_n_days, unit="days")
-            newest_date_for_pred_str = (self.df.index.max() + timedelta_days).strftime("%Y-%m-%d")
-            logger.info(f"newest_date_for_pred_str = {newest_date_for_pred_str}")
-            current_date_pred_for_list.append(newest_date_for_pred_str)
-            logger.info(f"current_date_pred_for_list = {current_date_pred_for_list}")
-
-            new_predictions_dict[date_prediction_for_col].extend(current_date_pred_for_list)
-
-            return new_predictions_dict
-
-        def _add_in_current_base_predictions(new_predictions_dict: Dict[str, List[Union[int, float]]], input_predictions: Dict[str, float], predictions_df: pd.DataFrame) -> Dict[str, List[Union[int, float]]]:
-            # for the current base predictions
-            for model_name, prediction in input_predictions.items():
-                if model_name in all_cols:
-                    # previous predictions
-                    current_predictions_list = list(predictions_df[model_name])
-                    # add in previous
-                    new_predictions_dict[model_name].extend(current_predictions_list)
-                    # add in new
-                    new_predictions_dict[model_name].append(prediction)
-
-                else:  # new model_name
-                    new_model_predictions_array = list(np.zeros(largest_n_predictions))
-                    new_model_predictions_array[-1] = input_predictions[model_name]
-                    new_predictions_dict[model_name].extend(new_model_predictions_array)
-            return new_predictions_dict
-
-        # this sets the date to be the index
-        predictions_df = read_in_data(self.all_predictions_filename, running_on_aws(), self.constants["date_col"])
-        # store all arrays we will need to add to the df
-        new_predictions_dict: Dict[str, Any] = defaultdict(list)
-        all_cols = list(predictions_df.columns)
-        largest_n_predictions = 1 + np.max(predictions_df.count())
-
-        new_predictions_dict = _add_in_current_base_predictions(new_predictions_dict, input_predictions, predictions_df)
-
-        new_predictions_dict = _add_in_date_cols(self.df, new_predictions_dict, predictions_df, self.constants["date_prediction_for_col"], self.date_col, self.ml_constants["prediction_params"]["prediction_n_days"])
-        # From the original predictions_df, what cols do we have that we no longer have?
-        # this can happen if we change the predictions params to create new model names
-        missing_cols = list(set(predictions_df.columns).difference(list(input_predictions.keys())))
-        logger.info(f"missing_cols ={missing_cols}")
-        #  make sure to exclude the date cols
-        dates_cols = [self.constants["date_prediction_for_col"], self.date_col]
-
-        for col in missing_cols:
-            if col not in dates_cols:
-                current_preds = predictions_df[col]
-                new_array_for_missing_col = list(np.zeros(largest_n_predictions))
-                new_array_for_missing_col[: len(current_preds)] = current_preds
-                new_predictions_dict[col] = new_array_for_missing_col
-        # add in the stacking col predictions. We'll update this below
-        current_stacking_preds = []
-        if self.constants["stacking_prediction_col"] in predictions_df.columns:
-            current_stacking_preds = list(predictions_df[self.constants["stacking_prediction_col"]])
-
-        current_stacking_preds.extend([0 for _ in range(largest_n_predictions - len(current_stacking_preds))])
-        new_predictions_dict[self.constants["stacking_prediction_col"]] = current_stacking_preds
-
-        logger.info(f"new_predictions_dict= {new_predictions_dict}")
-
-        # make sure these are all the same length
-        try:
-            final_all_predictions_df = pd.DataFrame(new_predictions_dict)
-        except ValueError as e:
-            logger.error(
-                f"Found an array without the same length. {e}. This either means we have a new model or a new lookback window. Check that all arrays are the same length"
-            )
-            logger.error(f"new_predictions_dict  = {new_predictions_dict}")
-
-        # make sure the 'date' is the first col
-        first_col = final_all_predictions_df.pop(self.date_col)
-        final_all_predictions_df.insert(0, self.date_col, first_col)
-
-        self.final_all_predictions_df = final_all_predictions_df
-
     def _make_stacking_prediction_and_save(self) -> float:
         # train a RF model on the input predictions from each model.
         # we need to date align the previous predictions on the date_prediction_for
@@ -591,7 +481,8 @@ class CoinPricePredictor:
                 logger.info(set(stacked_x_data_train.columns) - set(testing_df.columns))
                 logger.info(set(testing_df.columns) - set(stacked_x_data_train.columns))
             estimator = RandomForestRegressor(
-                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"], n_jobs=-1,
+                n_estimators=self.ml_constants["hyperparameters_random_forest"]["n_estimators"],
+                n_jobs=-1,
                 random_state=self.random_state,
             )
 
@@ -631,9 +522,11 @@ class CoinPricePredictor:
         self._train_models(train_close_series, ts_stacked_series)
         logger.info("making predictions")
         sys.stdout.flush()
+        # base predictions from child class
         predictions_dict = self._make_base_predictions_dict(train_close_series, ts_stacked_series)
         logger.info(f"predictions_dict = {predictions_dict}")
         self._generate_base_predictions_df(predictions_dict)
+
         logger.info(f" stacking the predictions with {self.stacking_model_name}")
         prediction = self._make_stacking_prediction_and_save()
         logger.info(f"Prediction = {prediction}")
