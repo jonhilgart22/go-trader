@@ -1,4 +1,6 @@
+# type: ignore
 from typing import Any, Dict, List, Union
+
 import pandas as pd
 from darts import TimeSeries
 
@@ -7,8 +9,9 @@ try:  # need modules for pytest to work
 except ModuleNotFoundError:  # Go is unable to run python modules -m
     from utils import read_in_data, running_on_aws, setup_logging
 
-import numpy as np
 from collections import defaultdict
+
+import numpy as np
 
 __all__ = ["BasePredictor"]
 

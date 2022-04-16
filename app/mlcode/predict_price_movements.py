@@ -15,11 +15,11 @@ from finta import TA
 from sklearn.ensemble import RandomForestRegressor
 
 try:  # need modules for pytest to work
-    from app.mlcode.utils import running_on_aws, setup_logging
     from app.mlcode.base_predictions import BasePredictor
+    from app.mlcode.utils import running_on_aws, setup_logging
 except ModuleNotFoundError:  # Go is unable to run python modules -m
-    from utils import running_on_aws, setup_logging
     from base_predictions import BasePredictor
+    from utils import running_on_aws, setup_logging
 
 
 __all__ = ["CoinPricePredictor"]
