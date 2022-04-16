@@ -441,6 +441,23 @@ class CoinPricePredictor:
 
             return new_predictions_dict
 
+        def _add_in_current_base_predictions(new_predictions_dict: Dict[str, List[Union[int, float]]], input_predictions: Dict[str, float], predictions_df: pd.DataFrame) -> Dict[str, List[Union[int, float]]]:
+            # for the current base predictions
+            for model_name, prediction in input_predictions.items():
+                if model_name in all_cols:
+                    # previous predictions
+                    current_predictions_list = list(predictions_df[model_name])
+                    # add in previous
+                    new_predictions_dict[model_name].extend(current_predictions_list)
+                    # add in new
+                    new_predictions_dict[model_name].append(prediction)
+
+                else:  # new model_name
+                    new_model_predictions_array = list(np.zeros(largest_n_predictions))
+                    new_model_predictions_array[-1] = input_predictions[model_name]
+                    new_predictions_dict[model_name].extend(new_model_predictions_array)
+            return new_predictions_dict
+
         # this sets the date to be the index
         predictions_df = read_in_data(self.all_predictions_filename, running_on_aws(), self.constants["date_col"])
         # store all arrays we will need to add to the df
@@ -448,24 +465,7 @@ class CoinPricePredictor:
         all_cols = list(predictions_df.columns)
         largest_n_predictions = 1 + np.max(predictions_df.count())
 
-        # for the current base predictions
-        for model_name, prediction in input_predictions.items():
-            if model_name in all_cols:
-                # previous predictions
-                current_predictions_list = list(predictions_df[model_name])
-                # add in previous
-                new_predictions_dict[model_name].extend(current_predictions_list)
-                # add in new
-                new_predictions_dict[model_name].append(prediction)
-                num_predictions_for_this_model = len(new_predictions_dict[model_name])
-                # if
-                if num_predictions_for_this_model > largest_n_predictions:
-                    largest_n_predictions = num_predictions_for_this_model
-
-            else:  # new model_name
-                new_model_predictions_array = list(np.zeros(largest_n_predictions))
-                new_model_predictions_array[-1] = input_predictions[model_name]
-                new_predictions_dict[model_name].extend(new_model_predictions_array)
+        new_predictions_dict = _add_in_current_base_predictions(new_predictions_dict, input_predictions, predictions_df)
 
         new_predictions_dict = _add_in_date_cols(self.df, new_predictions_dict, predictions_df, self.constants["date_prediction_for_col"], self.date_col, self.ml_constants["prediction_params"]["prediction_n_days"])
         # From the original predictions_df, what cols do we have that we no longer have?
