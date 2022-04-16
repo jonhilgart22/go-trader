@@ -390,7 +390,7 @@ class CoinPricePredictor(BasePredictor):
                     dict_of_threads[str(lookback_window_models) + "_tcn"].start()
 
                 else:
-                    raise ValueError(f"We hdave an incorrect model name of {model.model_name} we need tcn or nbeats")
+                    raise ValueError(f"We have an incorrect model name of {model.model_name} we need tcn or nbeats")
         # block until all models are trained
         for k, v in dict_of_threads.items():
             logger.info(f"Have thread = {k}")
