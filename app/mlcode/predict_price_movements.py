@@ -493,10 +493,10 @@ class CoinPricePredictor(BasePredictor):
             prediction = estimator.predict(testing_df)[0]  # predict returns a numpy array, so we need to index it
 
         # save prediction as part of all predictions. Update the last stacking prediction to this new prediction
-        current_stacking_predictions = self.final_all_predictions_df[self.constants["stacking_prediction_col"]]
-        current_stacking_predictions[-1] = prediction
         # cast as float
         self.final_all_predictions_df.astype({self.constants["stacking_prediction_col"]: 'float32'})
+        current_stacking_predictions = self.final_all_predictions_df[self.constants["stacking_prediction_col"]]
+        current_stacking_predictions[-1] = prediction
         self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = current_stacking_predictions
 
         if running_on_aws():
