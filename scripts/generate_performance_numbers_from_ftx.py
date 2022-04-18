@@ -94,6 +94,8 @@ def main(directory: str, file_name_glob: str) -> None:
 
         logging.info(f"Fetched {len(all_trades_list)} trades")
         for i in range(0, len(all_trades_list)):
+            if (i == len(all_trades_list) - 1) and (trade['side'] == 'buy'):  # last trade, if BUY, exclude.. we are in an active position
+                continue
             trade = all_trades_list[i]
 
             logging.info(f"{trade['datetime'], trade['side'], trade['price'], trade['amount'],  trade['cost']}")
@@ -106,6 +108,7 @@ def main(directory: str, file_name_glob: str) -> None:
             if trade["side"] == "sell":
                 total_sold += dollars_traded
                 n_sell += 1
+
         total_won_or_lost = total_bought - total_sold
         logging.info("total bought = " + str(total_bought))
         logging.info("total sold = " + str(total_sold))
