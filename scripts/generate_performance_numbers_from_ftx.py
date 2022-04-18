@@ -138,7 +138,7 @@ def main(directory: str, file_name_glob: str) -> None:
         n_trades_buy += value[3]
         total_trades += value[2]
         total_won_or_lost_minus_fees += value[4]
-        total_fees += total_dollars_won_or_lost - total_won_or_lost_minus_fees
+        total_fees += value[0] - value[4]
 
     logging.info(f"total_dollars_won_or_lost = ${total_dollars_won_or_lost:.2f}")
     logging.info(f"total_fees = ${total_fees:.2f}")
