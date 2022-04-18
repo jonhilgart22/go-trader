@@ -90,18 +90,19 @@ def main(directory: str, file_name_glob: str) -> None:
         n_buy = 0
         total_sold = 0
         n_sell = 0
-        total_fees = 0
-        current_buy_price = None
+        total_fees = 0.0
 
         logging.info(f"Fetched {len(all_trades_list)} trades")
         for i in range(0, len(all_trades_list)):
             trade = all_trades_list[i]
             logging.info(f"{i} of {len(all_trades_list)-1}")
-            if (i == len(all_trades_list) - 1) and (trade['side'] == 'buy'):  # last trade, if BUY, exclude.. we are in an active position
+            if (i == len(all_trades_list) - 1) and (
+                trade["side"] == "buy"
+            ):  # last trade, if BUY, exclude.. we are in an active position
                 logging.info(f"Last trade, excluding")
                 logging.info(f"{trade['datetime'], trade['side'], trade['price'], trade['amount'],  trade['cost']}")
                 continue
-            total_fees += float(trade['fee']['cost'])
+            total_fees += float(trade["fee"]["cost"])
 
             logging.info(f"{trade['datetime'], trade['side'], trade['price'], trade['amount'],  trade['cost']}")
 
@@ -122,7 +123,13 @@ def main(directory: str, file_name_glob: str) -> None:
         logging.info(f"Total fees = {total_fees}")
         logging.info(f"Total won minus fees = {total_won_or_lost_minus_fees}")
         # profit for long trades, total money at risk, # of trades, winning trades
-        performance_per_coin[coin] = (total_won_or_lost, total_bought, n_buy + n_sell, n_buy, total_won_or_lost_minus_fees)
+        performance_per_coin[coin] = (
+            total_won_or_lost,
+            total_bought,
+            n_buy + n_sell,
+            n_buy,
+            total_won_or_lost_minus_fees,
+        )
     logging.info(f"performance_per_coin = {performance_per_coin}")
     # aggregate metrics
 
