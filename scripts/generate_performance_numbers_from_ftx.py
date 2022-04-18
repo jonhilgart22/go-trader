@@ -87,54 +87,49 @@ def main(directory: str, file_name_glob: str) -> None:
 
         all_trades_list = list(all_trades.values())
         total_bought = 0
-        total_won = 0
+        n_buy = 0
         total_sold = 0
-        total_lost = 0
+        n_sell = 0
         current_buy_price = None
 
         logging.info(f"Fetched {len(all_trades_list)} trades")
         for i in range(0, len(all_trades_list)):
             trade = all_trades_list[i]
 
-            logging.info(f"{trade['datetime'], trade['side'], trade['price']}")
+            logging.info(f"{trade['datetime'], trade['side'], trade['price'], trade['amount'],  trade['cost']}")
 
-            dollars_traded = trade["price"] * trade["amount"]
+            dollars_traded = trade["cost"]
 
             if trade["side"] == "buy":
                 total_bought += dollars_traded
-                current_buy_price = trade["price"]
+                n_buy += 1
             if trade["side"] == "sell":
                 total_sold += dollars_traded
-                if current_buy_price is None:
-                    continue
-                elif current_buy_price < trade["price"]:  # buy low sell high
-                    total_won += 1
-                else:
-                    total_lost += 1
-
-                current_buy_price = None
-
-        logging.info(f"Total won = { total_sold - total_bought }")
+                n_sell += 1
+        total_won_or_lost = total_bought - total_sold
+        logging.info("total bought = " + str(total_bought))
+        logging.info("total sold = " + str(total_sold))
+        logging.info(f"Total won = {total_won_or_lost }")
         # profit for long trades, total money at risk, # of trades, winning trades
-        performance_per_coin[coin] = (total_sold - total_bought, total_bought, total_won + total_lost, total_won)
+        performance_per_coin[coin] = (total_won_or_lost, total_bought, n_buy + n_sell, n_buy)
     logging.info(f"performance_per_coin = {performance_per_coin}")
     # aggregate metrics
 
     total_dollars_won_or_lost = 0
     total_dollars_at_risk = 0
-    total_trades_won = 0
+    n_trades_buy = 0
     total_trades = 0
     for key, value in performance_per_coin.items():
         total_dollars_won_or_lost += value[0]
         total_dollars_at_risk += value[1]
-        total_trades_won += value[3]
+        n_trades_buy += value[3]
         total_trades += value[2]
 
     logging.info(f"total_dollars_won_or_lost = ${total_dollars_won_or_lost}")
     logging.info(f"total_dollars_at_risk = ${total_dollars_at_risk}")
     logging.info(f"total_trades = {total_trades}")
-    logging.info(f"total_trades_won = {total_trades_won}")
-    logging.info(f"Bat rate = {total_trades_won/total_trades * 100:.2f}%")
+    logging.info(f"n_trades_buy = {n_trades_buy}")
+    logging.info(f"Bat rate = {n_trades_buy/total_trades * 100:.2f}%")
     logging.info(f"Percent Return = {(total_dollars_won_or_lost/total_dollars_at_risk)*100:.2f}%")
     logging.info(f"Amount won or lost per trade = ${total_dollars_won_or_lost/total_trades:.2f}")
 
