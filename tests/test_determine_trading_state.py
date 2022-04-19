@@ -146,7 +146,7 @@ def test_no_eth_action(
     price_prediction = btc_predictor.predict()
     print(f"Price prediction = {price_prediction}")
     assert math.isnan(price_prediction) != True
-    price_prediction = 900
+    price_prediction = 900.1516
     # btc_predictor.df has the bollinger bands
     trading_state_class = DetermineTradingState(
         coin_to_predict,
@@ -201,7 +201,7 @@ def test_buy_btc_action(
     print(f"Price prediction = {price_prediction}")
     assert math.isnan(price_prediction) != True
     # ensure the rest of the tests pass
-    price_prediction = 9000
+    price_prediction = 9000.1919
 
     # btc_predictor.df has the bollinger bands
     coin_to_predict = "btc"

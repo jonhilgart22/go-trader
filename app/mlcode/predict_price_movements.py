@@ -436,6 +436,7 @@ class CoinPricePredictor(BasePredictor):
             todays_date = self.df.index.max()
 
             # for training, we need to use the aligned date of the prediction FOR which is in merged_df
+            # TODO: we need to ensure the order of the columns is the same across both DFs. Use the training DF col orders
             training_df = merged_df[merged_df.index < todays_date]
             testing_df = self.final_all_predictions_df[self.final_all_predictions_df.index == todays_date]
 
@@ -458,6 +459,9 @@ class CoinPricePredictor(BasePredictor):
                 :, ~training_df.columns.isin(ALL_COLS_TO_EXCLUDE_RF_TRAINING)
             ]  # don't include the current row
             stacked_y_data_train = training_df[self.pred_col]  # don't include the current row
+            testing_df = testing_df.reindex(stacked_x_data_train.columns, axis=1)
+            # assert column order is the same
+            assert list(stacked_x_data_train.columns) == list(testing_df.columns)
 
             if self.verbose:
                 logger.info(f"{training_df.head} training_df head")
@@ -486,16 +490,20 @@ class CoinPricePredictor(BasePredictor):
                 random_state=self.random_state,
             )
 
+            # convert both to numpy arrays
+            stacked_x_data_train = stacked_x_data_train.to_numpy()
+
             estimator.fit(stacked_x_data_train, stacked_y_data_train)
             # if we have multiple rows for todays_date, run this multiple times, take the first
             if len(testing_df) > 1:
-                testing_df = testing_df.iloc[0, :]
+                testing_df = testing_df.iloc[0, :].to_numpy().reshape(1, -1)  # numpy array of 1 row, all cols
             prediction = estimator.predict(testing_df)[0]  # predict returns a numpy array, so we need to index it
 
         # save prediction as part of all predictions. Update the last stacking prediction to this new prediction
         # cast as float
-        self.final_all_predictions_df.astype({self.constants["stacking_prediction_col"]: 'float32'})
-        current_stacking_predictions = self.final_all_predictions_df[self.constants["stacking_prediction_col"]]
+        self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = self.final_all_predictions_df[self.constants["stacking_prediction_col"]].astype(float)
+        logger.info(f"dtypes of self.final_all_predictions_df {self.final_all_predictions_df.dtypes}")
+        current_stacking_predictions = list(self.final_all_predictions_df[self.constants["stacking_prediction_col"]])
         current_stacking_predictions[-1] = prediction
         self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = current_stacking_predictions
 
