@@ -402,6 +402,15 @@ class CoinPricePredictor(BasePredictor):
         # from the  _all_predictions file
         # test on the current days predictions
         # save the predictions to the tmp folder including the stacking prediction
+        def _create_date_part_cols(input_df: pd.DataFrame) -> pd.DataFrame:
+            # for  DFs used for RF, create day part cols
+            input_df["day"] = [t.day for t in pd.to_datetime(input_df.date)]
+            input_df["month"] = [t.month for t in pd.to_datetime(input_df.date)]
+            input_df["quarter"] = [t.quarter for t in pd.to_datetime(input_df.date)]
+            input_df["day_of_year"] = [t.strftime("%j") for t in pd.to_datetime(input_df.date)]
+            input_df["year"] = [t.year for t in pd.to_datetime(input_df.date)]
+            return input_df
+
         DATE_PART_AND_STACKING_COLS_TO_EXCLUDE = [
             self.constants["date_col"],
             "date_pred",
@@ -436,18 +445,8 @@ class CoinPricePredictor(BasePredictor):
             todays_date = self.df.index.max()
 
             # for training, we need to use the aligned date of the prediction FOR which is in merged_df
-            # TODO: we need to ensure the order of the columns is the same across both DFs. Use the training DF col orders
             training_df = merged_df[merged_df.index < todays_date]
             testing_df = self.final_all_predictions_df[self.final_all_predictions_df.index == todays_date]
-
-            def _create_date_part_cols(input_df: pd.DataFrame) -> pd.DataFrame:
-                # for  DFs used for RF, create day part cols
-                input_df["day"] = [t.day for t in pd.to_datetime(input_df.date)]
-                input_df["month"] = [t.month for t in pd.to_datetime(input_df.date)]
-                input_df["quarter"] = [t.quarter for t in pd.to_datetime(input_df.date)]
-                input_df["day_of_year"] = [t.strftime("%j") for t in pd.to_datetime(input_df.date)]
-                input_df["year"] = [t.year for t in pd.to_datetime(input_df.date)]
-                return input_df
 
             testing_df = _create_date_part_cols(testing_df)
             training_df = _create_date_part_cols(training_df)
