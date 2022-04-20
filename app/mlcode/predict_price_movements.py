@@ -501,7 +501,9 @@ class CoinPricePredictor(BasePredictor):
 
         # save prediction as part of all predictions. Update the last stacking prediction to this new prediction
         # cast as float
-        self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = self.final_all_predictions_df[self.constants["stacking_prediction_col"]].astype(float)
+        self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = self.final_all_predictions_df[
+            self.constants["stacking_prediction_col"]
+        ].astype(float)
         logger.info(f"dtypes of self.final_all_predictions_df {self.final_all_predictions_df.dtypes}")
         current_stacking_predictions = list(self.final_all_predictions_df[self.constants["stacking_prediction_col"]])
         current_stacking_predictions[-1] = prediction
