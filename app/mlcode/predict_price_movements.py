@@ -402,6 +402,15 @@ class CoinPricePredictor(BasePredictor):
         # from the  _all_predictions file
         # test on the current days predictions
         # save the predictions to the tmp folder including the stacking prediction
+        def _create_date_part_cols(input_df: pd.DataFrame) -> pd.DataFrame:
+            # for  DFs used for RF, create day part cols
+            input_df["day"] = [t.day for t in pd.to_datetime(input_df.date)]
+            input_df["month"] = [t.month for t in pd.to_datetime(input_df.date)]
+            input_df["quarter"] = [t.quarter for t in pd.to_datetime(input_df.date)]
+            input_df["day_of_year"] = [t.strftime("%j") for t in pd.to_datetime(input_df.date)]
+            input_df["year"] = [t.year for t in pd.to_datetime(input_df.date)]
+            return input_df
+
         DATE_PART_AND_STACKING_COLS_TO_EXCLUDE = [
             self.constants["date_col"],
             "date_pred",
@@ -439,15 +448,6 @@ class CoinPricePredictor(BasePredictor):
             training_df = merged_df[merged_df.index < todays_date]
             testing_df = self.final_all_predictions_df[self.final_all_predictions_df.index == todays_date]
 
-            def _create_date_part_cols(input_df: pd.DataFrame) -> pd.DataFrame:
-                # for  DFs used for RF, create day part cols
-                input_df["day"] = [t.day for t in pd.to_datetime(input_df.date)]
-                input_df["month"] = [t.month for t in pd.to_datetime(input_df.date)]
-                input_df["quarter"] = [t.quarter for t in pd.to_datetime(input_df.date)]
-                input_df["day_of_year"] = [t.strftime("%j") for t in pd.to_datetime(input_df.date)]
-                input_df["year"] = [t.year for t in pd.to_datetime(input_df.date)]
-                return input_df
-
             testing_df = _create_date_part_cols(testing_df)
             training_df = _create_date_part_cols(training_df)
             # Exclude the date related cols
@@ -458,6 +458,9 @@ class CoinPricePredictor(BasePredictor):
                 :, ~training_df.columns.isin(ALL_COLS_TO_EXCLUDE_RF_TRAINING)
             ]  # don't include the current row
             stacked_y_data_train = training_df[self.pred_col]  # don't include the current row
+            testing_df = testing_df.reindex(stacked_x_data_train.columns, axis=1)
+            # assert column order is the same
+            assert list(stacked_x_data_train.columns) == list(testing_df.columns)
 
             if self.verbose:
                 logger.info(f"{training_df.head} training_df head")
@@ -486,14 +489,22 @@ class CoinPricePredictor(BasePredictor):
                 random_state=self.random_state,
             )
 
+            # convert both to numpy arrays
+            stacked_x_data_train = stacked_x_data_train.to_numpy()
+
             estimator.fit(stacked_x_data_train, stacked_y_data_train)
             # if we have multiple rows for todays_date, run this multiple times, take the first
             if len(testing_df) > 1:
-                testing_df = testing_df.iloc[0, :]
+                testing_df = testing_df.iloc[0, :].to_numpy().reshape(1, -1)  # numpy array of 1 row, all cols
             prediction = estimator.predict(testing_df)[0]  # predict returns a numpy array, so we need to index it
 
         # save prediction as part of all predictions. Update the last stacking prediction to this new prediction
-        current_stacking_predictions = self.final_all_predictions_df[self.constants["stacking_prediction_col"]]
+        # cast as float
+        self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = self.final_all_predictions_df[
+            self.constants["stacking_prediction_col"]
+        ].astype(float)
+        logger.info(f"dtypes of self.final_all_predictions_df {self.final_all_predictions_df.dtypes}")
+        current_stacking_predictions = list(self.final_all_predictions_df[self.constants["stacking_prediction_col"]])
         current_stacking_predictions[-1] = prediction
         self.final_all_predictions_df[self.constants["stacking_prediction_col"]] = current_stacking_predictions
 
