@@ -17,6 +17,8 @@ func PullDataFromYahoo(productCode string) []*models.HistoricalPrice {
 		time.Now().Add(-14*172800*time.Second).Format("2006-01-02"),
 		time.Now().Format("2006-01-02"),
 		quote.Daily, true)
+	log.Println("Pulling data from Yahoo complete")
+	log.Println("TBT data = ", tbt.CSV())
 	var records []*models.HistoricalPrice
 
 	newestDate := time.Date(2017, time.Month(1), 7, 0, 0, 0, 0, time.UTC)
@@ -33,6 +35,7 @@ func PullDataFromYahoo(productCode string) []*models.HistoricalPrice {
 		date := tbt.Date[idx]
 
 		if date.After(newestDate) {
+			log.Println("Updating the newest date to be ", date)
 			newestDate = date
 		}
 
