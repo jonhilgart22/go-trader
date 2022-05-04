@@ -18,11 +18,11 @@ import (
 
 	"github.com/grishinsana/goftx"
 	"github.com/grishinsana/goftx/models"
+	"github.com/jonhilgart22/go-trader/app/alphaVantage"
 	"github.com/jonhilgart22/go-trader/app/awsUtils"
 	"github.com/jonhilgart22/go-trader/app/ftx"
 	"github.com/jonhilgart22/go-trader/app/structs"
 	"github.com/jonhilgart22/go-trader/app/utils"
-	"github.com/jonhilgart22/go-trader/app/yahoo"
 )
 
 func main() {
@@ -72,7 +72,7 @@ func HandleRequest(ctx context.Context, req structs.CloudWatchEvent) (string, er
 	currentMaticRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["matic_product_code"], granularity)
 	currentLinkRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["link_product_code"], granularity)
 	// yahoo
-	currentTbtRecords := yahoo.PullDataFromYahoo(constantsMap["tbt_product_code"])
+	currentTbtRecords := alphaVantage.PullDataFromAlphaVantage(constantsMap["tbt_product_code"])
 	log.Println(currentTbtRecords, "currentTbtRecords")
 	// currentSpyRecords := ftx.PullDataFromFtx(ftxClient, constantsMap["spy_product_code"], granularity)
 

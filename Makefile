@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs_and_data update_lambda download_configs_and_data compile_go update_lambda run_golang_btc run_golang_eth coverage_go coverage_python test_go
+PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs_and_data update_lambda download_configs_and_data compile_go update_lambda run_golang_btc run_golang_eth coverage_go coverage_python test_go compile_local
 
 PYTHON_VERSION=3.8.2
 
@@ -102,7 +102,8 @@ download_data:
 # aws s3 cp "s3://go-trader/data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv" "./data/historic_crypto_prices - bitcoin_jan_2017_sep_4_2021 copy.csv"  --sse aws:kms
 # aws s3 cp  "s3://go-trader/data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" "./data/historic_crypto_prices - etherum_jan_2017_sept_4_2021 copy.csv" --sse aws:kms
 # aws s3 cp  "s3://go-trader/data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv" "./data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv" --sse aws:kms
-
+compile_local:
+	go build app/src/main.go && ./main
 # compile_golang
 compile_go:
 	docker run --rm -v "$PWD":/go/src/handler lambci/lambda:build-go1.x sh -c 'go build app/src/main.go'
