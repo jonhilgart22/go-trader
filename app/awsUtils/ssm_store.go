@@ -55,6 +55,9 @@ func SetSsmToEnvVars() {
 	linkSubaccountName := v.Get(`LINK_SUBACCOUNT_NAME`)
 	linkFtxKey := v.Get(`LINK_FTX_KEY`)
 	linkFtxSecret := v.Get(`LINK_FTX_SECRET`)
+	// AV
+	alphaVantageKey := v.Get(`ALPHA_VANTAGE_KEY`)
+
 	//value should be `a`
 	os.Setenv("FTX_KEY", fmt.Sprintf("%v", ftxKey))
 	os.Setenv("FTX_SECRET", fmt.Sprintf("%v", ftxSecret))
@@ -77,4 +80,6 @@ func SetSsmToEnvVars() {
 	os.Setenv("LINK_SUBACCOUNT_NAME", fmt.Sprintf("%v", linkSubaccountName))
 	os.Setenv("LINK_FTX_KEY", fmt.Sprintf("%v", linkFtxKey))
 	os.Setenv("LINK_FTX_SECRET", fmt.Sprintf("%v", linkFtxSecret))
+	// AV
+	os.Setenv("ALPHA_VANTAGE_KEY", fmt.Sprintf("%v", alphaVantageKey))
 }

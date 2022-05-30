@@ -90,6 +90,7 @@ Via Github Actions
 2. Download this data and put it into the `tmp/` directory. The tmp directory is used for the AWS lambda. If you are running experiments, you can put the experiment data into the `data/` folder.
 3. Run simulations in the `'notebooks/training_from_python_code.ipynb'` jupyter notebook to see how the default config would work. For new coins, we should use `eth` and `btc` as the additional_dfs argument.
    1. This notebook works the same as the inference code. Therefore, it uses the `training_configs` directory to store the results of each coin. You'll need to add in new configs for each coin, or reset the configs to zero for new training runs.
+   2. After you have these simulations, use them to seed the stacking predictions from the notebook `notebooks/combine_historical_predictions_with_current.ipynb`
 4. Setup a new FTX account, generate an api key for this account, create aws SSM params for these params, in the `ssm_store.go`, set these values as env vars. Also add these to the env_vars.sh file
 5. Add these env vars using `scripts/set_ssm.sh`. `./scripts/set_ssm.sh FTX_KEY <your-api-key>`
 6. Update the `main.go` file to create a new FTX client for this coin

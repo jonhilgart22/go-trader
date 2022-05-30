@@ -21,7 +21,7 @@ func PullDataFromYahoo(productCode string) []*models.HistoricalPrice {
 
 	newestDate := time.Date(2017, time.Month(1), 7, 0, 0, 0, 0, time.UTC)
 	// check if the newest date we have is not today's date (UTC). If so, we're on a weekend or holiday when markets are closed
-	// need to take the last row and propagae it forward to today
+	// need to take the last row and propagate it forward to today
 
 	for idx := 0; idx < len(tbt.Close); idx++ {
 		open := decimal.NewFromFloat(tbt.Open[idx])
