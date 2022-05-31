@@ -88,9 +88,10 @@ Via Github Actions
 
 1. Add new data to the [google sheet here](https://docs.google.com/spreadsheets/d/1fBvirRK7m17jYj0t1yO6Jagq_aFjQvJ5EApnHOZQz20/edit#gid=114347281). I like using (Coin Market Cap)[https://coinmarketcap.com/] for historical data.
 2. Download this data and put it into the `tmp/` directory. The tmp directory is used for the AWS lambda. If you are running experiments, you can put the experiment data into the `data/` folder.
-3. Run simulations in the `'notebooks/training_from_python_code.ipynb'` jupyter notebook to see how the default config would work. For new coins, we should use `eth` and `btc` as the additional_dfs argument.
-   1. This notebook works the same as the inference code. Therefore, it uses the `training_configs` directory to store the results of each coin. You'll need to add in new configs for each coin, or reset the configs to zero for new training runs.
+3. Run simulations in the `'notebooks/training_from_python_code.ipynb'` jupyter notebook to see how the default config would work. For new coins, we should use `tbt` and `btc` as the additional_dfs argument.
+   1. This notebook works the same as the inference code. Therefore, it uses the `training_configs` directory to store the results of each coin. You'll need to add in new configs for each coin, or reset the configs to zero for new training runs. You will need to add a new `<coin>_all_predictions.csv` that includes dates from the early data from the historical predictions.
    2. After you have these simulations, use them to seed the stacking predictions from the notebook `notebooks/combine_historical_predictions_with_current.ipynb`
+   3. Also, make sure you upload this new data after downloading `make download_configs_and_data`
 4. Setup a new FTX account, generate an api key for this account, create aws SSM params for these params, in the `ssm_store.go`, set these values as env vars. Also add these to the env_vars.sh file
 5. Add these env vars using `scripts/set_ssm.sh`. `./scripts/set_ssm.sh FTX_KEY <your-api-key>`
 6. Update the `main.go` file to create a new FTX client for this coin
