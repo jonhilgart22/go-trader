@@ -133,8 +133,8 @@ class BasePredictor:
 
         # this sets the date to be the index
         predictions_df = read_in_data(self.all_predictions_filename, running_on_aws(), self.constants["date_col"])
-        largest_n_predictions = 1 + np.max(predictions_df.count())
-        # store all arrays we will need to add to the df
+        largest_n_predictions = int(1 + np.max(predictions_df.count()))
+        # store all arrays we will need to add to the dfd
         new_predictions_dict: Dict[str, Any] = defaultdict(list)
 
         new_predictions_dict = BasePredictor._add_in_current_base_predictions(

@@ -1,2 +1,2 @@
 date,nbeats_sol_lookback_15_window_5_std_1.25_num_add_dfs_2,tcn_sol_lookback_15_window_5_std_1.25_num_add_dfs_2,nbeats_sol_lookback_30_window_5_std_1.25_num_add_dfs_2,tcn_sol_lookback_30_window_5_std_1.25_num_add_dfs_2,nbeats_sol_lookback_45_window_5_std_1.25_num_add_dfs_2,tcn_sol_lookback_45_window_5_std_1.25_num_add_dfs_2,date_prediction_for,test_model_lookback_1
-2010-01-01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+2010-01-01,0.0,0.0,0.0,0.0,0.0,0.0,2010-01-08,0.0
