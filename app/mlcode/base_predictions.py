@@ -109,8 +109,10 @@ class BasePredictor:
         logger.info(f"missing_cols ={missing_cols}")
         #  make sure to exclude the date cols
         dates_cols = [self.constants["date_prediction_for_col"], self.date_col]
+        logger.info(f"largest_n_predictions ={largest_n_predictions}")
 
         for col in missing_cols:
+            logger.info(f"Adding in missing col = {col}")
             if col not in dates_cols:
                 current_preds = predictions_df[col]
                 new_array_for_missing_col = list(np.zeros(largest_n_predictions))
@@ -120,9 +122,11 @@ class BasePredictor:
         current_stacking_preds = []
         if self.constants["stacking_prediction_col"] in predictions_df.columns:
             current_stacking_preds = list(predictions_df[self.constants["stacking_prediction_col"]])
-
         current_stacking_preds.extend([0 for _ in range(largest_n_predictions - len(current_stacking_preds))])
         new_predictions_dict[self.constants["stacking_prediction_col"]] = current_stacking_preds
+        logger.info("finished with extending current stacking preds for missing cols")
+        logger.info(f"new_predictions_dict key len  ={np.max([len(i) for i in new_predictions_dict.keys()])}")
+        logger.info(f"new_predictions_dict value len  ={np.max([len(i) for i in new_predictions_dict.values()])}")
 
         return new_predictions_dict
 
@@ -133,8 +137,8 @@ class BasePredictor:
 
         # this sets the date to be the index
         predictions_df = read_in_data(self.all_predictions_filename, running_on_aws(), self.constants["date_col"])
-        largest_n_predictions = 1 + np.max(predictions_df.count())
-        # store all arrays we will need to add to the df
+        largest_n_predictions = int(1 + np.max(predictions_df.count()))
+        # store all arrays we will need to add to the dfd
         new_predictions_dict: Dict[str, Any] = defaultdict(list)
 
         new_predictions_dict = BasePredictor._add_in_current_base_predictions(
@@ -145,8 +149,7 @@ class BasePredictor:
         new_predictions_dict = self._add_in_missing_cols(
             new_predictions_dict, predictions_df, input_predictions, largest_n_predictions
         )
-
-        logger.info(f"new_predictions_dict= {new_predictions_dict}")
+        logger.info("finished adding in missing cols")
 
         # make sure these are all the same length
         try:

@@ -1,9 +1,9 @@
-dollar_amount_buy_lost: 2019.0
-dollar_amount_buy_won: 2813.0
+dollar_amount_buy_lost: 4999.0
+dollar_amount_buy_won: 3317.0
 dollar_amount_short_lost: 0.0
 dollar_amount_short_won: 0.0
-n_buy_lost: 1.0
-n_buy_won: 1.0
+n_buy_lost: 3.0
+n_buy_won: 2.0
 n_short_lost: 0.0
 n_short_won: 0.0
-n_total_days_in_trades: 7.0
+n_total_days_in_trades: 23.0

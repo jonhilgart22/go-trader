@@ -1,4 +1,4 @@
-PHONY: clean setup upload_models upload_data install run_go run_python test_python upload_configs_and_data update_lambda download_configs_and_data compile_go update_lambda run_golang_btc run_golang_eth coverage_go coverage_python test_go compile_local
+PHONY: clean setup upload_models install run_go run_python test_python upload_configs_and_data update_lambda download_configs_and_data compile_go update_lambda run_golang_btc run_golang_eth coverage_go coverage_python test_go compile_local
 
 PYTHON_VERSION=3.8.2
 
@@ -38,7 +38,7 @@ run_python:
 	python -m app.mlcode.main --coin_to_predict btc
 
 # we make sure to download first. However, if you've already downloaded, you can copy the upload command
-upload_configs_and_data: download_configs_and_data
+upload_configs_and_data:
 	aws s3 cp tmp/   s3://go-trader/tmp/  --sse aws:kms --recursive
 
 download_configs_and_data:
@@ -93,9 +93,6 @@ invoke_lambda_link:
 # 	aws s3 cp ./models/checkpoints/31_nbeats_btc/checkpoint_257.pth.tar s3://go-trader/models/checkpoints/31_nbeats_btc/checkpoint_257.pth.tar --sse aws:kms
 # 	aws s3 cp ./models/checkpoints/31_nbeats_eth/checkpoint_257.pth.tar s3://go-trader/models/checkpoints/31_nbeats_eth/checkpoint_257.pth.tar --sse aws:kms
 
-upload_data:
-	aws s3 cp data/ s3://go-trader/data --sse aws:kms --recursive
-# aws s3 cp   "./data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv"  "s3://go-trader/data/historic_crypto_prices - sol_jan_2017_oct_18_2021.csv" --sse aws:kms
 
 download_data:
 	aws s3 cp s3://go-trader/data data/  --sse aws:kms --recursive
