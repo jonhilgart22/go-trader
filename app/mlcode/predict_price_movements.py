@@ -419,10 +419,8 @@ class CoinPricePredictor(BasePredictor):
             self.constants["stacking_prediction_col"],
         ]
         NUMERIC_COLS_TO_EXCLUDE = [
-            self.constants["bollinger_low_col"],
-            self.constants["bollinger_high_col"],
             self.constants["close_col"],
-        ] + self.ml_train_cols
+        ]
         ALL_COLS_TO_EXCLUDE_RF_TRAINING = DATE_PART_AND_STACKING_COLS_TO_EXCLUDE + NUMERIC_COLS_TO_EXCLUDE
 
         if self.stacking_model_name.lower() == "rf":
@@ -446,7 +444,7 @@ class CoinPricePredictor(BasePredictor):
 
             # for training, we need to use the aligned date of the prediction FOR which is in merged_df
             training_df = merged_df[merged_df.index < todays_date]
-            testing_df = self.final_all_predictions_df[self.final_all_predictions_df.index == todays_date]
+            testing_df = merged_df[merged_df.index == todays_date]
 
             testing_df = _create_date_part_cols(testing_df)
             training_df = _create_date_part_cols(training_df)
@@ -459,6 +457,7 @@ class CoinPricePredictor(BasePredictor):
             ]  # don't include the current row
             stacked_y_data_train = training_df[self.pred_col]  # don't include the current row
             testing_df = testing_df.reindex(stacked_x_data_train.columns, axis=1)
+
             # assert column order is the same
             assert list(stacked_x_data_train.columns) == list(testing_df.columns)
 
